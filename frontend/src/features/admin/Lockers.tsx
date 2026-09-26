@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
-import { Calendar, LockKeyhole, Plus, Search } from 'lucide-react'
+import { Calendar, LockKeyhole, Plus, Search, ShieldCheck, User } from 'lucide-react'
 import { api, type AdminLockers, type EligibleMember } from '../../shared/api'
 import { formatDate } from '../../shared/format'
 import { errorMessage } from '../../shared/errors'
@@ -146,33 +146,65 @@ export function AdminLockersPanel({ show }: Notice) {
       </AdminDialog>
 
       <div className="admin-locker-matrix-section">
-        <div className="admin-locker-summary-chips">
-          <div className="admin-locker-chip">
-            <span className="admin-locker-chip-dot blue" />
-            <div className="admin-locker-chip-text">
-              <span>Total Loker</span>
-              <strong>{data?.lockers.length ?? 0}</strong>
+        {(() => {
+          const totalCount = data?.lockers.length ?? 0
+          const availableCount = (data?.lockers ?? []).filter((l) => l.active && !l.customerId).length
+          const assignedCount = (data?.lockers ?? []).filter((l) => Boolean(l.customerId)).length
+          const occupancyPercent = totalCount > 0 ? Math.round((assignedCount / totalCount) * 100) : 0
+
+          return (
+            <div className="admin-locker-kpi-banner">
+              <div className="admin-locker-kpi-card">
+                <div className="admin-locker-kpi-icon-wrap blue">
+                  <LockKeyhole size={18} />
+                </div>
+                <div className="admin-locker-kpi-info">
+                  <span>Total Kapasitas</span>
+                  <strong>{totalCount} Loker</strong>
+                  <small>Kompartemen studio</small>
+                </div>
+              </div>
+
+              <div className="admin-locker-kpi-card">
+                <div className="admin-locker-kpi-icon-wrap green">
+                  <ShieldCheck size={18} />
+                </div>
+                <div className="admin-locker-kpi-info">
+                  <span>Loker Tersedia</span>
+                  <strong style={{ color: '#15803d' }}>{availableCount} Loker</strong>
+                  <small>Siap ditetapkan</small>
+                </div>
+              </div>
+
+              <div className="admin-locker-kpi-card">
+                <div className="admin-locker-kpi-icon-wrap amber">
+                  <User size={18} />
+                </div>
+                <div className="admin-locker-kpi-info">
+                  <span>Sedang Terisi</span>
+                  <strong style={{ color: '#0369a1' }}>{assignedCount} Loker</strong>
+                  <small>Aktif bersama member</small>
+                </div>
+              </div>
+
+              <div className="admin-locker-kpi-card occupancy">
+                <div className="admin-locker-occupancy-head">
+                  <span>Okupansi Studio</span>
+                  <strong>{occupancyPercent}%</strong>
+                </div>
+                <div className="admin-locker-progress-track">
+                  <div
+                    className="admin-locker-progress-bar"
+                    style={{ width: `${occupancyPercent}%` }}
+                  />
+                </div>
+                <span className="admin-locker-occupancy-sub">
+                  {assignedCount} dari {totalCount} unit terisi
+                </span>
+              </div>
             </div>
-          </div>
-          <div className="admin-locker-chip">
-            <span className="admin-locker-chip-dot green" />
-            <div className="admin-locker-chip-text">
-              <span>Tersedia</span>
-              <strong style={{ color: '#15803d' }}>
-                {(data?.lockers ?? []).filter((l) => l.active && !l.customerId).length}
-              </strong>
-            </div>
-          </div>
-          <div className="admin-locker-chip">
-            <span className="admin-locker-chip-dot amber" />
-            <div className="admin-locker-chip-text">
-              <span>Ditetapkan / Terisi</span>
-              <strong style={{ color: '#0369a1' }}>
-                {(data?.lockers ?? []).filter((l) => Boolean(l.customerId)).length}
-              </strong>
-            </div>
-          </div>
-        </div>
+          )
+        })()}
 
         <div className="admin-locker-toolbar">
           <div className="admin-locker-filter-pills">
@@ -211,73 +243,101 @@ export function AdminLockersPanel({ show }: Notice) {
         </div>
 
         <div className="admin-entity-grid admin-locker-grid admin-locker-matrix-grid">
-          {filteredLockers.map((row) => (
-            <article
-              className={`panel admin-record admin-locker-card admin-locker-box ${
-                row.customerId ? 'assigned' : 'available'
-              }`}
-              key={row.id}
-            >
-              <div className="admin-locker-box-top">
-                <span className="admin-locker-code">Loker {row.code}</span>
-                <span
-                  className={`admin-locker-status-tag ${
-                    !row.active ? 'inactive' : row.customerId ? 'assigned' : 'available'
-                  }`}
-                >
-                  {!row.active ? 'Nonaktif' : row.customerId ? 'Ditetapkan' : 'Tersedia'}
-                </span>
-              </div>
+          {filteredLockers.map((row) => {
+            const initials = row.customerName
+              ? row.customerName
+                  .split(' ')
+                  .filter(Boolean)
+                  .map((n) => n[0])
+                  .join('')
+                  .slice(0, 2)
+                  .toUpperCase()
+              : 'MB'
 
-              <div className="admin-locker-box-center">
-                {row.customerId ? (
-                  <div className="admin-locker-occupant">
-                    <strong className="admin-locker-occupant-name">{row.customerName}</strong>
-                    <span className="admin-locker-occupant-email" title={row.customerEmail ?? undefined}>
-                      {row.customerEmail}
-                    </span>
-                    <span className="admin-locker-occupant-validity">
-                      <Calendar size={12} style={{ flexShrink: 0 }} />
-                      Paket sampai {formatDate(row.membershipEndsOn!)}
-                    </span>
+            return (
+              <article
+                className={`panel admin-record admin-locker-card admin-locker-box ${
+                  row.customerId ? 'assigned' : 'available'
+                }`}
+                key={row.id}
+              >
+                <div className="admin-locker-box-top">
+                  <div className="admin-locker-compartment-pill">
+                    <span className="admin-locker-compartment-label">LOKER</span>
+                    <strong className="admin-locker-code">{row.code}</strong>
                   </div>
-                ) : (
-                  <div className="admin-locker-vacant">
-                    <LockKeyhole size={22} className="admin-locker-vacant-icon" />
-                    <span>Loker kosong & siap ditetapkan.</span>
-                  </div>
-                )}
-              </div>
+                  <span
+                    className={`admin-locker-status-tag ${
+                      !row.active ? 'inactive' : row.customerId ? 'assigned' : 'available'
+                    }`}
+                  >
+                    {!row.active ? 'Nonaktif' : row.customerId ? 'Ditetapkan' : 'Tersedia'}
+                  </span>
+                </div>
 
-              <div className="admin-locker-box-action">
-                {row.customerId ? (
-                  <button
-                    type="button"
-                    className="button button-outline admin-locker-action-btn danger"
-                    disabled={busy}
-                    onClick={() => void release(row.id, row.code)}
-                  >
-                    Lepas
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    className="button button-outline admin-locker-action-btn primary"
-                    disabled={busy || !data?.enabled || !row.active}
-                    onClick={() => {
-                      setSelectedLocker(row.id)
-                      setCustomerId('')
-                      void loadMembers(search).catch((error) => show(errorMessage(error)))
-                    }}
-                  >
-                    Tetapkan
-                  </button>
-                )}
-              </div>
-            </article>
-          ))}
+                <div className="admin-locker-box-center">
+                  {row.customerId ? (
+                    <div className="admin-locker-occupant">
+                      <div className="admin-locker-occupant-profile">
+                        <div className="admin-locker-avatar">{initials}</div>
+                        <div className="admin-locker-occupant-info">
+                          <strong className="admin-locker-occupant-name">{row.customerName}</strong>
+                          <span
+                            className="admin-locker-occupant-email"
+                            title={row.customerEmail ?? undefined}
+                          >
+                            {row.customerEmail}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="admin-locker-validity-pill">
+                        <Calendar size={12} style={{ flexShrink: 0 }} />
+                        <span>Paket s/d {formatDate(row.membershipEndsOn!)}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="admin-locker-vacant">
+                      <div className="admin-locker-vacant-icon-wrap">
+                        <LockKeyhole size={18} />
+                      </div>
+                      <div className="admin-locker-vacant-text">
+                        <strong>Siap Ditetapkan</strong>
+                        <span>Slot kosong untuk member</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="admin-locker-box-action">
+                  {row.customerId ? (
+                    <button
+                      type="button"
+                      className="button button-outline admin-locker-action-btn danger"
+                      disabled={busy}
+                      onClick={() => void release(row.id, row.code)}
+                    >
+                      Lepas
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="button button-outline admin-locker-action-btn primary"
+                      disabled={busy || !data?.enabled || !row.active}
+                      onClick={() => {
+                        setSelectedLocker(row.id)
+                        setCustomerId('')
+                        void loadMembers(search).catch((error) => show(errorMessage(error)))
+                      }}
+                    >
+                      Tetapkan
+                    </button>
+                  )}
+                </div>
+              </article>
+            )
+          })}
           {data && !filteredLockers.length && (
-            <div className="panel" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '32px' }}>
+            <div className="panel" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '36px 20px' }}>
               <p style={{ margin: 0, color: 'var(--muted)' }}>
                 {lockerQuery ? 'Tidak ada loker yang cocok dengan pencarian.' : 'Belum ada nomor loker.'}
               </p>
