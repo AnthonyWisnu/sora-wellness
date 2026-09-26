@@ -538,45 +538,17 @@ export function CoachDashboard({
                             <div className="live-coach-person-details">
                               <strong className="live-coach-person-name">{person.fullName}</strong>
                               {person.healthNote && (
-                                <div
-                                  className="live-health-note"
-                                  style={{
-                                    borderLeft: '3px solid #e11d48',
-                                    background: '#fff1f2',
-                                    padding: '8px 12px',
-                                    borderRadius: '6px',
-                                    marginTop: '8px',
-                                  }}
-                                >
-                                  <div
-                                    style={{
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      gap: '6px',
-                                      color: '#be123c',
-                                      fontWeight: 600,
-                                      fontSize: '0.78rem',
-                                    }}
-                                  >
-                                    <AlertTriangle size={14} /> PERHATIAN KESEHATAN PESERTA
-                                  </div>
-                                  <div>
-                                    <span style={{ fontSize: '0.7rem', color: '#9f1239' }}>
+                                <div className="live-health-note">
+                                  <div className="live-health-note-header">
+                                    <AlertTriangle size={13} />
+                                    <span className="live-health-note-label">Catatan Kesehatan</span>
+                                    <span className="live-health-note-source">
                                       {person.healthSource === 'snapshot'
-                                        ? 'Catatan saat kelas berlangsung'
-                                        : 'Catatan kesehatan terkini'}
+                                        ? 'saat kelas berlangsung'
+                                        : 'terkini'}
                                     </span>
-                                    <p
-                                      style={{
-                                        margin: '4px 0 0',
-                                        color: '#881337',
-                                        fontSize: '0.85rem',
-                                        fontWeight: 500,
-                                      }}
-                                    >
-                                      {person.healthNote}
-                                    </p>
                                   </div>
+                                  <p className="live-health-note-text">{person.healthNote}</p>
                                 </div>
                               )}
                             </div>
