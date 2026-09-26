@@ -1,286 +1,282 @@
-# Sora Wellness Studio
+# 🌿 Sora Wellness Studio Platform
 
-Platform demo wellness untuk satu studio dan satu lokasi. Proyek ini memakai API NestJS, PostgreSQL, dan aplikasi React/TypeScript. Data contoh dibuat secara lokal oleh seed script; akun dan sandi demo tidak disimpan di repository.
+<div align="center">
 
-> **Status:** aplikasi demo untuk pengembangan dan presentasi. Pembayaran memakai Midtrans Sandbox. Jangan masukkan data pelanggan sungguhan atau deploy konfigurasi ini sebagai layanan produksi.
+![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue?logo=typescript&logoColor=white)
+![NestJS](https://img.shields.io/badge/NestJS-11.2-E0234E?logo=nestjs&logoColor=white)
+![React](https://img.shields.io/badge/React-19.1-61DAFB?logo=react&logoColor=black)
+![Vite](https://img.shields.io/badge/Vite-6.3-646CFF?logo=vite&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
+![Midtrans](https://img.shields.io/badge/Payment-Midtrans_Snap-002B49?logoColor=white)
 
-## Daftar isi
+**Platform Manajemen & Booking Studio Wellness Modern Berbasis API-First**  
+*Dirancang khusus untuk satu boutique studio (Yoga & Pilates) dengan arsitektur modular, keamanan tingkat enterprise, dan sistem pembayaran terintegrasi.*
 
-- [Fitur](#fitur)
-- [Prasyarat](#prasyarat)
-- [Clone dan konfigurasi](#clone-dan-konfigurasi)
-- [Buat database dan isi dataset demo](#buat-database-dan-isi-dataset-demo)
-- [Jalankan aplikasi](#jalankan-aplikasi)
-- [Akun dan data demo](#akun-dan-data-demo)
-- [Coba API dengan Swagger atau Postman](#coba-api-dengan-swagger-atau-postman)
-- [Midtrans Sandbox](#midtrans-sandbox)
-- [Perintah pengembangan](#perintah-pengembangan)
-- [Struktur repository](#struktur-repository)
-- [Troubleshooting](#troubleshooting)
-- [Berbagi repository dengan aman](#berbagi-repository-dengan-aman)
+[Fitur Utama](#-fitur-utama) •
+[Arsitektur & Tech Stack](#-arsitektur--tech-stack) •
+[Panduan Instalasi](#-panduan-instalasi-cepat) •
+[Akun & Data Demo](#-akun--data-demo) •
+[Dokumentasi API](#-dokumentasi-api--pengujian) •
+[Struktur Direktori](#-struktur-direktori)
 
-## Fitur
+</div>
 
-- Halaman publik studio, jadwal kelas, pilihan paket, konten, dan galeri media.
-- Pelanggan dapat membuat akun, mengelola profil, melihat riwayat kesehatan, booking kelas, serta melihat paket, pembayaran, saldo, dan loker.
-- Pelatih dapat melihat peserta kelas yang dia ajar dan mencatat kehadiran.
-- Admin dapat mengelola akun staf, kelas, sesi, jadwal berulang, paket, aturan, transaksi, loker, media, konten situs, dan pengaturan pembayaran.
-- Backend menjadi sumber aturan untuk akses, kapasitas, harga, status pembayaran, pembatalan, jatah, dan saldo.
-- API HTTP JSON dapat dipakai tanpa React. Swagger tersedia untuk mencoba endpoint.
+---
 
-Versi saat ini melayani **satu studio dan satu lokasi**. Visi multi-perusahaan di [PRD.md](PRD.md) belum diimplementasikan.
+## 📌 Tentang Proyek
 
-## Prasyarat
+**Sora Wellness Studio** adalah platform manajemen studio kebugaran terpadu yang memisahkan secara tegas antara aturan bisnis backend dan antarmuka frontend. Platform ini melayani operasional harian studio mulai dari reservasi kelas, kuota langganan (*membership*), pembatalan adaptif, buku besar saldo (*wallet ledger*), absensi pelatih, rekam kesehatan berizin (*consented health notes*), pengelolaan loker, hingga Content Management System (CMS) untuk situs publik.
 
-- Windows PowerShell (langkah di bawah menggunakan PowerShell), Git, dan Node.js 22.
-- npm yang terpasang bersama Node.js.
-- Docker Desktop aktif untuk menjalankan PostgreSQL lokal.
-- Akun Midtrans Sandbox hanya diperlukan untuk menguji pembayaran gateway. Dataset demo dapat dibuat tanpa kredensial Midtrans.
+> **Status Proyek:** Aplikasi demo tingkat produk (*production-grade demo*). Transaksi pembayaran terhubung langsung ke **Midtrans Sandbox** resmi tanpa uang riil.
 
-Periksa instalasi:
+---
 
+## ✨ Fitur Utama
+
+### 1. 🌐 Situs Publik & CMS Mandiri
+- **Profil Studio Dinamis:** Informasi studio, hero banner, teks promosi, dan galeri foto studio resolusi tinggi.
+- **CMS dengan Versioning:** Pengelolaan draf konten, pratinjau khusus admin (`?preview=1`), dan penerbitan satu klik (*atomic publish*) yang terlindung dari *race condition*.
+- **Pustaka Media Terproteksi:** Unggah dan validasi berkas gambar (JPG, PNG, WebP maks 5 MB) dengan pelacakan pemakaian aset agar tidak terhapus saat masih digunakan.
+- **Peta & Kontak Terintegrasi:** Dukungan URL sematan Google Maps resmi, tautan WhatsApp, dan nomor telepon langsung.
+
+### 2. 🎟️ Sistem Reservasi & Keanggotaan (*Booking Engine*)
+- **Tiga Tingkat Kelas:** *Beginner*, *Intermediate 1*, dan *Intermediate 2* dengan batas kapasitas dan harga per sesi.
+- **Jadwal Berulang Fleksibel:** Pengaturan pola jadwal mingguan otomatis hingga 180 hari ke depan, lengkap dengan penanganan hari libur atau pembatalan sesi tertentu.
+- **Hak Akses Member & Jatah Bulanan:** Perhitungan kuota kelas bulanan dengan prorata akurat sesuai kalender (termasuk penanganan tanggal 31 dan tahun kabisat).
+- **Auto-Expire Seat Hold:** Penahanan kursi 15 menit saat pembayaran berlangsung; otomatis dilepaskan oleh background sweeper jika transaksi tidak diselesaikan.
+
+### 3. 💳 Pembayaran & Dompet Digital (*Wallet Ledger*)
+- **Integrasi Midtrans Snap Sandbox:** Checkout kelas dan paket membership langsung memanggil gateway resmi Midtrans.
+- **Pembayaran Kombinasi:** Fleksibilitas menggunakan saldo dompet (*wallet*) yang digabung dengan pembayaran sisa tagihan via payment gateway.
+- **Buku Besar Transaksi (*Double-Entry Ledger*):** Setiap rupiah mutasi (pembelian, pengembalian dana, pembebasan saldo tahanan) tercatat transparan dan tidak dapat dimanipulasi.
+- **Penanganan Webhook Aman:** Verifikasi signature notifikasi menggunakan SHA-512 dengan Server Key terenkripsi AES-256.
+
+### 4. 🔄 Kebijakan Pembatalan Adaptif
+- **Pembatalan oleh Pelanggan:** Kebijakan pembatalan 24 jam. Pembatalan tepat waktu mengembalikan jatah/saldo 100%, sedangkan pembatalan terlambat menghanguskan jatah/biaya.
+- **Pembatalan Sepihak oleh Studio:** Jika studio membatalkan sesi kelas, seluruh hak pelanggan dipulihkan otomatis dalam satu transaksi atomik—termasuk memulihkan hak pelanggan yang sebelumnya sempat membatalkan terlambat.
+
+### 5. 🩺 Kesehatan, Absensi & Privasi Pelatih
+- **Rekam Riwayat Kesehatan Berizin:** Formulir kondisi fisik dengan persetujuan (*consent*) yang dapat dihapus sewaktu-waktu oleh pelanggan.
+- **Snapshot Kesehatan Terbatas:** Pelatih hanya dapat melihat kondisi kesehatan peserta yang tercatat pada saat sesi kelas berlangsung.
+- **Pencatatan & Koreksi Absensi:** Pelatih mencatat kehadiran dalam jendela 24 jam; Admin dapat melakukan koreksi data absensi yang wajib disertai alasan audit.
+
+### 6. 🔐 Manajemen Loker Studio
+- Penomoran loker fisik dan penetapan loker eksklusif kepada member aktif.
+- Pelepasan loker otomatis (*auto-release*) saat masa paket langganan pelanggan berakhir.
+
+---
+
+## 🏗 Arsitektur & Tech Stack
+
+```mermaid
+graph TD
+    Client[Browser / Klien HTTP] -->|HTTP / JSON + Session Cookie| Proxy[Vite Proxy :5173]
+    Proxy -->|Reverse Proxy /api/v1| Nest[Backend NestJS :3000]
+    Nest -->|Connection Pool| PG[(PostgreSQL 16 :55432)]
+    Nest -->|Snap API & Webhooks| Midtrans[Midtrans Sandbox]
+    Nest -->|Storage| Disk[Uploads Media Storage]
 ```
-node --version
-npm --version
-docker --version
-git --version
-```
 
-## Clone dan konfigurasi
+| Lapisan | Teknologi | Keterangan |
+| :--- | :--- | :--- |
+| **Frontend** | React 19, TypeScript, Vite 6 | Arsitektur modular per fitur, responsif ponsel & desktop |
+| **Desain & UI** | CSS Modern, Lucide React, Google Fonts | Tipografi *Cormorant Garamond*, *Manrope*, *Plus Jakarta Sans* |
+| **Backend API** | NestJS 11, TypeScript, Express | Arsitektur controller-service-module dengan DTO Validation |
+| **Database** | PostgreSQL 16 (Docker) | Akses via `pg.Pool`, transaksi atomik & *pessimistic locking* |
+| **Keamanan** | Helmet, CSRF-Sync, PG Session | Sesi server-side `HttpOnly`, proteksi CSRF, sanitasi header |
+| **Payment Gateway** | Midtrans Snap Sandbox | Enkripsi Server Key AES-256, verifikasi notifikasi SHA-512 |
+| **Testing** | Node.js Test Runner, Playwright | 15/15 Unit test lulus, smoke test browser otomatis |
 
-Clone repository lalu masuk ke folder proyek:
+---
 
-```
-git clone <URL-REPOSITORY-GITHUB>
-Set-Location wellness
-```
+## 🚀 Panduan Instalasi Cepat
 
-Ganti <URL-REPOSITORY-GITHUB> dengan alamat repository yang dibagikan pemilik proyek.
+### Prasyarat Sistem
+- **Node.js** v22.x & **npm**
+- **Docker Desktop** (untuk database PostgreSQL)
+- **Git** & **PowerShell** (Windows) / Terminal (macOS/Linux)
 
-Salin template konfigurasi backend:
+---
 
-```
+### Langkah 1: Kloning & Persiapan Konfigurasi
+
+```powershell
+# 1. Masuk ke folder proyek
+Set-Location C:\laragon\www\wellness
+
+# 2. Salin template konfigurasi backend
 Copy-Item backend/.env.example backend/.env
 ```
 
-Buka backend/.env dan atur nilai lokal berikut:
+Buka `backend/.env` dan isi variabel konfigurasi lokal berikut:
 
-| Variabel | Nilai lokal |
-| --- | --- |
-| DB_USER | wellness atau nama pengguna PostgreSQL pilihan Anda |
-| DB_PASSWORD | Sandi acak yang Anda buat sendiri |
-| DB_NAME | wellness |
-| DATABASE_URL | postgresql://your-user:your-password@127.0.0.1:55432/your-database, konsisten dengan nilai di atas |
-| PORT | 3000 |
-| SESSION_SECRET | Nilai acak rahasia minimal 32 karakter |
-| FRONTEND_ORIGIN | http://127.0.0.1:5173 |
-| NODE_ENV | development |
-| MEDIA_STORAGE_DIR | uploads |
-| MIDTRANS_ENV | sandbox |
-| MIDTRANS_SETTINGS_KEY | Base64 dari 32 byte acak; simpan nilai ini selama database dipakai |
-
-Buat nilai acak dari PowerShell. Jalankan setiap baris sendiri, lalu salin nilainya ke .env:
-
-```
-node -e "console.log(require('node:crypto').randomBytes(24).toString('base64url'))"
-node -e "console.log(require('node:crypto').randomBytes(48).toString('base64url'))"
-node -e "console.log(require('node:crypto').randomBytes(32).toString('base64'))"
+```env
+DATABASE_URL=postgresql://wellness:password-acak-anda@127.0.0.1:55432/wellness
+DB_USER=wellness
+DB_PASSWORD=password-acak-anda
+DB_NAME=wellness
+PORT=3000
+SESSION_SECRET=kunci-rahasia-minimal-32-karakter-acak
+FRONTEND_ORIGIN=http://127.0.0.1:5173
+NODE_ENV=development
+MEDIA_STORAGE_DIR=uploads
+MIDTRANS_ENV=sandbox
+MIDTRANS_SETTINGS_KEY=kunci-base64-32-byte-acak
 ```
 
-Gunakan hasil pertama sebagai DB_PASSWORD, hasil kedua sebagai SESSION_SECRET, dan hasil ketiga sebagai MIDTRANS_SETTINGS_KEY. Pastikan DATABASE_URL memakai user, sandi, host, port, dan nama database yang sama. Nilai base64url aman digunakan langsung pada URL database.
+> [!TIP]
+> **Cara Cepat Menghasilkan Kunci Acak via Terminal:**
+> ```powershell
+> node -e "console.log(require('node:crypto').randomBytes(24).toString('base64url'))" # untuk DB_PASSWORD
+> node -e "console.log(require('node:crypto').randomBytes(48).toString('base64url'))" # untuk SESSION_SECRET
+> node -e "console.log(require('node:crypto').randomBytes(32).toString('base64'))"    # untuk MIDTRANS_SETTINGS_KEY
+> ```
 
-Jangan commit backend/.env. Jika tidak menguji peta/kontak demo, .demo.local.json boleh tidak dibuat. Bila perlu, salin backend/.demo.example.json ke backend/.demo.local.json lalu isi nomor telepon, WhatsApp, dan tautan peta lokal.
+---
 
-## Buat database dan isi dataset demo
+### Langkah 2: Setup Database & Dataset Demo
 
-> Perintah demo:setup akan menghapus lalu membuat ulang data aplikasi di database lokal port 55432. Sebelum menjalankannya, pastikan database tersebut khusus untuk proyek Wellness. Script membuat cadangan database dan unggahan ke backend/.qa/demo-backup-*, tetapi sebaiknya jangan arahkan konfigurasi ke database penting.
+Jalankan rangkaian perintah berikut di dalam direktori `backend`:
 
-> Bila hanya ingin seed dasar, jalankan npm run seed sebagai pengganti npm run demo:setup. Seed dasar membuat admin/pelatih awal, beberapa paket/kelas, dan jadwal contoh; sandi acak dicetak satu kali ke terminal. Jangan jalankan kedua seed berurutan pada database yang sama.
-
-```
+```powershell
 Set-Location backend
 npm install
+
+# 1. Jalankan PostgreSQL melalui Docker
 docker compose up -d db
+
+# 2. Jalankan migrasi skema tabel
 npm run migrate
+
+# 3. Muat dataset demo lengkap Sora Wellness Studio
 npm run demo:setup
 ```
 
-demo:setup mengisi data fiktif untuk mencoba dashboard, termasuk:
+Skrip `demo:setup` akan secara otomatis:
+- Mengisi 7 katalog kelas dan jadwal rutin 45 hari ke depan.
+- Mengunggah foto studio dan mengonfigurasi CMS situs publik.
+- Mengonfigurasi nomor kontak dan peta dari `backend/.demo.local.json`.
+- Membuat 9 akun demo dan mencatat password uniknya ke:
+  ```
+  backend/.qa/demo-accounts.json
+  ```
 
-- 9 akun demo: admin, dua pelatih, dan enam pelanggan.
-- Jenis kelas pemula dan lanjutan, jadwal kelas lampau/mendatang, serta beberapa booking.
-- Catatan kesehatan dan absensi contoh yang seluruhnya fiktif.
-- Pilihan paket, saldo, loker, dan konten halaman publik.
-- Foto studio ilustratif yang tersedia di frontend/public/images/.
+---
 
-> Dataset ini tidak membutuhkan Midtrans Sandbox yang telah dikonfigurasi. Dashboard tetap dapat dibuka, tetapi pembayaran berbayar melalui gateway belum tersedia sampai Anda memasukkan kredensial Sandbox sendiri (lihat [Midtrans Sandbox](#midtrans-sandbox)).
+### Langkah 3: Menjalankan Aplikasi
 
-Setelah berhasil, script mencetak lokasi berkas akun demo:
+Buka dua jendela terminal terpisah:
 
-```
-backend/.qa/demo-accounts.json
-```
-
-Berkas tersebut berisi sandi acak yang cocok dengan database lokal yang baru dibuat. Folder .qa diabaikan Git; **jangan mengunggah atau mengirimkan berkas ini**. Setiap orang harus menjalankan seed sendiri dan menggunakan akun hasil seed masing-masing. Menyalin berkas akun ke komputer teman tidak akan membuat akun itu berlaku pada database teman.
-
-Dataset demo dapat diperbarui tanpa membuat ulang booking melalui:
-
-```
-npm run demo:refresh-schedule
-```
-
-## Jalankan aplikasi
-
-Jalankan backend di terminal PowerShell pertama dari folder backend:
-
-```
+**Terminal 1 (Backend API):**
+```powershell
+Set-Location backend
 npm run dev
 ```
+*API aktif di: `http://127.0.0.1:3000/api/v1`*
 
-Jalankan frontend di terminal kedua dari root proyek:
-
-```
+**Terminal 2 (Frontend React):**
+```powershell
 Set-Location frontend
 npm install
 npm run dev
 ```
+*Frontend aktif di: `http://127.0.0.1:5173`*
 
-Buka http://127.0.0.1:5173 di browser. Frontend memakai proxy Vite untuk meneruskan /api/v1 ke backend lokal.
+Buka peramban di **`http://127.0.0.1:5173`**.
 
-| Layanan | Alamat |
-| --- | --- |
-| Aplikasi React | http://127.0.0.1:5173 |
-| API | http://127.0.0.1:3000/api/v1 |
-| Swagger UI | http://127.0.0.1:3000/api/docs |
-| OpenAPI JSON | http://127.0.0.1:3000/api/docs-json |
-| PostgreSQL | 127.0.0.1:55432 |
+---
 
-Untuk login, gunakan email dan sandi yang tercatat di backend/.qa/demo-accounts.json. Seed demo mengatur sandi acak baru tiap kali dataset dibuat ulang.
+## 👥 Akun & Data Demo
 
-## Akun dan data demo
+Buka berkas [`backend/.qa/demo-accounts.json`](backend/.qa/demo-accounts.json) yang terbuat di komputer Anda untuk melihat password login masing-masing akun:
 
-Gunakan email berikut bersama sandi hasil seed lokal. **Sandi tidak sama untuk semua instalasi dan memang tidak ditulis di GitHub.** Setelah menjalankan `npm run demo:setup`, buka file `backend/.qa/demo-accounts.json` dari folder utama proyek. Cari baris dengan email yang ingin dipakai, lalu salin nilai `password` dari objek akun itu.
+| Peran | Nama Akun | Email Login | Hak Akses Utama |
+| :--- | :--- | :--- | :--- |
+| **Admin** | Admin Sora | `admin@sora.example.test` | Kelola jadwal, kelas, staf, CMS, loker, audit absensi, & keuangan |
+| **Coach** | Nadia Putri | `nadia@sora.example.test` | Jadwal mengajar, rekam kehadiran, & lihat catatan kesehatan kelasnya |
+| **Coach** | Made Arya | `arya@sora.example.test` | Jadwal mengajar, rekam kehadiran, & lihat catatan kesehatan kelasnya |
+| **Customer** | Ayu Lestari | `ayu.lestari@sora.example.test` | Booking kelas pemula, beli paket, kelola profil |
+| **Customer** | Dimas Saputra | `dimas.saputra@sora.example.test` | Booking kelas pemula, beli paket, kelola profil |
+| **Customer** | Lila Mahendra | `lila.mahendra@sora.example.test` | Riwayat kelas lampau, loker, & catatan kesehatan tersimpan |
+| **Customer** | Maya Kirana | `maya.kirana@sora.example.test` | Booking kelas aktif mendatang |
+| **Customer** | Raka Pratama | `raka.pratama@sora.example.test` | Pelanggan reguler |
+| **Customer** | Sinta Dewi | `sinta.dewi@sora.example.test` | Riwayat kelas & koreksi absensi admin |
 
-| Peran | Email login | Cara mendapatkan sandi |
-| --- | --- | --- |
-| Admin | admin@sora.example.test | Nilai `password` untuk email ini di `backend/.qa/demo-accounts.json` |
-| Pelatih | nadia@sora.example.test, arya@sora.example.test | Cari masing-masing email di `backend/.qa/demo-accounts.json` |
-| Pelanggan | ayu.lestari@sora.example.test, dimas.saputra@sora.example.test, lila.mahendra@sora.example.test, maya.kirana@sora.example.test, raka.pratama@sora.example.test, sinta.dewi@sora.example.test | Cari email yang ingin dipakai di `backend/.qa/demo-accounts.json` |
+---
 
-Cara masuk: jalankan kedua server, buka `http://127.0.0.1:5173`, pilih **Masuk**, lalu masukkan email dan sandi dari file tersebut. Jika file belum ada, jalankan seed penuh dari folder `backend` dengan `npm run demo:setup`; seed ulang mengganti dataset dan semua sandinya. File berada di `backend/.qa/` relatif terhadap folder utama proyek dan sengaja diabaikan Git, jadi setiap teman membuat sandi lokal sendiri saat menjalankan seed.
+## 📖 Dokumentasi API & Pengujian
 
-> Semua data, alamat, catatan kesehatan, transaksi, foto, serta testimoni yang dihasilkan untuk seed adalah ilustrasi fiktif. Jangan gunakan sebagai informasi studio sungguhan.
+Aplikasi menyediakan dokumentasi OpenAPI interaktif yang dapat diakses langsung saat backend berjalan:
 
-### Menemukan akun demo
+* **Swagger UI Interaktif:** `http://127.0.0.1:3000/api/docs`
+* **Spesifikasi OpenAPI JSON:** `http://127.0.0.1:3000/api/docs-json`
 
-Setelah `npm run demo:setup` selesai, buka `backend/.qa/demo-accounts.json` dengan editor teks. Di dalamnya ada nama, peran, email, dan sandi acak untuk semua akun demo. File ini dibuat di komputer Anda, sengaja tidak ada di GitHub, dan berubah setiap kali seed penuh dijalankan. Untuk seed dasar (`npm run seed`), simpan kredensial yang dicetak di terminal saat seed pertama berjalan.
+### Menjalankan Pengujian Mandiri
 
-## Coba API dengan Swagger atau Postman
+```powershell
+# Jalankan unit test logika bisnis di backend
+cd backend
+npm test
 
-API bisa dicoba tanpa aplikasi React. Pastikan database sudah di-migrate dan backend menyala (`npm run dev` dari folder `backend`). Untuk penggunaan pertama, buka Swagger UI:
+# Jalankan linter kode
+npm run lint
 
-**http://127.0.0.1:3000/api/docs**
+# Jalankan skrip smoke test Playwright di frontend (opsional)
+cd ../frontend
+npm run smoke:dashboard
+npm run smoke:admin
+```
 
-Swagger menampilkan endpoint berdasarkan kelompok, skema input, dan contoh respons. Buka kelompok `public` dan coba `GET /api/v1/public/sessions` atau `GET /api/v1/public/packages`; endpoint baca publik tidak memerlukan login. Tekan **Try it out**, lalu **Execute**.
+---
 
-Untuk memakai Postman:
+## 📁 Struktur Direktori
 
-1. Buat collection baru dan pilih **Import**.
-2. Masukkan URL `http://127.0.0.1:3000/api/docs-json` (atau simpan respons OpenAPI JSON lalu impor file tersebut). Postman akan membuat request dari spesifikasi API.
-3. Atur base URL ke `http://127.0.0.1:3000/api/v1` dan gunakan request `GET /public/sessions` untuk uji pertama.
-4. Request yang butuh login memakai cookie sesi `wellness.sid`. Pastikan Postman mengaktifkan cookie jar untuk `127.0.0.1`, dan gunakan host yang sama pada semua request; jangan berganti antara `localhost` dan `127.0.0.1`.
+```text
+wellness/
+├── backend/                  # Layanan NestJS & Business Engine
+│   ├── migrations/           # Skema & migrasi tabel PostgreSQL
+│   ├── scripts/              # Skrip demo-setup, seed, & smoke test
+│   ├── src/                  # Kode sumber modular per fitur
+│   │   ├── attendance/       # Modul absensi pelatih & koreksi admin
+│   │   ├── auth/             # Sesi, login, CSRF, & ganti kata sandi
+│   │   ├── booking/          # Reservasi kelas & aturan pembatalan
+│   │   ├── catalog/          # Katalog kelas & jadwal sesi
+│   │   ├── content/          # CMS dokumen publik, versi draf, & media
+│   │   ├── finance/          # Pemantauan transaksi & buku besar saldo
+│   │   ├── health/           # Rekam kesehatan & retensi snapshot
+│   │   ├── lockers/          # Manajemen loker & auto-release
+│   │   ├── membership/       # Pembelian paket & kuota prorata
+│   │   ├── payments/         # Integrasi Midtrans Snap & webhooks
+│   │   └── shared/           # Koneksi DB, guard keamanan, & CSRF
+│   ├── uploads/              # Penyimpanan berkas media studio
+│   └── compose.yaml          # Konfigurasi container PostgreSQL
+│
+├── frontend/                 # Aplikasi Web React 19 + TypeScript
+│   ├── public/images/        # Aset gambar & ilustrasi bawaan
+│   ├── src/
+│   │   ├── app/              # Komponen root aplikasi & router
+│   │   ├── features/         # Komponen dashboard per peran & publik
+│   │   ├── shared/           # Klien HTTP API, formatter, & tipe data
+│   │   └── styles/           # Desain CSS modular & styling Stitch
+│   └── vite.config.ts        # Konfigurasi proxy Vite ke backend
+│
+├── .demo.local.json          # Konfigurasi kontak & peta studio
+├── AGENTS.md                 # Panduan etika & batasan teknis tim
+├── PRD.md                    # Product Requirements Document lengkap
+└── README.md                 # Dokumentasi panduan utama proyek
+```
 
-#### Login akun seed dan menguji endpoint terlindungi
+---
 
-Untuk request terlindungi, gunakan Postman: Swagger cocok untuk membaca spesifikasi dan mencoba GET publik, sedangkan alur login ini perlu mengirim cookie sesi serta header CSRF secara manual. Jalankan urutan berikut di Postman dengan cookie jar yang sama:
+## 🔒 Kebijakan Keamanan & Data
 
-1. Kirim `GET /api/v1/auth/csrf`. Simpan nilai `token` dari respons JSON.
-2. Kirim `POST /api/v1/auth/login` dengan header `x-csrf-token: <token>` dan JSON body, misalnya `{"email":"admin@sora.example.test","password":"<sandi-dari-demo-accounts.json>"}`.
-3. Pastikan cookie `wellness.sid` yang diterima tersimpan. Login mengganti sesi, jadi ambil token CSRF baru dengan `GET /api/v1/auth/csrf` setelah login.
-4. Panggil endpoint terlindungi memakai cookie sesi yang sama. Untuk setiap request `POST`, `PUT`, `PATCH`, atau `DELETE`, kirim header `x-csrf-token` dari token sesi terbaru.
+1. **Berkas Lingkungan:** Berkas `.env` tidak pernah dikomit ke repository. Kredensial merchant dan database dikelola per lingkungan pengembang.
+2. **Kunci Server Midtrans:** Tersimpan di database PostgreSQL dalam bentuk terenkripsi AES-256 menggunakan `MIDTRANS_SETTINGS_KEY`.
+3. **Data Demo:** Seluruh nama pelanggan, catatan kesehatan, testimoni, dan histori transaksi pada dataset demo adalah fiktif untuk kebutuhan pengujian.
 
-Contoh endpoint setelah login admin: `GET /api/v1/admin/accounts`. Coba juga `GET /api/v1/coach/sessions` setelah login pelatih, atau `GET /api/v1/me/profile` setelah login pelanggan. Hak akses tetap mengikuti peran akun; endpoint admin akan menolak akun pelanggan/pelatih.
+---
 
-Respons `403 Token CSRF tidak valid` biasanya berarti header CSRF hilang/kedaluwarsa atau cookie sesi tidak ikut terkirim; ambil token baru dan pastikan host tetap `127.0.0.1`.
-
-Jangan memasukkan sandi akun demo atau cookie sesi ke screenshot, issue, log, atau GitHub. Nilai di file akun hanya berlaku pada database lokal yang membuatnya.
-
-## Midtrans Sandbox
-
-Midtrans bersifat opsional untuk membuka aplikasi dan menjelajahi dataset. Untuk menguji checkout:
-
-1. Buat/akses akun merchant Sandbox Midtrans milik Anda sendiri.
-2. Isi MIDTRANS_ENV=sandbox dan MIDTRANS_SETTINGS_KEY di backend/.env.
-3. Salin MIDTRANS_MERCHANT_ID, MIDTRANS_CLIENT_KEY, dan MIDTRANS_SERVER_KEY Sandbox Anda ke .env.
-4. Dari folder backend, jalankan npm run import:midtrans.
-5. Hapus tiga variabel kredensial merchant dari .env setelah tersimpan. Nilai Server Key disimpan terenkripsi di database; jangan masukkan ke frontend, README, screenshot, log, atau Git.
-6. Masuk sebagai admin demo, buka menu **Midtrans**, lalu pilih **Uji koneksi**.
-
-> Jangan memakai atau meminta pemilik repository membagikan Server Key. Setiap pengembang menggunakan kredensial Sandbox miliknya sendiri. MIDTRANS_SETTINGS_KEY harus tetap sama selama database yang berisi kredensial terenkripsi masih dipakai; jika hilang, kredensial itu tidak dapat dibaca.
-
-Pembayaran uji hanya memakai metode/kartu uji resmi Sandbox dan tidak memindahkan uang nyata. Jangan menjalankan skenario pembayaran kartu uji dengan kredensial produksi.
-
-## Perintah pengembangan
-
-Jalankan perintah dari folder yang sesuai (backend atau frontend):
-
-| Tujuan | Backend | Frontend |
-| --- | --- | --- |
-| Build | npm run build | npm run build |
-| Lint | npm run lint | npm run lint |
-| Tes | npm test | — |
-| Format check | — | npm run format:check |
-| Format otomatis | — | npm run format |
-| Seed demo penuh | npm run demo:setup | — |
-| Smoke browser dashboard | — | npm run smoke:dashboard |
-| Smoke manajemen admin | — | npm run smoke:admin |
-
-Smoke test browser memerlukan backend dan frontend yang sedang berjalan, serta Microsoft Edge di Windows. Smoke test yang membutuhkan database dapat membuat fixture sementara; gunakan database lokal dan pastikan script terkait membersihkan fixture setelah selesai.
-
-Untuk menjalankan smoke test backend tertentu, lihat scripts di backend/package.json dan dokumentasi [backend/README.md](backend/README.md). Dokumentasi frontend ada di [frontend/README.md](frontend/README.md).
-
-## Struktur repository
-
-| Lokasi | Keterangan |
-| --- | --- |
-| backend/src/ | API NestJS yang dikelompokkan berdasarkan fitur |
-| backend/migrations/ | Migrasi skema PostgreSQL |
-| backend/scripts/seed.ts | Seed dasar untuk pengembangan lokal |
-| backend/scripts/demo-setup.ts | Dataset Sora yang lengkap dan dapat dibuat ulang |
-| backend/uploads/ | Media yang diunggah saat aplikasi berjalan; tidak di-commit |
-| frontend/src/ | Aplikasi React/TypeScript, fitur, dan stylesheet |
-| frontend/public/images/ | Aset ilustrasi yang diperlukan halaman dan seed demo |
-| PRD.md | Kebutuhan produk, aturan, dan kriteria penerimaan |
-| AGENTS.md | Panduan kerja di repository |
-
-## Troubleshooting
-
-**Docker gagal membuka port 55432**
-
-Pastikan tidak ada PostgreSQL lain memakai port itu. Periksa container dengan docker compose ps dari folder backend. Jangan mengganti port tanpa menyesuaikan DATABASE_URL dan pemeriksaan keamanan lokal di script demo.
-
-**Backend tidak dapat terhubung ke database**
-
-Pastikan Docker Desktop berjalan, docker compose up -d db sudah berhasil, dan DATABASE_URL, DB_USER, DB_PASSWORD, serta DB_NAME konsisten dengan backend/.env.
-
-**Login demo gagal**
-
-Pastikan backend dan database memakai dataset yang sama. Baca kredensial terbaru dari backend/.qa/demo-accounts.json; jika database baru saja di-seed ulang, sandi sebelumnya sudah tidak berlaku.
-
-**Checkout berbayar belum tersedia**
-
-Ini normal jika Midtrans Sandbox belum diimpor. Lengkapi langkah pada [Midtrans Sandbox](#midtrans-sandbox), lalu mulai ulang backend jika .env berubah.
-
-**Frontend menampilkan kegagalan jaringan/CORS**
-
-Pastikan buka alamat Vite yang sama dengan nilai FRONTEND_ORIGIN (127.0.0.1 dan localhost dianggap origin berbeda), backend aktif pada port 3000, dan proxy Vite memakai host tersebut.
-
-## Berbagi repository dengan aman
-
-- Commit source code, migrasi, seed script, lockfile, dokumentasi, dan aset aplikasi yang benar-benar dipakai.
-- Jangan commit .env, .demo.local.json, uploads/, database dump, sandi akun demo, kredensial Midtrans, atau data pembayaran lokal.
-- Seed script dan konten fiktif boleh dibagikan; kredensial akun dihasilkan ulang untuk setiap database lokal.
-- Sumber test dipertahankan di repository. Hasil tes seperti screenshot, trace, report, coverage, log, dan fixture sementara diabaikan oleh .gitignore.
-- Folder Referensi UI/ adalah bahan referensi kerja lokal dan tidak ikut repository.
-
-Sebelum push pertama, periksa daftar file dengan git status --short dan pastikan tidak ada file rahasia atau hasil uji yang ikut ter-stage.
+<div align="center">
+  <sub>Dibuat dengan dedikasi untuk keunggulan arsitektur perangkat lunak · © 2026 Sora Wellness Studio</sub>
+</div>
