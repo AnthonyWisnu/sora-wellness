@@ -1,0 +1,236 @@
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.header-login {
+  min-height: 43px;
+}
+.mobile-menu-button {
+  display: none;
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 8px;
+  width: 42px;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  color: var(--green);
+}
+.mobile-nav {
+  display: none;
+}
+.hero {
+  height: min(720px, calc(100vh - 110px));
+  min-height: 570px;
+  background-color: #27392e;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  color: #fff;
+  overflow: hidden;
+}
+.hero-inner {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+.hero-copy {
+  width: min(600px, 58%);
+  padding-bottom: 22px;
+}
+.hero-eyebrow {
+  color: #e1c793;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.eyebrow-line {
+  width: 28px;
+  height: 1px;
+  background: #e1c793;
+}
+.hero h1 {
+  font-size: clamp(54px, 5.2vw, 91px);
+  max-width: 700px;
+  margin: 24px 0 24px;
+  font-weight: 600;
+  letter-spacing: -0.085em;
+}
+.hero p {
+  font-size: 16px;
+  max-width: 500px;
+  color: #f2f3ec;
+  line-height: 1.85;
+}
+.hero-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 32px;
+}
+.hero-buttons .button {
+  min-height: 52px;
+}
+.hero-secondary {
+  border-color: #cbd5c8;
+  color: #fff;
+}
+.hero-secondary:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+.hero-note {
+  position: absolute;
+  right: 6px;
+  bottom: 46px;
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  color: #f8f6ee;
+  background: rgba(30, 50, 38, 0.85);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.23);
+  padding: 18px 24px;
+  border-radius: 8px;
+}
+.hero-note > svg {
+  color: #e0c58c;
+}
+.hero-note span {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.hero-note strong {
+  font-size: 12px;
+}
+.hero-note small {
+  font-size: 10px;
+  color: #cfd8cc;
+}
+.hero-vertical {
+  position: absolute;
+  right: 25px;
+  top: 50%;
+  writing-mode: vertical-rl;
+  letter-spacing: 0.35em;
+  font-size: 9px;
+  font-weight: 700;
+  opacity: 0.7;
+}
+.intro-strip {
+  background: #e9e8dc;
+  color: #355347;
+  border-bottom: 1px solid #dadfce;
+}
+.strip-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+.strip-grid > div {
+  height: 81px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 13px;
+  border-right: 1px solid #d6dacd;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+.strip-grid > div:last-child {
+  border: 0;
+}
+.strip-grid svg {
+  color: #a58656;
+}
+.welcome-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 60px;
+  align-items: end;
+  margin-bottom: 42px;
+}
+.welcome-heading h2,
+.section-heading h2,
+.membership-teaser h2,
+.closing-cta h2,
+.benefits-layout h2 {
+  font-size: clamp(37px, 3.3vw, 56px);
+  margin: 14px 0 0;
+  font-weight: 700;
+}
+.welcome-heading h2 em,
+.membership-teaser h2 em,
+.closing-cta h2 em,
+.benefits-layout h2 em,
+.page-hero h1 em,
+.membership-hero h1 em {
+  color: #a4824f;
+}
+.welcome-heading > p {
+  max-width: 440px;
+  margin: 0 0 5px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.class-feature-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+.class-feature {
+  height: 410px;
+  position: relative;
+  border-radius: 13px;
+  overflow: hidden;
+  background: #ddd;
+}
+.class-feature:after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, rgba(17, 37, 29, 0.76), transparent 70%);
+}
+.class-feature img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s;
+}
+.class-feature:hover img {
+  transform: scale(1.04);
+}
+.feature-overlay {
+  position: absolute;
+  left: 36px;
+  right: 35px;
+  bottom: 32px;
+  z-index: 1;
+  color: #fff;
+}
+.feature-overlay > span {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  font-weight: 800;
+  color: #e5c592;
+}
+.feature-overlay h3 {
+  font-size: 29px;
+  letter-spacing: -0.05em;
+  margin: 9px 0 18px;
+}
+.feature-overlay button {
+  border: 0;
+  background: transparent;
+  color: #fff;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.feature-overlay button:hover {
+  gap: 15px;
+}

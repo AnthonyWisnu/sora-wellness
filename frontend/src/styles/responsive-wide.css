@@ -1,0 +1,40 @@
+@media (max-width: 1150px) {
+  .shell {
+    width: min(100% - 48px, 1320px);
+  }
+  .plan-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .schedule-card {
+    grid-template-columns: 75px 120px minmax(0, 1fr) 130px;
+    gap: 14px;
+  }
+  .schedule-image {
+    height: 120px;
+  }
+  .schedule-info h3 {
+    font-size: 16px;
+  }
+  .schedule-action .button {
+    padding-inline: 10px;
+  }
+  .app-shell {
+    grid-template-columns: 210px minmax(0, 1fr);
+  }
+  .app-content {
+    padding: 35px 24px;
+  }
+  .app-topbar {
+    padding-inline: 24px;
+  }
+  .customer-stats,
+  .admin-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .stat-card {
+    min-height: 165px;
+  }
+  .admin-card-grid.plans-admin {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

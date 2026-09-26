@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Sora Wellness">
+  <rect width="256" height="256" rx="56" fill="#233c31"/>
+  <circle cx="128" cy="109" r="45" fill="none" stroke="#e7d3aa" stroke-width="9"/>
+  <path d="M66 170c22-17 43-23 62-23s40 6 62 23" fill="none" stroke="#e7d3aa" stroke-width="9" stroke-linecap="round"/>
+  <path d="M92 190c14-9 26-13 36-13s22 4 36 13" fill="none" stroke="#e7d3aa" stroke-width="8" stroke-linecap="round"/>
+</svg>

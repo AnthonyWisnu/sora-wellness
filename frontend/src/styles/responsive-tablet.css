@@ -1,0 +1,304 @@
+@media (max-width: 760px) {
+  .shell {
+    width: min(100% - 34px, 1320px);
+  }
+  .section {
+    padding-block: 72px;
+  }
+  .sandbox-banner {
+    font-size: 7px;
+    gap: 7px;
+    letter-spacing: 0.08em;
+  }
+  .site-header {
+    height: 65px;
+  }
+  .wordmark > span:nth-child(2) {
+    font-size: 18px;
+  }
+  .wordmark-symbol {
+    font-size: 25px;
+  }
+  .wordmark small {
+    font-size: 7px;
+    padding: 5px;
+  }
+  .nav-pill {
+    display: none;
+  }
+  .header-login {
+    min-height: 36px;
+    font-size: 10px;
+    padding-inline: 11px;
+  }
+  .mobile-menu-button {
+    display: flex;
+  }
+  .mobile-nav {
+    display: grid;
+    position: absolute;
+    top: 65px;
+    left: 0;
+    right: 0;
+    background: #fffefa;
+    border-bottom: 1px solid var(--line);
+    padding: 12px 18px;
+    box-shadow: 0 10px 20px #0001;
+  }
+  .mobile-nav button {
+    border: 0;
+    background: transparent;
+    text-align: left;
+    padding: 12px;
+    color: var(--green);
+    font-weight: 700;
+  }
+  .hero {
+    min-height: 630px;
+    height: calc(100vh - 93px);
+    max-height: 730px;
+    background-position: 60% center;
+  }
+  .hero:before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(0deg, #152b23a8, transparent 75%);
+  }
+  .hero-inner {
+    align-items: flex-end;
+    padding-bottom: 92px;
+  }
+  .hero-copy {
+    width: 100%;
+    position: relative;
+    z-index: 1;
+  }
+  .hero h1 {
+    font-size: clamp(49px, 11vw, 70px);
+    max-width: 570px;
+  }
+  .hero p {
+    font-size: 13px;
+    max-width: 440px;
+  }
+  .hero-buttons {
+    gap: 8px;
+  }
+  .hero-buttons .button {
+    padding-inline: 13px;
+    font-size: 10px;
+    min-height: 45px;
+  }
+  .hero-note,
+  .hero-vertical {
+    display: none;
+  }
+  .strip-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .strip-grid > div {
+    height: 65px;
+    font-size: 9px;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+  .strip-grid > div:last-child {
+    display: none;
+  }
+  .welcome-heading {
+    display: block;
+  }
+  .welcome-heading > p {
+    margin-top: 20px;
+  }
+  .class-feature-grid {
+    gap: 12px;
+  }
+  .class-feature {
+    height: 300px;
+  }
+  .feature-overlay {
+    left: 18px;
+    right: 15px;
+    bottom: 20px;
+  }
+  .feature-overlay h3 {
+    font-size: 21px;
+  }
+  .feature-overlay > span {
+    font-size: 8px;
+  }
+  .feature-overlay button {
+    font-size: 10px;
+  }
+  .section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .home-session-grid {
+    grid-template-columns: 1fr;
+  }
+  .home-session {
+    min-height: 210px;
+  }
+  .membership-teaser {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .teaser-art img {
+    height: 350px;
+  }
+  .quote-band {
+    padding: 70px 0;
+  }
+  .closing-cta {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+  }
+  .page-main {
+    padding-top: 58px;
+  }
+  .schedule-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-top: 35px;
+  }
+  .schedule-card {
+    grid-template-columns: 82px minmax(0, 1fr);
+    gap: 12px;
+    padding: 16px;
+  }
+  .schedule-date {
+    grid-row: span 2;
+    align-items: flex-start;
+    border-right: 1px solid var(--line);
+  }
+  .schedule-image {
+    display: none;
+  }
+  .schedule-info h3 {
+    font-size: 16px;
+  }
+  .schedule-info p {
+    font-size: 10px;
+  }
+  .schedule-action {
+    grid-column: 2;
+    align-items: flex-start;
+    text-align: left;
+    border-top: 1px solid var(--line);
+    padding-top: 12px;
+  }
+  .schedule-action small {
+    margin: 3px 0;
+  }
+  .schedule-action .button {
+    margin-top: 12px;
+  }
+  .session-meta {
+    gap: 8px;
+  }
+  .membership-hero {
+    padding-top: 60px;
+    padding-bottom: 45px;
+  }
+  .plan-section {
+    padding-bottom: 75px;
+  }
+  .benefits-layout {
+    grid-template-columns: 1fr;
+    gap: 25px;
+  }
+  .login-page {
+    grid-template-columns: 1fr;
+  }
+  .login-visual {
+    display: none;
+  }
+  .login-content {
+    width: min(100% - 40px, 500px);
+    padding: 45px 0;
+  }
+  .back-link {
+    margin-bottom: 45px;
+  }
+  .app-shell {
+    display: block;
+  }
+  .app-sidebar {
+    height: auto;
+    position: relative;
+    padding: 16px;
+    display: block;
+  }
+  .sidebar-logo {
+    display: inline-flex;
+    padding: 0;
+  }
+  .sidebar-role {
+    display: none;
+  }
+  .side-nav {
+    display: flex;
+    overflow-x: auto;
+    gap: 4px;
+    margin-top: 15px;
+    padding-bottom: 2px;
+  }
+  .side-nav button {
+    white-space: nowrap;
+    padding: 9px 10px;
+    font-size: 9px;
+  }
+  .side-nav button svg {
+    width: 15px;
+  }
+  .sidebar-bottom {
+    display: none;
+  }
+  .app-topbar {
+    height: 63px;
+    padding-inline: 17px;
+  }
+  .app-breadcrumb {
+    font-size: 8px;
+  }
+  .topbar-user > span:last-child {
+    display: none;
+  }
+  .app-content {
+    padding: 27px 17px 70px;
+  }
+  .dashboard-heading {
+    align-items: flex-start;
+  }
+  .dashboard-heading h1 {
+    font-size: 27px;
+  }
+  .dashboard-heading > .button {
+    font-size: 10px;
+    min-height: 38px;
+    padding-inline: 9px;
+  }
+  .dashboard-two-col,
+  .coach-layout {
+    grid-template-columns: 1fr;
+  }
+  .warm-panel {
+    min-height: 220px;
+  }
+  .admin-card-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .booking-row {
+    flex-wrap: wrap;
+  }
+  .booking-row-main {
+    min-width: 55%;
+  }
+}

@@ -1,0 +1,1 @@
+export const PACKAGE_CHECKOUT_MINUTES = 15;

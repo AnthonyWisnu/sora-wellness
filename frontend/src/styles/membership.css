@@ -1,0 +1,202 @@
+.membership-hero {
+  text-align: center;
+  padding-top: 82px;
+  padding-bottom: 70px;
+}
+.membership-hero p {
+  margin-inline: auto;
+}
+.plan-section {
+  padding-bottom: 104px;
+}
+.plan-heading {
+  text-align: center;
+  margin-bottom: 27px;
+}
+.plan-heading span {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.19em;
+  color: #ac8b59;
+}
+.plan-heading h2 {
+  font-size: 33px;
+  margin: 9px 0;
+}
+.plan-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+.plan-card {
+  border: 1px solid var(--line);
+  background: #fffefa;
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  min-height: 380px;
+  cursor: pointer;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s,
+    border-color 0.2s;
+}
+.plan-card:hover,
+.plan-card.plan-selected {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow);
+  border-color: #a1b6a6;
+}
+.plan-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.plan-card-top > span {
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+}
+.plan-card h3 {
+  font-size: 19px;
+  margin: 27px 0 5px;
+}
+.plan-card > p {
+  font-size: 11px;
+  color: var(--muted);
+}
+.plan-price {
+  margin-top: 12px;
+}
+.plan-price strong {
+  display: block;
+  font-size: 23px;
+  letter-spacing: -0.05em;
+}
+.plan-price small {
+  font-size: 10px;
+  color: var(--muted);
+}
+.plan-rule {
+  height: 1px;
+  background: var(--line);
+  margin: 22px 0;
+}
+.plan-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 25px;
+  display: grid;
+  gap: 12px;
+}
+.plan-card li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  color: #526157;
+}
+.plan-card li svg {
+  color: #2b6849;
+}
+.plan-card .button {
+  margin-top: auto;
+  width: 100%;
+  font-size: 11px;
+}
+.plan-fineprint {
+  text-align: center;
+  font-size: 11px;
+  color: var(--muted);
+  margin: 19px 0 0;
+}
+.benefits-section {
+  background: #eef1e8;
+  padding: 95px 0;
+}
+.benefits-layout {
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  gap: 80px;
+}
+.benefits-layout h2 {
+  margin-bottom: 20px;
+}
+.benefits-layout > div:first-child > p {
+  font-size: 13px;
+  color: var(--muted);
+  max-width: 390px;
+}
+.benefit-list {
+  background: #fffefa;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 30px;
+}
+.benefit-list > div {
+  display: flex;
+  align-items: center;
+  gap: 19px;
+  padding: 23px 0;
+  border-bottom: 1px solid var(--line);
+}
+.benefit-list > div:last-child {
+  border: 0;
+}
+.benefit-list span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.benefit-list strong {
+  font-size: 13px;
+}
+.benefit-list small {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+.faq-section {
+  max-width: 900px;
+}
+.faq-section h2 {
+  font-size: 38px;
+  margin: 12px 0 28px;
+}
+.faq-list {
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  overflow: hidden;
+  background: #fffefa;
+}
+.faq-item {
+  border-bottom: 1px solid var(--line);
+}
+.faq-item:last-child {
+  border: 0;
+}
+.faq-item button {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 24px 27px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+.faq-open button {
+  color: var(--green);
+}
+.faq-item p {
+  padding: 0 27px 23px;
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+}

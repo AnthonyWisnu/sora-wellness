@@ -1,0 +1,225 @@
+.footer-brand .wordmark-symbol {
+  font-size: 29px;
+}
+.footer-brand small {
+  border: 1px solid #778f80;
+  border-radius: 4px;
+  padding: 4px 6px;
+  font-size: 8px;
+}
+.footer-grid p {
+  max-width: 300px;
+  font-size: 12px;
+  color: #bfcac0;
+  line-height: 1.8;
+  margin: 15px 0;
+}
+.footer-grid > div:not(:first-child) {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+.footer-grid strong {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #e8e7d8;
+  margin-bottom: 8px;
+}
+.footer-grid button {
+  border: 0;
+  background: transparent;
+  color: #c6d0c7;
+  text-align: left;
+  padding: 0;
+  font-size: 12px;
+}
+.footer-grid button:hover {
+  color: #fff;
+}
+.footer-grid span:not(.wordmark-symbol) {
+  display: flex;
+  gap: 7px;
+  align-items: flex-start;
+  font-size: 12px;
+  color: #c6d0c7;
+}
+.footer-bottom {
+  border-top: 1px solid #496054;
+  padding: 22px 0;
+  display: flex;
+  justify-content: space-between;
+  color: #a7b8aa;
+  font-size: 10px;
+}
+.page-main {
+  padding-top: 75px;
+  padding-bottom: 100px;
+}
+.page-hero {
+  max-width: 780px;
+}
+.page-hero h1,
+.membership-hero h1 {
+  font-size: clamp(44px, 4.4vw, 70px);
+  margin: 13px 0 18px;
+}
+.page-hero p,
+.membership-hero p {
+  font-size: 14px;
+  color: var(--muted);
+  max-width: 580px;
+}
+.schedule-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  margin: 55px 0 22px;
+}
+.filter-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.filter-list button {
+  background: #fff;
+  border: 1px solid #e0e2db;
+  border-radius: 100px;
+  padding: 10px 18px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #637068;
+}
+.filter-list button.selected,
+.filter-list button:hover {
+  background: var(--green);
+  color: #fff;
+  border-color: var(--green);
+}
+.schedule-range {
+  font-size: 11px;
+  color: #6b756c;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+.schedule-list {
+  display: grid;
+  gap: 16px;
+}
+.schedule-card {
+  display: grid;
+  grid-template-columns: 108px 155px minmax(0, 1fr) 150px;
+  gap: 22px;
+  align-items: center;
+  background: #fffefa;
+  border: 1px solid #e7e3db;
+  border-radius: 13px;
+  padding: 22px;
+  box-shadow: 0 8px 22px rgba(22, 44, 28, 0.04);
+}
+.schedule-date {
+  height: 100%;
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+.schedule-date span {
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  font-weight: 800;
+  color: #a47f49;
+}
+.schedule-date strong {
+  font-size: 37px;
+  line-height: 1.3;
+}
+.schedule-date small {
+  font-size: 11px;
+  color: var(--muted);
+}
+.schedule-image {
+  height: 132px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.schedule-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.schedule-info h3 {
+  font-size: 20px;
+  margin: 12px 0 7px;
+}
+.schedule-info p {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 0 0 16px;
+}
+.session-tags {
+  display: flex;
+  gap: 6px;
+}
+.session-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 17px;
+}
+.session-meta span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  color: #6a756e;
+  font-weight: 600;
+}
+.schedule-action {
+  text-align: right;
+  display: flex;
+  align-items: flex-end;
+  flex-direction: column;
+}
+.schedule-action strong {
+  font-size: 20px;
+}
+.schedule-action small {
+  font-size: 10px;
+  color: var(--muted);
+  margin: 2px 0 auto;
+}
+.schedule-action .button {
+  margin-top: 20px;
+}
+.schedule-footnote {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #69766d;
+  font-size: 11px;
+  margin-top: 26px;
+}
+.empty-state {
+  background: #fffefa;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 70px;
+  text-align: center;
+  color: var(--muted);
+}
+.empty-state svg {
+  color: #a99066;
+}
+.empty-state h3 {
+  color: var(--ink);
+  margin: 14px 0 4px;
+}
+.empty-state p {
+  font-size: 12px;
+}

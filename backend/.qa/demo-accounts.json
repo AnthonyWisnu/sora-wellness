@@ -1,0 +1,58 @@
+{
+  "accounts": [
+    {
+      "name": "Admin Sora",
+      "email": "admin@sora.example.test",
+      "role": "admin",
+      "password": "3xkORXNaqVqvwsJGYhynGu4J"
+    },
+    {
+      "name": "Nadia Putri",
+      "email": "nadia@sora.example.test",
+      "role": "coach",
+      "password": "d8lcUDh_3DdaZkQrfPD-BjP3"
+    },
+    {
+      "name": "Made Arya",
+      "email": "arya@sora.example.test",
+      "role": "coach",
+      "password": "izMGzkiPmgnsj5oZnQiNVyHX"
+    },
+    {
+      "name": "Ayu Lestari",
+      "email": "ayu.lestari@sora.example.test",
+      "role": "customer",
+      "password": "CL8mYMJ2RmdSi_pvhhGhWq66"
+    },
+    {
+      "name": "Dimas Saputra",
+      "email": "dimas.saputra@sora.example.test",
+      "role": "customer",
+      "password": "dLmprrpUcgGmH0Lg2QwZhJPo"
+    },
+    {
+      "name": "Lila Mahendra",
+      "email": "lila.mahendra@sora.example.test",
+      "role": "customer",
+      "password": "-94M0CiKIMvolMbbRE_Lr-gn"
+    },
+    {
+      "name": "Maya Kirana",
+      "email": "maya.kirana@sora.example.test",
+      "role": "customer",
+      "password": "3m5Asu1jRLkm2nfRGsHkkKVh"
+    },
+    {
+      "name": "Raka Pratama",
+      "email": "raka.pratama@sora.example.test",
+      "role": "customer",
+      "password": "zjf5m_dkBvT3JgOORKGFaZW8"
+    },
+    {
+      "name": "Sinta Dewi",
+      "email": "sinta.dewi@sora.example.test",
+      "role": "customer",
+      "password": "UQpRmKUopwx4FXVk-uXDOOda"
+    }
+  ]
+}

@@ -1,0 +1,123 @@
+@media (max-width: 480px) {
+  .hero h1 {
+    font-size: 48px;
+  }
+  .hero-buttons {
+    flex-wrap: wrap;
+  }
+  .welcome-heading h2,
+  .section-heading h2,
+  .membership-teaser h2,
+  .closing-cta h2,
+  .benefits-layout h2 {
+    font-size: 37px;
+  }
+  .class-feature-grid {
+    grid-template-columns: 1fr;
+  }
+  .class-feature {
+    height: 330px;
+  }
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+  }
+  .footer-grid > div:first-child {
+    grid-column: span 2;
+  }
+  .footer-bottom {
+    gap: 10px;
+    flex-direction: column;
+  }
+  .page-hero h1,
+  .membership-hero h1 {
+    font-size: 44px;
+  }
+  .plan-grid {
+    grid-template-columns: 1fr;
+  }
+  .plan-card {
+    min-height: 360px;
+  }
+  .benefit-list {
+    padding: 6px 18px;
+  }
+  .benefit-list > div {
+    gap: 12px;
+  }
+  .schedule-date strong {
+    font-size: 30px;
+  }
+  .customer-stats,
+  .admin-stats {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .stat-card {
+    min-height: 150px;
+    padding: 15px;
+  }
+  .stat-card > strong {
+    font-size: 20px;
+  }
+  .stat-dark > strong {
+    font-size: 17px;
+  }
+  .stat-card > p {
+    font-size: 9px;
+  }
+  .coach-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+  .coach-stats > .stat-card:last-child {
+    grid-column: span 2;
+  }
+  .panel {
+    padding: 18px;
+  }
+  .admin-card-grid,
+  .admin-card-grid.plans-admin {
+    grid-template-columns: 1fr;
+  }
+  .locker-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+  .profile-panel {
+    flex-wrap: wrap;
+  }
+  .profile-panel > .button {
+    width: 100%;
+  }
+  .participant-row {
+    flex-wrap: wrap;
+  }
+  .participant-info {
+    min-width: 70%;
+  }
+  .attendance-toggle {
+    margin-left: auto;
+  }
+  .modal-session-info {
+    gap: 8px;
+  }
+  .booking-modal {
+    padding: 27px 20px;
+  }
+  .booking-option {
+    flex-wrap: wrap;
+  }
+  .booking-option b {
+    width: 100%;
+    padding-left: 58px;
+  }
+  .filter-list {
+    gap: 5px;
+  }
+  .filter-list button {
+    padding: 8px 12px;
+    font-size: 9px;
+  }
+}

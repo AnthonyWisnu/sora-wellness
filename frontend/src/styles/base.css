@@ -1,0 +1,237 @@
+:root {
+  --green: #203e32;
+  --green-2: #335845;
+  --ink: #1d2924;
+  --muted: #6e7772;
+  --cream: #fcfaf6;
+  --beige: #f4f0e9;
+  --line: #e7e2d9;
+  --gold: #ad8950;
+  --white: #fffefa;
+  --shadow: 0 14px 40px rgba(33, 45, 35, 0.07);
+}
+#root {
+  min-height: 100vh;
+}
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+h1,
+h2,
+h3 {
+  letter-spacing: -0.055em;
+}
+h1 {
+  line-height: 1.08;
+}
+h2 {
+  line-height: 1.15;
+}
+p {
+  line-height: 1.7;
+}
+em {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+.shell {
+  width: min(100% - 80px, 1320px);
+  margin-inline: auto;
+}
+.section {
+  padding-block: 112px;
+}
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  font-weight: 800;
+  color: #9b7d4d;
+}
+.button {
+  border: 1px solid transparent;
+  border-radius: 7px;
+  min-height: 48px;
+  padding: 0 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 13px;
+  transition:
+    transform 0.2s,
+    background 0.2s,
+    border-color 0.2s,
+    box-shadow 0.2s;
+  white-space: nowrap;
+}
+.button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(22, 54, 40, 0.15);
+}
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.button-primary {
+  background: var(--green);
+  color: #fff;
+}
+.button-primary:hover {
+  background: #305a45;
+}
+.button-outline {
+  background: transparent;
+  border-color: #d5d8d0;
+  color: var(--green);
+}
+.button-outline:hover {
+  background: #f0f3ed;
+}
+.button-text {
+  background: transparent;
+  color: var(--green);
+}
+.full-width {
+  width: 100%;
+}
+.tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 27px;
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.tag-green {
+  background: #eaf3ed;
+  color: #2e684e;
+}
+.tag-gold {
+  background: #f8efe0;
+  color: #9d743e;
+}
+.tag-gray {
+  background: #f0f0ed;
+  color: #66716b;
+}
+.icon-bubble {
+  height: 46px;
+  width: 46px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.bubble-green {
+  background: #eaf1e9;
+  color: var(--green);
+}
+.bubble-gold {
+  background: #f5ebd8;
+  color: #a17738;
+}
+.bubble-cream {
+  background: #f1eee6;
+  color: var(--green);
+}
+.sandbox-banner {
+  height: 28px;
+  background: #1b332a;
+  color: #e4e9df;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  font-weight: 700;
+}
+.ribbon-dot {
+  width: 5px;
+  height: 5px;
+  background: #d5b680;
+  border-radius: 50%;
+}
+.ribbon-divider {
+  opacity: 0.45;
+}
+.site-header {
+  height: 82px;
+  background: #fffefa;
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+.header-inner {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.wordmark {
+  border: 0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  color: var(--ink);
+  gap: 8px;
+  padding: 0;
+}
+.wordmark-symbol {
+  font-size: 32px;
+  color: #b6945d;
+  font-weight: 400;
+  line-height: 1;
+}
+.wordmark > span:nth-child(2) {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+.wordmark small {
+  margin-left: 3px;
+  align-self: center;
+  border: 1px solid #c9d3cb;
+  border-radius: 5px;
+  padding: 6px 8px;
+  color: var(--green);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+}
+.nav-pill {
+  display: flex;
+  gap: 4px;
+  background: #f2f0eb;
+  padding: 5px;
+  border-radius: 999px;
+  border: 1px solid #e6e3dd;
+}
+.nav-pill button {
+  border: 0;
+  background: transparent;
+  border-radius: 999px;
+  padding: 11px 22px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #66716a;
+}
+.nav-pill button.active,
+.nav-pill button:hover {
+  background: var(--green);
+  color: #fff;
+  box-shadow: 0 4px 8px rgba(27, 54, 39, 0.15);
+}

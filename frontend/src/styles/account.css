@@ -1,0 +1,226 @@
+.wallet-checkbox {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 11px;
+  margin: 18px 0;
+}
+.wallet-checkbox input {
+  accent-color: var(--green);
+  margin: 2px 0;
+}
+.wallet-checkbox span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-weight: 700;
+}
+.wallet-checkbox small {
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 400;
+}
+.modal-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--line);
+  margin-top: 25px;
+  padding: 20px 0;
+  font-size: 12px;
+}
+.modal-summary strong {
+  font-size: 18px;
+}
+.modal-hint {
+  text-align: center;
+  font-size: 10px;
+  color: var(--muted);
+  margin: 14px 0 0;
+}
+.payment-modal {
+  text-align: center;
+}
+.payment-modal > .icon-bubble {
+  margin: 0 auto 17px;
+}
+.payment-modal h2 {
+  margin-right: 0;
+}
+.payment-modal p {
+  font-size: 12px;
+  color: var(--muted);
+}
+.payment-timer {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 15px;
+  border-radius: 8px;
+  background: #f4f0e8;
+  margin: 22px 0;
+  font-size: 11px;
+}
+.payment-timer span {
+  flex: 1;
+  text-align: left;
+}
+.payment-timer strong {
+  font-size: 18px;
+}
+.payment-modal .button-text {
+  margin-top: 8px;
+}
+.app-shell {
+  min-height: calc(100vh - 28px);
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  background: #f7f8f4;
+}
+.app-sidebar {
+  height: calc(100vh - 28px);
+  position: sticky;
+  top: 0;
+  background: #1d392e;
+  color: #e6efe6;
+  display: flex;
+  flex-direction: column;
+  padding: 30px 15px;
+}
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 13px;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+.sidebar-logo small {
+  font-size: 8px;
+  border: 1px solid #72907a;
+  padding: 4px 5px;
+  border-radius: 3px;
+  letter-spacing: 0.08em;
+}
+.sidebar-role {
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  color: #8fac97;
+  font-weight: 800;
+  margin: 54px 17px 16px;
+}
+.side-nav {
+  display: grid;
+  gap: 4px;
+}
+.side-nav button,
+.sidebar-bottom button {
+  background: transparent;
+  border: 0;
+  color: #b6c8b8;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  text-align: left;
+  border-radius: 7px;
+  padding: 12px 14px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.side-nav button.selected,
+.side-nav button:hover {
+  background: #375846;
+  color: #fff;
+}
+.sidebar-bottom {
+  margin-top: auto;
+  display: grid;
+  border-top: 1px solid #3e5e4b;
+  padding-top: 17px;
+}
+.sidebar-bottom button:hover {
+  color: #fff;
+}
+.app-main {
+  min-width: 0;
+}
+.app-topbar {
+  height: 76px;
+  background: #fffefa;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 40px;
+}
+.app-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #8a958c;
+  text-transform: capitalize;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+.topbar-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.topbar-user > span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.topbar-user strong {
+  font-size: 10px;
+}
+.topbar-user small {
+  font-size: 9px;
+  color: var(--muted);
+}
+.avatar-small {
+  width: 33px;
+  height: 33px;
+  font-size: 9px;
+}
+.icon-button {
+  background: transparent;
+  border: 0;
+  color: var(--green);
+  padding: 7px;
+  margin-right: 10px;
+}
+.app-content {
+  padding: 42px 40px 80px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+.dashboard-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 25px;
+  margin-bottom: 29px;
+}
+.dashboard-heading h1 {
+  font-size: 33px;
+  margin: 10px 0 8px;
+}
+.dashboard-heading p {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 0;
+}
+.dashboard-heading > .tag {
+  align-self: flex-start;
+}
+.customer-stats,
+.admin-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 22px;
+}
