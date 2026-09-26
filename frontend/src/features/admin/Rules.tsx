@@ -156,7 +156,7 @@ export function AdminRulesPanel({
               </span>
               <h3>{row.title}</h3>
               <p>
-                {row.coach_name} · {formatDate(row.starts_on.slice(0, 10))} –{' '}
+                {row.coach_name} · {formatDate(row.starts_on.slice(0, 10))} s/d{' '}
                 {formatDate(row.ends_on.slice(0, 10))}
               </p>
               <p>

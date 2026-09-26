@@ -204,7 +204,7 @@ export default function LiveApp() {
       )}
       {new URLSearchParams(window.location.search).has('preview') && (
         <div className="site-preview-banner">
-          PRATINJAU DRAF — hanya admin yang dapat melihat halaman ini
+          PRATINJAU DRAF · hanya admin yang dapat melihat halaman ini
         </div>
       )}
       {site &&

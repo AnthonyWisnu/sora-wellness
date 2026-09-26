@@ -48,8 +48,8 @@ try {
   await admin.getByRole('button', { name: 'Profil & galeri' }).click()
   await admin.getByLabel('Nama studio').fill(`Studio UI ${suffix}`)
   await admin.getByLabel('Alamat').fill('Jalan Uji No. 10, Denpasar')
-  await admin.getByLabel('Logo').selectOption(mediaId)
-  await admin.getByLabel('Foto utama').selectOption(mediaId)
+  await admin.getByLabel('Logo', { exact: true }).selectOption(mediaId)
+  await admin.getByLabel('Foto utama', { exact: true }).selectOption(mediaId)
   await admin.locator('fieldset').getByRole('checkbox').last().check()
   await admin.getByRole('button', { name: 'Halaman', exact: true }).click()
   await admin.locator('.site-section-panel').first().locator('summary').click()
@@ -59,7 +59,7 @@ try {
   const previewPromise = admin.context().waitForEvent('page')
   await admin.getByRole('button', { name: 'Pratinjau draf' }).click()
   const preview = await previewPromise
-  await preview.getByText('PRATINJAU DRAF — hanya admin yang dapat melihat halaman ini').waitFor()
+  await preview.getByText('PRATINJAU DRAF · hanya admin yang dapat melihat halaman ini').waitFor()
   await preview.getByRole('heading', { name: 'Ruang gerak baru' }).waitFor()
   await preview.close()
   await admin.getByRole('button', { name: 'Terbitkan situs' }).click()
@@ -81,8 +81,9 @@ try {
 
   await admin.getByRole('button', { name: 'Dashboard' }).first().click()
   await admin.getByRole('navigation', { name: 'Navigasi dashboard' }).getByRole('link', { name: 'Loker', exact: true }).click()
-  await admin.getByLabel('Nomor atau kode').fill(`Z-${suffix}`)
   await admin.getByRole('button', { name: 'Tambah loker' }).click()
+  await admin.getByLabel('Nomor atau kode').fill(`Z-${suffix}`)
+  await admin.getByRole('dialog', { name: 'Tambah nomor loker' }).getByRole('button', { name: 'Tambah loker' }).click()
   await admin.locator('.admin-record').filter({ hasText: `Z-${suffix}` }).waitFor()
   lockerId = (await pool.query('SELECT id FROM lockers WHERE code=$1', [`Z-${suffix}`.toUpperCase()])).rows[0].id
   await admin.locator('.admin-record').filter({ hasText: `Z-${suffix}` }).getByRole('button', { name: 'Tetapkan' }).click()

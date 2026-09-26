@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
-import { Check, Pencil, Plus } from 'lucide-react'
+import { Check, Clock, Pencil, Plus, Users } from 'lucide-react'
 import { api, type AdminClassType } from '../../shared/api'
 import { money } from '../../shared/format'
 import { AdminDialog } from './AdminDialog'
@@ -201,28 +201,46 @@ export function AdminClassTypesPanel({ show, onChanged }: PanelProps & { onChang
           </div>
         </form>
       </AdminDialog>
-      <div className="admin-entity-grid">
+      <div className="admin-entity-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}>
         {rows.map((row) => (
-          <article className="panel admin-record" key={row.id}>
+          <article className="panel admin-record admin-class-card" key={row.id}>
             <div>
-              <span className="eyebrow">
-                {row.category} · {levelLabel[row.level]}
-              </span>
-              <h3>{row.title}</h3>
-              <p>
-                {row.duration_minutes} menit · {row.default_capacity} kursi ·{' '}
-                {money(row.default_price_idr)}
-              </p>
-              {row.description && <p>{row.description}</p>}
+              <div className="admin-class-card-top">
+                <span className="eyebrow" style={{ margin: 0 }}>{row.category}</span>
+                <span className={`admin-class-level-badge ${row.level}`}>
+                  {levelLabel[row.level]}
+                </span>
+              </div>
+              <h3 className="admin-class-card-title">{row.title}</h3>
+              {row.description ? (
+                <p className="admin-class-card-desc">{row.description}</p>
+              ) : (
+                <p className="admin-class-card-desc" style={{ fontStyle: 'italic', opacity: 0.6 }}>Tidak ada deskripsi</p>
+              )}
+              <div className="admin-class-card-specs">
+                <span>
+                  <Clock size={13} style={{ color: 'var(--muted)' }} /> {row.duration_minutes} menit
+                </span>
+                <span>·</span>
+                <span>
+                  <Users size={13} style={{ color: 'var(--muted)' }} /> {row.default_capacity} kursi
+                </span>
+              </div>
             </div>
-            <button className="button button-outline" onClick={() => edit(row)}>
-              <Pencil size={14} /> Ubah
-            </button>
+            <div className="admin-class-card-bottom">
+              <div>
+                <span style={{ fontSize: '11px', color: 'var(--muted)', display: 'block' }}>Tarif Bawaan</span>
+                <span className="admin-class-price">{money(row.default_price_idr)}</span>
+              </div>
+              <button className="button button-outline" onClick={() => edit(row)}>
+                <Pencil size={14} /> Ubah
+              </button>
+            </div>
           </article>
         ))}
         {!rows.length && (
-          <div className="panel">
-            <p>Belum ada jenis kelas.</p>
+          <div className="panel" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '36px' }}>
+            <p style={{ margin: 0, color: 'var(--muted)' }}>Belum ada jenis kelas.</p>
           </div>
         )}
       </div>

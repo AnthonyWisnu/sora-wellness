@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowRight, CreditCard, QrCode } from 'lucide-react'
+import { ArrowRight, CreditCard, QrCode, Sparkles } from 'lucide-react'
 import type { Actor, Booking, Membership, PackagePurchase, Payment } from '../../shared/api'
 import { formatDate, localDateTime, localTime, money, statusName } from '../../shared/format'
 import { CustomerProfilePanel } from './Profile'
@@ -50,25 +50,99 @@ export function CustomerDashboard({
   return (
     <>
       {section === 'overview' && (
-        <div className="live-stats">
-          <div className="panel">
-            <span className="eyebrow">STATUS PAKET</span>
-            <h2>{member ? 'Member aktif' : 'Pelanggan'}</h2>
-            <p>{member ? 'Akses semua tingkat kelas' : 'Anda dapat memesan kelas pemula.'}</p>
+        <>
+          <div className="live-stats">
+            <div className="panel">
+              <span className="eyebrow">STATUS PAKET</span>
+              <h2>{member ? 'Member aktif' : 'Pelanggan'}</h2>
+              <p>{member ? 'Akses semua tingkat kelas' : 'Anda dapat memesan kelas pemula.'}</p>
+            </div>
+            <div className="panel">
+              <span className="eyebrow">JATAH BULAN INI</span>
+              <h2>{quota ? `${Math.max(0, quota.total - quota.used)} / ${quota.total}` : '-'}</h2>
+              <p>
+                {quota ? `${quota.used} kelas sudah digunakan` : 'Belum ada paket aktif bulan ini.'}
+              </p>
+            </div>
+            <div className="panel">
+              <span className="eyebrow">SALDO KELAS</span>
+              <h2>{money(balance)}</h2>
+              <p>Hanya untuk pembelian kelas satuan.</p>
+            </div>
           </div>
-          <div className="panel">
-            <span className="eyebrow">JATAH BULAN INI</span>
-            <h2>{quota ? `${Math.max(0, quota.total - quota.used)} / ${quota.total}` : '—'}</h2>
-            <p>
-              {quota ? `${quota.used} kelas sudah digunakan` : 'Belum ada paket aktif bulan ini.'}
-            </p>
-          </div>
-          <div className="panel">
-            <span className="eyebrow">SALDO KELAS</span>
-            <h2>{money(balance)}</h2>
-            <p>Hanya untuk pembelian kelas satuan.</p>
-          </div>
-        </div>
+
+          {bookings.find((b) => b.status === 'confirmed') && (
+            (() => {
+              const nextBooking = bookings.find((b) => b.status === 'confirmed')!
+              return (
+                <div
+                  className="panel"
+                  style={{
+                    margin: '18px 0',
+                    background: 'linear-gradient(135deg, #17392e 0%, #1e4538 100%)',
+                    color: '#fff',
+                    borderRadius: '14px',
+                    padding: '22px 24px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '20px',
+                    flexWrap: 'wrap',
+                    boxShadow: '0 8px 24px rgba(23, 57, 46, 0.15)',
+                  }}
+                >
+                  <div>
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        letterSpacing: '0.1em',
+                        textTransform: 'uppercase',
+                        color: 'rgba(255, 255, 255, 0.75)',
+                        marginBottom: '6px',
+                      }}
+                    >
+                      <Sparkles size={13} style={{ color: '#dcfce7' }} /> Sesi Terdekat Anda
+                    </span>
+                    <h3 style={{ margin: '0 0 6px', fontSize: '22px', fontWeight: 800, color: '#fff' }}>
+                      {nextBooking.title}
+                    </h3>
+                    <p style={{ margin: 0, fontSize: '13.5px', color: 'rgba(255, 255, 255, 0.85)' }}>
+                      {formatDate(nextBooking.localDate, {
+                        weekday: 'long',
+                        day: 'numeric',
+                        month: 'long',
+                      })}{' '}
+                      · {localTime(nextBooking.startsAt, timezone)} WITA
+                    </p>
+                  </div>
+                  <button
+                    className="button"
+                    style={{
+                      background: '#fff',
+                      color: '#17392e',
+                      fontWeight: 700,
+                      border: 'none',
+                      padding: '12px 20px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      borderRadius: '8px',
+                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => setTicketBooking(nextBooking)}
+                  >
+                    <QrCode size={16} /> Buka E-Ticket Masuk
+                  </button>
+                </div>
+              )
+            })()
+          )}
+        </>
       )}
       {(section === 'overview' || section === 'bookings') && (
         <>
@@ -204,7 +278,7 @@ export function CustomerDashboard({
                     </h3>
                     <p>
                       {purchase.startsOn && purchase.endsOn
-                        ? `Aktif ${formatDate(purchase.startsOn)} – ${formatDate(purchase.endsOn)}`
+                        ? `Aktif ${formatDate(purchase.startsOn)} s/d ${formatDate(purchase.endsOn)}`
                         : purchase.expiresAt
                           ? `Masa aktif dimulai setelah pembayaran berhasil. Bayar sebelum ${localDateTime(purchase.expiresAt, timezone)}.`
                           : 'Masa aktif dimulai setelah pembayaran berhasil.'}

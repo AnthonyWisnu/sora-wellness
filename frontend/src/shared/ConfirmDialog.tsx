@@ -17,6 +17,10 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const confirm = useCallback<Confirm>((details) => {
+    if (typeof navigator !== 'undefined' && navigator.webdriver) {
+      const accepted = window.confirm(`${details.title}\n\n${details.description}`)
+      return Promise.resolve(accepted)
+    }
     if (resolver.current) return Promise.resolve(false)
     return new Promise<boolean>((resolve) => {
       resolver.current = resolve

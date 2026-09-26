@@ -92,7 +92,7 @@ export function FinanceList({
                       <h3>
                         {row.kind === 'class'
                           ? row.classTitle
-                          : `Paket ${row.durationMonths ?? '—'} bulan`}
+                          : `Paket ${row.durationMonths ?? '-'} bulan`}
                       </h3>
                       <p>
                         {row.customerName} · {row.customerEmail}

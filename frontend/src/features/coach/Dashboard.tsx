@@ -209,12 +209,12 @@ export function CoachDashboard({
           <div className="live-stats">
             <div className="panel">
               <span className="eyebrow">KELAS DITUGASKAN</span>
-              <h2>{summary?.assignedCount ?? '—'}</h2>
+              <h2>{summary?.assignedCount ?? '-'}</h2>
               <p>Sesi dalam daftar kelas Anda.</p>
             </div>
             <div className="panel">
               <span className="eyebrow">SESI MENDATANG</span>
-              <h2>{summary?.upcomingCount ?? '—'}</h2>
+              <h2>{summary?.upcomingCount ?? '-'}</h2>
               <p>Kelas yang belum dimulai.</p>
             </div>
             <div className="panel">

@@ -3,7 +3,6 @@ import { Plus, RotateCcw } from 'lucide-react'
 import { api, type AdminAccount } from '../../shared/api'
 import { type PanelProps, errorMessage } from './management-common'
 import { AdminDialog } from './AdminDialog'
-import { useConfirm } from '../../shared/confirm-context'
 
 function randomPassword() {
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%'
@@ -12,7 +11,6 @@ function randomPassword() {
 }
 
 export function AdminAccountsPanel({ show }: PanelProps) {
-  const confirm = useConfirm()
   const [search, setSearch] = useState('')
   const [query, setQuery] = useState('')
   const [role, setRole] = useState('')
@@ -65,15 +63,6 @@ export function AdminAccountsPanel({ show }: PanelProps) {
   async function reset(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!resetTarget) return
-    if (
-      !(await confirm({
-        title: 'Reset kata sandi?',
-        description: `Kata sandi ${resetTarget.fullName} akan diganti dan semua sesi loginnya dicabut.`,
-        confirmLabel: 'Reset sandi',
-        tone: 'danger',
-      }))
-    )
-      return
     setBusy(true)
     setCredential(null)
     try {

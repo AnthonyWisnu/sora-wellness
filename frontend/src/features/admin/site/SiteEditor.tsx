@@ -243,13 +243,15 @@ export function SiteEditor({ show, onChanged }: Props) {
               <div className="live-form-grid">
                 {(
                   [
-                    ['logoMediaId', 'Logo'],
-                    ['heroMediaId', 'Foto utama'],
+                    ['logoMediaId', 'Logo', 'studio-profile-logo'],
+                    ['heroMediaId', 'Foto utama', 'studio-profile-hero'],
                   ] as const
-                ).map(([key, label]) => (
-                  <label key={key}>
+                ).map(([key, label, selectId]) => (
+                  <label key={key} htmlFor={selectId}>
                     {label}
                     <select
+                      id={selectId}
+                      aria-label={label}
                       value={document.profile[key] ?? ''}
                       onChange={(event) => setProfile(key, event.target.value || null)}
                     >

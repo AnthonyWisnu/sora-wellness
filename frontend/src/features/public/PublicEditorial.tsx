@@ -1,4 +1,4 @@
-import { ArrowRight, CalendarDays, Compass, MapPin, Quote, ShieldCheck } from 'lucide-react'
+import { ArrowRight, CalendarDays, Compass, ExternalLink, MapPin, Quote, ShieldCheck } from 'lucide-react'
 import type { SiteSection } from '../../shared/api'
 import { siteMediaUrl } from '../../shared/types/site'
 import type { SiteBlockContext } from './public-types'
@@ -155,8 +155,8 @@ export function PublicContact({ section, ctx }: { section: SiteSection; ctx: Sit
             )}
             {contact.email && <a href={`mailto:${contact.email}`}>Email · {contact.email}</a>}
             {contact.socialLinks.map((link) => (
-              <a key={link.url} href={link.url} target="_blank" rel="noopener noreferrer">
-                {link.label} ↗
+              <a key={link.url} href={link.url} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                {link.label} <ExternalLink size={13} />
               </a>
             ))}
           </div>
@@ -175,8 +175,9 @@ export function PublicContact({ section, ctx }: { section: SiteSection; ctx: Sit
               href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${profile.name}, ${profile.address}`)}`}
               target="_blank"
               rel="noopener noreferrer"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
             >
-              Buka lokasi di Google Maps ↗
+              Buka lokasi di Google Maps <ExternalLink size={13} />
             </a>
           </>
         ) : null}

@@ -360,3 +360,614 @@
 .package-benefits-actions {
   margin-top: 20px;
 }
+
+/* ==========================================================================
+   Studio Control Tower (Admin Summary / Ringkasan)
+   ========================================================================== */
+.admin-control-tower {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  margin-top: 20px;
+}
+
+.admin-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.admin-kpi-card {
+  background: #fff;
+  border: 1px solid var(--line, #e2e8f0);
+  border-radius: 12px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.admin-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(24, 61, 49, 0.06);
+}
+
+.admin-kpi-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--muted, #64748b);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.admin-kpi-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f3;
+  color: var(--green, #17392e);
+}
+
+.admin-kpi-val {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--ink, #0f172a);
+  line-height: 1.1;
+  margin: 4px 0 2px;
+}
+
+.admin-kpi-desc {
+  font-size: 12px;
+  color: var(--muted, #64748b);
+  margin: 0;
+}
+
+.admin-quick-actions-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  background: #fff;
+  border: 1px solid var(--line, #e2e8f0);
+  border-radius: 12px;
+  padding: 14px 20px;
+  flex-wrap: wrap;
+}
+
+.admin-quick-actions-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink, #0f172a);
+}
+
+.admin-quick-actions-buttons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-timeline-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.8fr);
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .admin-timeline-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.admin-timeline-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-session-item {
+  background: #fff;
+  border: 1px solid var(--line, #e2e8f0);
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  transition: all 0.15s ease;
+}
+
+.admin-session-item:hover {
+  border-color: var(--green, #17392e);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.04);
+}
+
+.admin-session-item-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.admin-session-time-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 62px;
+  padding: 8px 10px;
+  background: #f4f7f5;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.admin-session-time-badge strong {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--green, #17392e);
+}
+
+.admin-session-time-badge small {
+  font-size: 10px;
+  color: var(--muted, #64748b);
+  text-transform: uppercase;
+}
+
+.admin-session-info h3 {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.admin-session-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--muted, #64748b);
+  flex-wrap: wrap;
+}
+
+.admin-session-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ==========================================================================
+   Visual Locker Matrix (Matriks Lemari Loker)
+   ========================================================================== */
+.admin-locker-matrix-section {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.admin-locker-summary-chips {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.admin-locker-chip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  border: 1px solid var(--line, #e2e8f0);
+  border-radius: 12px;
+  padding: 12px 18px;
+  min-width: 150px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.admin-locker-chip-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.admin-locker-chip-dot.green {
+  background: #15803d;
+  box-shadow: 0 0 0 3px #dcfce7;
+}
+
+.admin-locker-chip-dot.blue {
+  background: #0284c7;
+  box-shadow: 0 0 0 3px #e0f2fe;
+}
+
+.admin-locker-chip-dot.amber {
+  background: #d97706;
+  box-shadow: 0 0 0 3px #fef3c7;
+}
+
+.admin-locker-chip-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-locker-chip-text span {
+  font-size: 11px;
+  color: var(--muted, #64748b);
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.admin-locker-chip-text strong {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--ink, #0f172a);
+  line-height: 1.1;
+  margin-top: 2px;
+}
+
+.admin-locker-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  background: #fff;
+  border: 1px solid var(--line, #e2e8f0);
+  border-radius: 12px;
+  padding: 10px 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.admin-locker-filter-pills {
+  display: flex;
+  gap: 6px;
+}
+
+.admin-locker-filter-btn {
+  padding: 8px 14px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted, #64748b);
+  font-size: 12.5px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.admin-locker-filter-btn:hover {
+  background: #f8fafc;
+  color: var(--ink, #0f172a);
+}
+
+.admin-locker-filter-btn.active {
+  background: #17392e;
+  color: #fff;
+  border-color: #17392e;
+  font-weight: 700;
+}
+
+.admin-locker-search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line, #e2e8f0);
+  border-radius: 8px;
+  padding: 7px 14px;
+  min-width: 250px;
+  background: #f8fafc;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.admin-locker-search-box:focus-within {
+  border-color: #17392e;
+  background: #fff;
+}
+
+.admin-locker-search-box input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 12.5px;
+  width: 100%;
+}
+
+.admin-locker-matrix-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.admin-locker-box {
+  background: #fff;
+  border: 1px solid var(--line, #e2e8f0);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 195px;
+  transition: all 0.18s ease;
+  position: relative;
+  text-align: left;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.admin-locker-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(24, 61, 49, 0.06);
+}
+
+.admin-locker-box.available {
+  border-top: 3.5px solid #22c55e;
+}
+
+.admin-locker-box.available:hover {
+  border-color: #22c55e;
+}
+
+.admin-locker-box.assigned {
+  border-top: 3.5px solid #0284c7;
+  background: #fafcfe;
+}
+
+.admin-locker-box.assigned:hover {
+  border-color: #0284c7;
+}
+
+.admin-locker-box-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.admin-locker-code {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--ink, #0f172a);
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
+.admin-locker-status-tag {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+  display: inline-block;
+  white-space: nowrap;
+  letter-spacing: 0.04em;
+}
+
+.admin-locker-status-tag.available {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.admin-locker-status-tag.assigned {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.admin-locker-status-tag.inactive {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.admin-locker-box-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.admin-locker-occupant {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.admin-locker-occupant-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink, #0f172a);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-locker-occupant-email {
+  font-size: 11.5px;
+  color: var(--muted, #64748b);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-locker-occupant-validity {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #0369a1;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.admin-locker-vacant {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 0;
+  text-align: center;
+}
+
+.admin-locker-vacant-icon {
+  color: #94a3b8;
+  opacity: 0.6;
+}
+
+.admin-locker-vacant span {
+  font-size: 12px;
+  color: var(--muted, #64748b);
+  line-height: 1.4;
+}
+
+.admin-locker-box-action {
+  width: 100%;
+  border-top: 1px solid var(--line, #e2e8f0);
+  padding-top: 10px;
+}
+
+.admin-locker-action-btn {
+  width: 100%;
+  padding: 7px 12px;
+  font-size: 12.5px;
+  font-weight: 700;
+  border-radius: 7px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.admin-locker-action-btn.primary {
+  border: 1px solid #17392e;
+  color: #17392e;
+  background: transparent;
+}
+
+.admin-locker-action-btn.primary:hover:not(:disabled) {
+  background: #17392e;
+  color: #fff;
+}
+
+.admin-locker-action-btn.danger {
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  background: #fef2f2;
+}
+
+.admin-locker-action-btn.danger:hover:not(:disabled) {
+  border-color: #dc2626;
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* ==========================================================================
+   Class Catalog Cards (Jenis Kelas)
+   ========================================================================== */
+.admin-class-card {
+  background: #fff;
+  border: 1px solid var(--line, #e2e8f0);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  transition: all 0.15s ease;
+}
+
+.admin-class-card:hover {
+  border-color: var(--green, #17392e);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.admin-class-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.admin-class-level-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+  text-transform: capitalize;
+}
+
+.admin-class-level-badge.beginner {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.admin-class-level-badge.intermediate_1 {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.admin-class-level-badge.intermediate_2 {
+  background: #f3e8ff;
+  color: #7e22ce;
+}
+
+.admin-class-card-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--ink, #0f172a);
+  margin: 8px 0 6px;
+}
+
+.admin-class-card-desc {
+  font-size: 12.5px;
+  color: var(--muted, #64748b);
+  line-height: 1.5;
+  margin: 0 0 12px;
+}
+
+.admin-class-card-specs {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--ink, #0f172a);
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.admin-class-card-specs span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.admin-class-card-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--line, #e2e8f0);
+  padding-top: 14px;
+  margin-top: 4px;
+}
+
+.admin-class-price {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--green, #17392e);
+}
+

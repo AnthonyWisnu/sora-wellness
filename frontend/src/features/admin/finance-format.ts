@@ -20,7 +20,7 @@ export const kindLabel: Record<string, string> = {
   correction: 'Koreksi',
 }
 export function label(value: string | null) {
-  return value ? (stateLabel[value] ?? value) : '—'
+  return value ? (stateLabel[value] ?? value) : '-'
 }
 export function dateTime(value: string, timezone: string) {
   return new Intl.DateTimeFormat('id-ID', {

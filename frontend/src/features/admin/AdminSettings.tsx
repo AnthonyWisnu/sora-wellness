@@ -140,8 +140,8 @@ export function AdminPaymentSettings({
           <div className="panel">
             <span className="eyebrow">MIDTRANS SANDBOX</span>
             <h2>{paymentSettings?.configured ? 'Terhubung' : 'Belum dikonfigurasi'}</h2>
-            <p>Merchant ID: {paymentSettings?.merchantId ?? '—'}</p>
-            <p>Client Key: {paymentSettings?.clientKey ?? '—'}</p>
+            <p>Merchant ID: {paymentSettings?.merchantId ?? '-'}</p>
+            <p>Client Key: {paymentSettings?.clientKey ?? '-'}</p>
             <p>
               Server Key:{' '}
               {paymentSettings?.serverKeyConfigured ? 'Tersimpan aman di backend' : 'Belum ada'}

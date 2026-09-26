@@ -1,6 +1,13 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Download, RefreshCw } from 'lucide-react'
-import { api, type AdminWalletLedger, type AdminWalletRecord } from '../../shared/api'
+import { CheckCircle2, Clock, DollarSign, Download, RefreshCw } from 'lucide-react'
+import {
+  api,
+  type AdminBookingRecord,
+  type AdminPaymentRecord,
+  type AdminWalletLedger,
+  type AdminWalletRecord,
+} from '../../shared/api'
+import { money } from '../../shared/format'
 import { FinanceFilters } from './FinanceFilters'
 import { FinanceList } from './FinanceList'
 import { WalletLedger } from './WalletLedger'
@@ -106,6 +113,71 @@ export function AdminFinancePanel({
   }
   const totalPages = data ? Math.max(1, Math.ceil(data.total / data.limit)) : 1
 
+  const kpiStats = (() => {
+    if (!data || !data.items.length) {
+      return {
+        metric1Label: 'TOTAL DATA',
+        metric1Val: data ? String(data.total) : '0',
+        metric1Desc: 'Total catatan tercatat',
+        metric2Label: 'STATUS AKTIF',
+        metric2Val: '0',
+        metric2Desc: 'Tercatat di sistem',
+        metric3Label: 'ESTIMASI NILAI',
+        metric3Val: 'Rp 0',
+        metric3Desc: 'Berdasarkan filter aktif',
+      }
+    }
+    if (tab === 'payments') {
+      const items = data.items as AdminPaymentRecord[]
+      const settled = items.filter((p) => p.status === 'settlement' || p.status === 'capture')
+      const totalAmount = settled.reduce((sum, p) => sum + (p.grossAmountIdr || 0), 0)
+      const pendingCount = items.filter((p) => p.status === 'pending').length
+      return {
+        metric1Label: 'OMZET (HALAMAN INI)',
+        metric1Val: money(totalAmount),
+        metric1Desc: `${settled.length} pembayaran berhasil`,
+        metric2Label: 'TRANSAKSI SUKSES',
+        metric2Val: `${settled.length} / ${items.length}`,
+        metric2Desc: `${Math.round((settled.length / items.length) * 100)}% tingkat konversi`,
+        metric3Label: 'MENUNGGU PEMBAYARAN',
+        metric3Val: `${pendingCount}`,
+        metric3Desc: 'Pending di payment gateway',
+      }
+    }
+    if (tab === 'bookings') {
+      const items = data.items as AdminBookingRecord[]
+      const confirmed = items.filter((b) => b.status === 'confirmed')
+      const totalValue = confirmed.reduce((sum, b) => sum + (b.priceIdr || 0), 0)
+      const pendingCount = items.filter((b) => b.status === 'pending_payment').length
+      return {
+        metric1Label: 'NILAI BOOKING',
+        metric1Val: money(totalValue),
+        metric1Desc: `${confirmed.length} booking terkonfirmasi`,
+        metric2Label: 'BOOKING TERKONFIRMASI',
+        metric2Val: `${confirmed.length} / ${items.length}`,
+        metric2Desc: `${Math.round((confirmed.length / items.length) * 100)}% kehadiran terjadwal`,
+        metric3Label: 'MENUNGGU BAYAR',
+        metric3Val: `${pendingCount}`,
+        metric3Desc: 'Hold tiket sementara',
+      }
+    }
+    const items = data.items as AdminWalletRecord[]
+    const totalBalance = items.reduce((sum, w) => sum + (w.balanceIdr || 0), 0)
+    const activeCount = items.filter((w) => w.balanceIdr > 0).length
+    const avgBalance = items.length ? Math.round(totalBalance / items.length) : 0
+    return {
+      metric1Label: 'TOTAL SALDO MEMBER',
+      metric1Val: money(totalBalance),
+      metric1Desc: `Dari ${items.length} akun dompet`,
+      metric2Label: 'DOMPET DENGAN SALDO',
+      metric2Val: `${activeCount} / ${items.length}`,
+      metric2Desc: 'Memiliki deposit aktif',
+      metric3Label: 'RATA-RATA SALDO',
+      metric3Val: money(avgBalance),
+      metric3Desc: 'Per akun terdaftar',
+    }
+  })()
+
   return (
     <section className="admin-workspace admin-finance">
       <div className="admin-workspace-head">
@@ -138,6 +210,40 @@ export function AdminFinancePanel({
           </button>
         </div>
       </div>
+
+      <div className="admin-kpi-grid" style={{ marginBottom: '20px' }}>
+        <div className="admin-kpi-card">
+          <div className="admin-kpi-head">
+            <span>{kpiStats.metric1Label}</span>
+            <div className="admin-kpi-icon">
+              <DollarSign size={16} />
+            </div>
+          </div>
+          <div className="admin-kpi-val" style={{ fontSize: '22px' }}>{kpiStats.metric1Val}</div>
+          <p className="admin-kpi-desc">{kpiStats.metric1Desc}</p>
+        </div>
+        <div className="admin-kpi-card">
+          <div className="admin-kpi-head">
+            <span>{kpiStats.metric2Label}</span>
+            <div className="admin-kpi-icon" style={{ background: '#ecfdf5', color: '#15803d' }}>
+              <CheckCircle2 size={16} />
+            </div>
+          </div>
+          <div className="admin-kpi-val" style={{ fontSize: '22px' }}>{kpiStats.metric2Val}</div>
+          <p className="admin-kpi-desc">{kpiStats.metric2Desc}</p>
+        </div>
+        <div className="admin-kpi-card">
+          <div className="admin-kpi-head">
+            <span>{kpiStats.metric3Label}</span>
+            <div className="admin-kpi-icon" style={{ background: '#fef3c7', color: '#b45309' }}>
+              <Clock size={16} />
+            </div>
+          </div>
+          <div className="admin-kpi-val" style={{ fontSize: '22px' }}>{kpiStats.metric3Val}</div>
+          <p className="admin-kpi-desc">{kpiStats.metric3Desc}</p>
+        </div>
+      </div>
+
       <div className="filter-list admin-finance-tabs">
         <button
           className={tab === 'bookings' ? 'selected' : ''}

@@ -34,6 +34,7 @@ type Props = {
   adminTab: AdminTab
   timezone: string
   show: (message: string) => void
+  go?: (path: string) => void
   loadSessions: () => Promise<void>
   setPackages: Dispatch<SetStateAction<Packages | null>>
   setStudio: Dispatch<SetStateAction<Studio | null>>
@@ -53,6 +54,7 @@ export function AdminDashboard({
   adminTab,
   timezone,
   show,
+  go,
   loadSessions,
   setPackages,
   setStudio,
@@ -136,6 +138,7 @@ export function AdminDashboard({
         summary={summary}
         timezone={timezone}
         busy={busy}
+        go={go}
         cancelStudioSession={cancelStudioSession}
       />
       <AdminPolicy

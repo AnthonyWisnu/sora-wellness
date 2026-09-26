@@ -73,11 +73,14 @@ export function PublicHero({ section, ctx }: { section: SiteSection; ctx: SiteBl
 
   // Active slide content
   const activeCustom = customSlides ? customSlides[currentSlide] : null
-  const currentImage = activeCustom
-    ? (siteMediaUrl(activeCustom.mediaId) ?? siteMediaUrl(profile.heroMediaId) ?? '/images/sora-studio-hero.png')
-    : fallbackSlides[currentSlide]
-  const currentTitle = activeCustom?.title?.trim() || section.title || profile.name
-  const currentBody = activeCustom?.body?.trim() || section.body || profile.description
+  const currentImage =
+    currentSlide === 0 && profile.heroMediaId
+      ? (siteMediaUrl(profile.heroMediaId) ?? '/images/sora-studio-hero.png')
+      : activeCustom?.mediaId
+        ? (siteMediaUrl(activeCustom.mediaId) ?? siteMediaUrl(profile.heroMediaId) ?? '/images/sora-studio-hero.png')
+        : fallbackSlides[currentSlide]
+  const currentTitle = section.title?.trim() || activeCustom?.title?.trim() || profile.name
+  const currentBody = section.body?.trim() || activeCustom?.body?.trim() || profile.description
   const currentLabel = activeCustom?.caption?.trim() || section.label || ''
   const currentLink = activeCustom?.link || section.link || ''
 

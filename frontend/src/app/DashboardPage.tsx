@@ -121,6 +121,7 @@ export function DashboardPage({
             adminTab={section as AdminTab}
             timezone={timezone}
             show={show}
+            go={go}
             loadSessions={loadSessions}
             setPackages={setPackages}
             setStudio={setStudio}
