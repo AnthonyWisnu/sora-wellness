@@ -20,6 +20,10 @@ export type SiteBlockContext = {
   guestDays: number
   memberDays: number
   busy: boolean
+  sessionsStatus: 'loading' | 'ready' | 'error'
+  packagesStatus: 'loading' | 'ready' | 'error'
+  retrySessions: () => void
+  retryPackages: () => void
   go: (path: string) => void
   openBooking: (session: Session) => void
   buyPackage: (id: string) => void

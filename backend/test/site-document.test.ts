@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { initialSiteDocument, parseSiteDocument, referencedMedia } from '../src/content/site-document';
+import { initialSiteDocument, parseSiteDocument, referencedMedia, validatePublishedDocument } from '../src/content/site-document';
 
 const profile = { name: 'Studio Uji', description: 'Latihan bersama', address: 'Jalan Uji', logoMediaId: null, heroMediaId: null, galleryMediaIds: [] };
 
@@ -39,4 +39,18 @@ test('gambar dalam testimoni tercatat sebagai gambar terpakai', () => {
   const mediaId = 'ff912739-9780-4d21-93c0-0398d39066a1';
   document.pages.home.find(section => section.type === 'testimonials')!.items.push({ title: 'Nia', body: 'Kelas nyaman', caption: '', mediaId });
   assert.deepEqual(referencedMedia(document), [mediaId]);
+});
+
+test('draf boleh memiliki blok kosong, tetapi judul manfaat terbit wajib terisi', () => {
+  const document = initialSiteDocument(profile);
+  const benefits = document.pages.membership.find(section => section.type === 'features')!;
+  benefits.title = '';
+  benefits.items.push({ title: 'Akses kelas', body: 'Untuk member aktif', caption: '', mediaId: null });
+  assert.equal(parseSiteDocument(document).pages.membership.length > 0, true);
+  assert.throws(() => validatePublishedDocument(document), /Judul blok/);
+  benefits.title = 'Manfaat';
+  benefits.items[0].title = '';
+  assert.throws(() => validatePublishedDocument(document), /Setiap manfaat/);
+  benefits.items[0].title = 'Akses kelas';
+  validatePublishedDocument(document);
 });

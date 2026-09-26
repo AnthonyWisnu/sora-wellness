@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { RefreshCw } from 'lucide-react'
+import { Download, RefreshCw } from 'lucide-react'
 import { api, type AdminWalletLedger, type AdminWalletRecord } from '../../shared/api'
 import { FinanceFilters } from './FinanceFilters'
 import { FinanceList } from './FinanceList'
@@ -117,9 +117,26 @@ export function AdminFinancePanel({
             diterima atau diverifikasi oleh backend.
           </p>
         </div>
-        <button className="button button-outline" onClick={() => setRefresh((value) => value + 1)}>
-          <RefreshCw size={15} /> Muat ulang
-        </button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button
+            className="button button-primary"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            onClick={() => {
+              const exportParams = new URLSearchParams()
+              if (query) exportParams.set('q', query)
+              if (from) exportParams.set('from', from)
+              if (to) exportParams.set('to', to)
+              if (status) exportParams.set('status', status)
+              if (kind) exportParams.set('kind', kind)
+              window.open(`/api/v1/admin/payments/export?${exportParams.toString()}`, '_blank')
+            }}
+          >
+            <Download size={15} /> Unduh Laporan CSV
+          </button>
+          <button className="button button-outline" onClick={() => setRefresh((value) => value + 1)}>
+            <RefreshCw size={15} /> Muat ulang
+          </button>
+        </div>
       </div>
       <div className="filter-list admin-finance-tabs">
         <button

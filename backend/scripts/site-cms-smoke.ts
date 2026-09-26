@@ -38,11 +38,15 @@ async function main() {
     document.footer.tagline = 'Footer dari CMS';
     document.pages.home.find((section: {type:string}) => section.type==='testimonials').items.push({ title: 'Pelanggan Uji', body: 'Kelas terasa nyaman.', caption: 'Peserta', mediaId: null });
     document.pages.home.find((section: {type:string}) => section.type==='faq').items.push({ title: 'Kapan kelas dimulai?', body: 'Lihat halaman jadwal.', caption: '', mediaId: null });
+    const benefitTitle = `Manfaat smoke ${randomUUID().slice(0,8)}`;
+    document.pages.membership.find((section: {type:string}) => section.type==='features').items.push({ title: benefitTitle, body: 'Berlaku untuk semua pilihan durasi.', caption: '', mediaId: null });
     const saved = (await agent.put('/api/v1/admin/site').set('x-csrf-token',csrf).send({ expectedVersion: state.draftVersion, document }).expect(200)).body;
     assert.equal(saved.draftVersion,state.draftVersion+1);
     await agent.delete(`/api/v1/admin/media/${uploadedMediaId}`).set('x-csrf-token',csrf).expect(409);
     assert.equal((await agent.get('/api/v1/public/site').expect(200)).body.pages.home.find((section: {type:string}) => section.type==='hero').title,originalHero);
     assert.equal((await agent.get('/api/v1/admin/site/preview').expect(200)).body.pages.home.find((section: {type:string}) => section.type==='hero').title,changedTitle);
+    assert.equal((await agent.get('/api/v1/public/site').expect(200)).body.pages.membership.find((section: {type:string}) => section.type==='features').items.some((item: {title:string}) => item.title===benefitTitle),false);
+    assert.equal((await agent.get('/api/v1/admin/site/preview').expect(200)).body.pages.membership.find((section: {type:string}) => section.type==='features').items.some((item: {title:string}) => item.title===benefitTitle),true);
     await agent.put('/api/v1/admin/site').set('x-csrf-token',csrf).send({ expectedVersion: state.draftVersion, document }).expect(409);
     const invalid = structuredClone(document); invalid.contact.mapEmbedUrl='https://example.com/fake';
     await agent.put('/api/v1/admin/site').set('x-csrf-token',csrf).send({ expectedVersion: saved.draftVersion, document: invalid }).expect(400);
@@ -50,8 +54,9 @@ async function main() {
     await agent.delete(`/api/v1/admin/media/${uploadedMediaId}`).set('x-csrf-token',csrf).expect(409);
     const publicSite = (await agent.get('/api/v1/public/site').expect(200)).body;
     assert.equal(publicSite.pages.home.find((section: {type:string}) => section.type==='hero').title,changedTitle);
-    assert.equal(publicSite.pages.home.find((section: {type:string}) => section.type==='testimonials').items[0].body,'Kelas terasa nyaman.');
-    assert.equal(publicSite.pages.home.find((section: {type:string}) => section.type==='faq').items[0].title,'Kapan kelas dimulai?');
+    assert.equal(publicSite.pages.home.find((section: {type:string}) => section.type==='testimonials').items.some((item: {body:string}) => item.body==='Kelas terasa nyaman.'),true);
+    assert.equal(publicSite.pages.home.find((section: {type:string}) => section.type==='faq').items.some((item: {title:string}) => item.title==='Kapan kelas dimulai?'),true);
+    assert.equal(publicSite.pages.membership.find((section: {type:string}) => section.type==='features').items.some((item: {title:string}) => item.title===benefitTitle),true);
     assert.equal(publicSite.contact.mapEmbedUrl,document.contact.mapEmbedUrl);
     assert.equal(publicSite.footer.tagline,'Footer dari CMS');
     assert.equal((await agent.get('/api/v1/public/studio').expect(200)).body.heroTitle,changedTitle);

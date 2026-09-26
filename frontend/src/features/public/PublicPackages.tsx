@@ -16,6 +16,23 @@ export function PublicPackages({ section, ctx }: { section: SiteSection; ctx: Si
   const selected = shown.find((option) => option.id === selectedId) ?? shown[0]
   const quota = ctx.packages?.monthlyClassQuota ?? 0
   const levels = ctx.packages?.accessLevels.map(levelName).join(', ') ?? ''
+  const benefitsSection = ctx.site.pages.membership.find((entry) => entry.type === 'features')
+  const benefits = benefitsSection?.visible
+    ? benefitsSection.items.filter((item) => item.title.trim())
+    : []
+  const packageState =
+    ctx.packagesStatus === 'loading' ? (
+      <p role="status">Memuat pilihan paket…</p>
+    ) : ctx.packagesStatus === 'error' ? (
+      <div role="alert">
+        Paket belum dapat dimuat.{' '}
+        <button className="zeira-btn zeira-btn-outline" onClick={ctx.retryPackages}>
+          Coba lagi
+        </button>
+      </div>
+    ) : (
+      <p>Belum ada paket yang tersedia.</p>
+    )
 
   if (ctx.page === 'home') {
     return (
@@ -49,7 +66,7 @@ export function PublicPackages({ section, ctx }: { section: SiteSection; ctx: Si
               </div>
             </>
           )}
-          {!shown.length && <p>Belum ada paket yang tersedia.</p>}
+          {!shown.length && packageState}
         </div>
         <div className="zeira-package-benefits">
           <div className="zeira-package-benefits-head">
@@ -57,20 +74,25 @@ export function PublicPackages({ section, ctx }: { section: SiteSection; ctx: Si
             <Sparkles size={19} />
           </div>
           <ul>
-            <li>
-              <Check size={16} /> {quota} jatah kelas per bulan kalender
-            </li>
-            {levels && (
+            {ctx.packagesStatus === 'ready' && ctx.packages && (
+              <li>
+                <Check size={16} /> {quota} jatah kelas per bulan kalender
+              </li>
+            )}
+            {ctx.packagesStatus === 'ready' && levels && (
               <li>
                 <Check size={16} /> Akses kelas: {levels}
               </li>
             )}
-            <li>
-              <Check size={16} /> Pilihan durasi sesuai paket yang tersedia
-            </li>
-            <li>
-              <Check size={16} /> Akun dan riwayat tetap ada setelah paket berakhir
-            </li>
+            {benefits.map((item, index) => (
+              <li key={`${item.title}-${index}`}>
+                <Check size={16} />{' '}
+                <span>
+                  <strong>{item.title}</strong>
+                  {item.body && <small>{item.body}</small>}
+                </span>
+              </li>
+            ))}
           </ul>
           <button className="zeira-btn zeira-btn-primary" onClick={() => ctx.go('/membership')}>
             Jelajahi membership <ArrowRight size={16} />
@@ -101,10 +123,12 @@ export function PublicPackages({ section, ctx }: { section: SiteSection; ctx: Si
           <article className="zeira-compare-member">
             <span className="zeira-field-label">MANFAAT MEMBER</span>
             <h3>Membership studio</h3>
-            <p>
-              {quota} jatah kelas per bulan kalender, dengan akses tingkat{' '}
-              {levels || 'sesuai paket'} selama paket aktif.
-            </p>
+            {ctx.packagesStatus === 'ready' && ctx.packages && (
+              <p>
+                {quota} jatah kelas per bulan kalender, dengan akses tingkat {levels} selama paket
+                aktif.
+              </p>
+            )}
             <a href="#pilihan-paket">
               Lihat pilihan durasi <ArrowRight size={15} />
             </a>
@@ -120,7 +144,7 @@ export function PublicPackages({ section, ctx }: { section: SiteSection; ctx: Si
           </div>
         </div>
         {options.length ? (
-          <div className="zeira-plan-grid">
+          <div className={`zeira-plan-grid zeira-plan-grid-${Math.min(options.length, 4)}`}>
             {options.map((option) => (
               <article
                 key={option.id}
@@ -137,8 +161,6 @@ export function PublicPackages({ section, ctx }: { section: SiteSection; ctx: Si
                 <strong>{money(option.priceIdr)}</strong>
                 <small>Harga total untuk {option.durationMonths} bulan</small>
                 <hr />
-                <p>{quota} jatah kelas per bulan kalender</p>
-                <p>Akses tingkat kelas member selama paket aktif</p>
                 <button
                   className="zeira-btn zeira-btn-primary"
                   disabled={ctx.busy}
@@ -150,10 +172,7 @@ export function PublicPackages({ section, ctx }: { section: SiteSection; ctx: Si
             ))}
           </div>
         ) : (
-          <div className="zeira-empty">
-            <h3>Belum ada paket</h3>
-            <p>Hubungi studio untuk informasi keanggotaan.</p>
-          </div>
+          <div className="zeira-empty">{packageState}</div>
         )}
         <p className="zeira-plan-note">
           Masa aktif dan jatah kelas dihitung oleh sistem setelah pembayaran berhasil.

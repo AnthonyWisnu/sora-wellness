@@ -13,12 +13,14 @@ import {
 } from './management-common'
 import { SessionFields } from './SessionFields'
 import { AdminDialog } from './AdminDialog'
+import { useConfirm } from '../../shared/confirm-context'
 
 export function AdminSessionsPanel({
   timezone,
   show,
   onChanged,
 }: PanelProps & { timezone: string; onChanged: () => void }) {
+  const confirm = useConfirm()
   const [date, setDate] = useState(() => studioToday(timezone))
   const [rows, setRows] = useState<AdminSession[]>([])
   const [classes, setClasses] = useState<AdminClassType[]>([])
@@ -88,9 +90,12 @@ export function AdminSessionsPanel({
   }
   async function cancel(row: AdminSession) {
     if (
-      !window.confirm(
-        `Batalkan sesi ${row.title} pada ${row.local_date.slice(0, 10)}? Booking aktif akan diproses sesuai aturan pengembalian.`,
-      )
+      !(await confirm({
+        title: 'Batalkan sesi kelas?',
+        description: `${row.title} pada ${row.local_date.slice(0, 10)} akan dibatalkan. Booking aktif diproses sesuai aturan pengembalian.`,
+        confirmLabel: 'Batalkan sesi',
+        tone: 'danger',
+      }))
     )
       return
     setBusy(true)

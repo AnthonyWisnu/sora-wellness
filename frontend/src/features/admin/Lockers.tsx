@@ -5,9 +5,11 @@ import { formatDate } from '../../shared/format'
 import { errorMessage } from '../../shared/errors'
 import '../admin/StudioAssets.css'
 import { AdminDialog } from './AdminDialog'
+import { useConfirm } from '../../shared/confirm-context'
 type Notice = { show: (message: string) => void }
 
 export function AdminLockersPanel({ show }: Notice) {
+  const confirm = useConfirm()
   const [data, setData] = useState<AdminLockers | null>(null)
   const [members, setMembers] = useState<EligibleMember[]>([])
   const [search, setSearch] = useState('')
@@ -63,7 +65,15 @@ export function AdminLockersPanel({ show }: Notice) {
     }
   }
   async function release(id: string, label: string) {
-    if (!window.confirm(`Lepas penetapan loker ${label}?`)) return
+    if (
+      !(await confirm({
+        title: 'Lepas penetapan loker?',
+        description: `Loker ${label} tidak lagi ditetapkan kepada member. Riwayat penetapan tetap tersimpan.`,
+        confirmLabel: 'Lepas loker',
+        tone: 'danger',
+      }))
+    )
+      return
     setBusy(true)
     try {
       await api(`/admin/lockers/${id}/assignment`, { method: 'DELETE' })

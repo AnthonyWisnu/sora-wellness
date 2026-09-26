@@ -4,4 +4,3 @@ dist/
 .env
 coverage/
 .qa/*
-!.qa/demo-accounts.json

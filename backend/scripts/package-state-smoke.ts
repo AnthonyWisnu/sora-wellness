@@ -7,7 +7,8 @@ import { PaymentsService } from '../src/payments/payments';
 
 async function main() {
   const db = new Db();
-  const payments = new PaymentsService(db,new PaymentSettings(db));
+  const settings = new PaymentSettings(db);
+  const payments = new PaymentsService(db,settings);
   const created = await db.query<{ id: string }>(`INSERT INTO app_users (email,full_name,role,password_hash) VALUES ($1,'Uji Paket','customer','fixture-only') RETURNING id`, [`package-smoke-${randomUUID()}@example.test`]);
   const customerId = created.rows[0].id;
   let purchaseId: string | undefined;
@@ -43,7 +44,7 @@ async function main() {
     assert.ok(unused.rows[0]);
     const free = await db.query<{ id: string }>('INSERT INTO package_options (duration_months,price_idr) VALUES ($1,0) RETURNING id', [unused.rows[0].duration]);
     freeOptionId = free.rows[0].id;
-    const service = new MembershipPurchasesService(db,payments);
+    const service = new MembershipPurchasesService(db,payments,settings);
     const key = randomUUID();
     const once = await service.create(customerId,freeOptionId,key);
     const repeated = await service.create(customerId,freeOptionId,key);

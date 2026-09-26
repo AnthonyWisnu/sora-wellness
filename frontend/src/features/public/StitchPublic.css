@@ -794,6 +794,16 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 15px;
 }
+.zeira-plan-grid.zeira-plan-grid-1 {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 480px;
+}
+.zeira-plan-grid.zeira-plan-grid-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.zeira-plan-grid.zeira-plan-grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
 .zeira-plan-grid article {
   background: #fff;
   border: 1px solid var(--zeira-stone);
@@ -801,7 +811,7 @@
   padding: 26px;
   display: flex;
   flex-direction: column;
-  min-height: 335px;
+  min-height: 255px;
 }
 .zeira-plan-grid .zeira-plan-featured {
   border-color: var(--zeira-green);
@@ -826,7 +836,7 @@
   border: 0;
   border-top: 1px solid var(--zeira-stone);
   width: 100%;
-  margin: 24px 0 16px;
+  margin: 20px 0 16px;
 }
 .zeira-plan-grid p {
   font-size: 11px;
@@ -937,13 +947,12 @@
   background: #fff;
   border: 1px solid var(--zeira-stone);
   border-radius: 12px;
-  display: flex;
-  align-items: center;
-  gap: 20px;
+  display: grid;
+  gap: 12px;
   padding: 10px 16px;
   margin-bottom: 22px;
 }
-.zeira-date-rail > span {
+.zeira-date-rail-heading {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -954,21 +963,56 @@
   white-space: nowrap;
   font-weight: 800;
 }
+.zeira-week-navigation {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.zeira-week-navigation button {
+  border: 1px solid var(--zeira-stone);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--zeira-green);
+  min-width: 32px;
+  min-height: 32px;
+  font-size: 21px;
+}
+.zeira-week-navigation button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 .zeira-date-options {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 5px;
-  overflow-x: auto;
   min-width: 0;
 }
 .zeira-date-options button {
   background: transparent;
   border: 0;
   border-radius: 8px;
-  min-width: 65px;
-  min-height: 52px;
+  min-width: 0;
+  min-height: 65px;
   color: #505850;
   font-size: 10px;
   text-transform: uppercase;
+}
+.zeira-date-options button span,
+.zeira-date-options button strong,
+.zeira-date-options button small {
+  display: block;
+}
+.zeira-date-options button small {
+  margin-top: 4px;
+  text-transform: none;
+}
+.zeira-date-options button:focus-visible,
+.zeira-week-navigation button:focus-visible {
+  outline: 3px solid var(--zeira-bronze);
+  outline-offset: 2px;
 }
 .zeira-date-options button strong {
   font-family: 'Playfair Display', serif;
@@ -1178,6 +1222,9 @@
   grid-template-columns: 0.8fr 1.2fr;
   gap: 18px;
 }
+.zeira-contact-no-map {
+  grid-template-columns: minmax(0, 1fr);
+}
 .zeira-contact-card,
 .zeira-contact-map-placeholder {
   border: 1px solid var(--zeira-stone);
@@ -1218,6 +1265,9 @@
   width: 100%;
   min-height: 360px;
   border-radius: 13px;
+}
+.zeira-contact-map-link {
+  display: none;
 }
 .zeira-contact-map-placeholder {
   display: flex;
@@ -1471,6 +1521,27 @@
   .zeira-contact-grid {
     grid-template-columns: 1fr;
   }
+  .zeira-contact-grid iframe {
+    display: none;
+  }
+  .zeira-contact-map-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: 12px;
+    border: 1px solid var(--zeira-green);
+    border-radius: 10px;
+    color: var(--zeira-green);
+    font-weight: 700;
+    text-align: center;
+  }
+  .zeira-plan-grid.zeira-plan-grid-1,
+  .zeira-plan-grid.zeira-plan-grid-2,
+  .zeira-plan-grid.zeira-plan-grid-3,
+  .zeira-plan-grid.zeira-plan-grid-4 {
+    grid-template-columns: 1fr;
+  }
   .zeira-session-card {
     grid-template-columns: 1fr;
   }
@@ -1526,11 +1597,18 @@
   .zeira-date-rail {
     display: block;
   }
-  .zeira-date-rail > span {
+  .zeira-date-rail-heading {
     margin-bottom: 9px;
   }
   .zeira-date-options {
     margin-top: 10px;
+  }
+  .zeira-date-options button {
+    min-height: 58px;
+    font-size: 9px;
+  }
+  .zeira-date-options button strong {
+    font-size: 15px;
   }
   .zeira-feature-grid,
   .zeira-gallery-grid {
@@ -1571,6 +1649,29 @@
   }
   .zeira-plan-grid {
     grid-template-columns: 1fr;
+  }
+  .zeira-date-rail {
+    padding: 10px 8px;
+  }
+  .zeira-date-rail-heading {
+    flex-wrap: wrap;
+  }
+  .zeira-week-navigation {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .zeira-date-options {
+    gap: 2px;
+  }
+  .zeira-date-options button {
+    padding: 4px 0;
+    font-size: 10px;
+  }
+  .zeira-date-options button strong {
+    font-size: 15px;
+  }
+  .zeira-date-options button small {
+    font-size: 9px;
   }
   .zeira-hero-center {
     left: 29px;

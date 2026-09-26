@@ -2,6 +2,7 @@ import { useState, type ChangeEvent } from 'react'
 import { ImagePlus, Trash2 } from 'lucide-react'
 import { api, type MediaAsset, type SiteDocument } from '../../../shared/api'
 import { errorMessage } from '../../../shared/errors'
+import { useConfirm } from '../../../shared/confirm-context'
 
 type Props = {
   media: MediaAsset[]
@@ -10,6 +11,7 @@ type Props = {
   show: (message: string) => void
 }
 export function MediaManager({ media, setMedia, document, show }: Props) {
+  const confirm = useConfirm()
   const [busy, setBusy] = useState(false)
   async function upload(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
@@ -29,7 +31,15 @@ export function MediaManager({ media, setMedia, document, show }: Props) {
     }
   }
   async function remove(asset: MediaAsset) {
-    if (!window.confirm(`Hapus ${asset.filename}?`)) return
+    if (
+      !(await confirm({
+        title: 'Hapus gambar?',
+        description: `${asset.filename} akan dihapus dari pustaka media.`,
+        confirmLabel: 'Hapus gambar',
+        tone: 'danger',
+      }))
+    )
+      return
     setBusy(true)
     try {
       await api(`/admin/media/${asset.id}`, { method: 'DELETE' })

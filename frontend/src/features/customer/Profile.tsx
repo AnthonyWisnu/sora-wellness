@@ -3,6 +3,7 @@ import { Check, HeartPulse, Trash2 } from 'lucide-react'
 import { api, type Actor, type HealthProfile } from '../../shared/api'
 import { localDateTime } from '../../shared/format'
 import { errorMessage } from '../../shared/errors'
+import { useConfirm } from '../../shared/confirm-context'
 import '../dashboard/Panels.css'
 
 export function CustomerProfilePanel({
@@ -16,6 +17,7 @@ export function CustomerProfilePanel({
   onNameChanged: (name: string) => void
   show: (text: string) => void
 }) {
+  const confirm = useConfirm()
   const [name, setName] = useState(actor.fullName)
   const [health, setHealth] = useState<HealthProfile | null>(null)
   const [note, setNote] = useState('')
@@ -74,7 +76,16 @@ export function CustomerProfilePanel({
     }
   }
   async function deleteHealth() {
-    if (!window.confirm('Hapus catatan kesehatan dan semua snapshot kelas Anda?')) return
+    if (
+      !(await confirm({
+        title: 'Hapus data kesehatan?',
+        description:
+          'Catatan kesehatan dan semua salinan pada kelas Anda akan dihapus. Tindakan ini tidak dapat dibatalkan.',
+        confirmLabel: 'Hapus data',
+        tone: 'danger',
+      }))
+    )
+      return
     setBusy(true)
     try {
       setHealth(

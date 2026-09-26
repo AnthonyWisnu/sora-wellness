@@ -9,7 +9,7 @@ export type SiteSectionType =
   | 'faq'
   | 'cta'
   | 'contact'
-export type SiteItem = { title: string; body: string; caption: string; mediaId: string | null }
+export type SiteItem = { title: string; body: string; caption: string; mediaId: string | null; link?: string }
 export type SiteSection = {
   type: SiteSectionType
   visible: boolean

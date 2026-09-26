@@ -28,6 +28,7 @@ import { AdminContentPanel } from './Content'
 import { AdminLockersPanel } from './Lockers'
 import './Management.css'
 import { AdminFinancePanel } from './Finance'
+import { useConfirm } from '../../shared/confirm-context'
 
 type Props = {
   adminTab: AdminTab
@@ -57,6 +58,7 @@ export function AdminDashboard({
   setStudio,
   setSite,
 }: Props) {
+  const confirm = useConfirm()
   const [busy, setBusy] = useState(false)
   const [policy, setPolicy] = useState<Policy | null>(null)
   const [summary, setSummary] = useState<AdminDashboardSummary | null>(null)
@@ -78,7 +80,13 @@ export function AdminDashboard({
 
   async function cancelStudioSession(id: string) {
     if (
-      !window.confirm('Batalkan sesi ini dan kembalikan hak seluruh peserta sesuai aturan studio?')
+      !(await confirm({
+        title: 'Batalkan sesi kelas?',
+        description:
+          'Sesi akan dibatalkan dan hak seluruh peserta dikembalikan sesuai aturan studio.',
+        confirmLabel: 'Batalkan sesi',
+        tone: 'danger',
+      }))
     )
       return
     setBusy(true)
@@ -170,8 +178,11 @@ export function AdminDashboard({
         <AdminPackagesPanel
           show={show}
           onChanged={() => {
-            void api<Packages>('/public/packages')
-              .then(setPackages)
+            void Promise.all([api<Packages>('/public/packages'), api<SiteDocument>('/public/site')])
+              .then(([nextPackages, nextSite]) => {
+                setPackages(nextPackages)
+                setSite(nextSite)
+              })
               .catch((error) => show(message(error)))
           }}
         />

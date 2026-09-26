@@ -6,6 +6,7 @@ import {
   type BookingOptions,
   type Session,
 } from '../../shared/api'
+import { useConfirm } from '../../shared/confirm-context'
 
 type Options = {
   actor: Actor | null
@@ -20,6 +21,7 @@ function message(error: unknown) {
 }
 
 export function useBooking({ actor, go, show, setBusy, loadSessions, loadCustomer }: Options) {
+  const confirm = useConfirm()
   const [selected, setSelected] = useState<Session | null>(null)
   const [options, setOptions] = useState<BookingOptions | null>(null)
   const [choice, setChoice] = useState<'quota' | 'single'>('single')
@@ -77,7 +79,16 @@ export function useBooking({ actor, go, show, setBusy, loadSessions, loadCustome
     }
   }
   async function cancelBooking(id: string) {
-    if (!window.confirm('Batalkan booking ini sesuai batas pembatalan studio?')) return
+    if (
+      !(await confirm({
+        title: 'Batalkan booking?',
+        description:
+          'Pengembalian jatah atau saldo mengikuti batas pembatalan studio. Periksa status booking setelah dibatalkan.',
+        confirmLabel: 'Batalkan booking',
+        tone: 'danger',
+      }))
+    )
+      return
     setBusy(true)
     try {
       await api(`/bookings/${id}/cancel`, { method: 'POST' })

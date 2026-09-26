@@ -226,7 +226,37 @@ npm run lint
 cd ../frontend
 npm run smoke:dashboard
 npm run smoke:admin
+npm run smoke:site
+npm run smoke:public-data
+npm run smoke:package-benefits
 ```
+
+### Email pembayaran Midtrans Sandbox
+
+Checkout kelas dan paket berbayar mengirim **email akun pelanggan** ke Midtrans Snap. Aktifkan pengiriman di dashboard merchant Sandbox melalui **Settings → Email Notifications**: centang **Send email to customer** dan **Send email to me**, lalu isi **Notification receiver email** serta **Notification sender/support email** dengan alamat bisnis Sandbox milik Anda. Alamat ini diatur per merchant dan tidak disimpan di repository. Periksa penerimaan email dengan akun pelanggan uji yang inbox-nya Anda kuasai; alamat akun demo `example.test` bersifat fiktif dan tidak dapat membuktikan pengiriman. Status pembayaran tetap ditentukan oleh webhook/status API, bukan oleh email. Panduan resmi: [Email Notifications Midtrans](https://docs.midtrans.com/docs/email-notifications).
+
+### MCP pembayaran uji untuk Codex
+
+Repository ini memiliki MCP lokal `wellness-midtrans` untuk menguji alur pembayaran **melalui API wellness**. MCP ini berbeda dari paket PyPI `mcp-midtrans` yang hanya menyediakan dokumentasi. MCP lokal tidak menerima Server Key: backend membaca kredensial Sandbox terenkripsi dari pengaturan pembayaran studio.
+
+Jalankan PostgreSQL dan backend seperti pada panduan di atas, pastikan merchant Sandbox sudah diatur di dashboard admin, lalu dari `backend/` jalankan:
+
+```powershell
+npm run build
+npm run smoke:mcp-wellness
+node dist/scripts/mcp-wellness/smoke.js --checkout
+```
+
+Perintah terakhir membuat satu booking berbayar di Midtrans Sandbox, memeriksa statusnya, lalu membatalkan booking pending. Perintah itu **tidak menyelesaikan pembayaran**. Untuk memasang MCP pada Codex di komputer lain, jalankan perintah berikut dengan path lokal Anda sendiri:
+
+```powershell
+codex mcp add wellness-midtrans -- "C:\Program Files\nodejs\node.exe" "C:\path\ke\wellness\backend\dist\scripts\mcp-wellness\server.js"
+codex mcp list
+```
+
+Muat ulang sesi Codex sesudah menambahkan server. Secara default MCP login sebagai pelanggan demo Ayu menggunakan sandi dari `backend/.qa/demo-accounts.json`. Anda dapat mengganti akun dengan `WELLNESS_MCP_ACCOUNT` dan `WELLNESS_MCP_PASSWORD` pada lingkungan lokal; jangan masukkan sandi ke konfigurasi Git atau argumen command. MCP hanya menerima alamat backend HTTP loopback (`WELLNESS_MCP_API_URL`, default `http://127.0.0.1:3000`). Tool yang tersedia mencakup daftar sesi/paket, booking/pembelian paket uji, pembacaan dan refresh status, serta pembatalan pending. Pembatalan booking melepaskan booking lokal; bila pembayaran gateway datang kemudian, aturan saldo terlambat tetap berlaku. Pembatalan paket hanya dapat diteruskan ke Midtrans jika transaksi provider sudah berstatus `pending`; token Snap yang belum dipakai akan kedaluwarsa setelah 15 menit. Refund tidak tersedia lewat MCP.
+
+Jika sandi demo perlu diganti tanpa menghapus jadwal dan konten lokal, jalankan `npm run demo:rotate-passwords` dari `backend/`. Sandi baru hanya disimpan di `backend/.qa/demo-accounts.json`. File itu diabaikan Git dan tidak boleh dibagikan.
 
 ---
 
@@ -236,7 +266,7 @@ npm run smoke:admin
 wellness/
 ├── backend/                  # Layanan NestJS & Business Engine
 │   ├── migrations/           # Skema & migrasi tabel PostgreSQL
-│   ├── scripts/              # Skrip demo-setup, seed, & smoke test
+│   ├── scripts/              # Skrip demo, MCP lokal, & smoke test
 │   ├── src/                  # Kode sumber modular per fitur
 │   │   ├── attendance/       # Modul absensi pelatih & koreksi admin
 │   │   ├── auth/             # Sesi, login, CSRF, & ganti kata sandi

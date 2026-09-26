@@ -1,0 +1,205 @@
+.sora-ticket-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(18, 22, 16, 0.75);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 1.5rem;
+  overflow-y: auto;
+  animation: fadeIn 0.25s ease-out;
+}
+
+.sora-ticket-card {
+  background: #fdfbf7;
+  color: #1c1f1a;
+  width: 100%;
+  max-width: 440px;
+  border-radius: 20px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  position: relative;
+  border: 1px solid #e7e2d9;
+}
+
+.sora-ticket-header {
+  background: linear-gradient(135deg, #1b261b 0%, #283728 100%);
+  color: #f5f4ef;
+  padding: 1.5rem 1.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.sora-ticket-brand h3 {
+  margin: 0;
+  font-size: 1.35rem;
+  font-family: 'Playfair Display', serif;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  color: #f5f4ef;
+}
+
+.sora-ticket-brand span {
+  display: block;
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #a3b899;
+  margin-top: 2px;
+}
+
+.sora-ticket-badge {
+  background: #2e5932;
+  color: #e2fbd0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sora-ticket-punchline {
+  position: relative;
+  height: 24px;
+  background: #fdfbf7;
+  display: flex;
+  align-items: center;
+}
+
+.sora-ticket-punchline::before,
+.sora-ticket-punchline::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 22px;
+  height: 22px;
+  background: rgba(18, 22, 16, 0.75);
+  border-radius: 50%;
+  transform: translateY(-50%);
+}
+
+.sora-ticket-punchline::before {
+  left: -11px;
+}
+
+.sora-ticket-punchline::after {
+  right: -11px;
+}
+
+.sora-ticket-divider {
+  width: 100%;
+  border-top: 2px dashed #dcd6ca;
+  margin: 0 16px;
+}
+
+.sora-ticket-body {
+  padding: 0 1.75rem 1.25rem;
+}
+
+.sora-ticket-class-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0 0 0.75rem;
+  color: #1b261b;
+}
+
+.sora-ticket-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.sora-ticket-field span {
+  display: block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #787771;
+  margin-bottom: 2px;
+}
+
+.sora-ticket-field strong {
+  font-size: 0.88rem;
+  color: #21241f;
+  word-break: break-word;
+}
+
+.sora-ticket-qr-section {
+  background: #ffffff;
+  border: 1px solid #e7e2d9;
+  border-radius: 14px;
+  padding: 1.25rem 1rem;
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+.sora-ticket-qr-img {
+  width: 180px;
+  height: 180px;
+  margin: 0 auto 0.75rem;
+  display: block;
+  border-radius: 8px;
+}
+
+.sora-ticket-code {
+  font-family: monospace;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: #434c3e;
+  background: #f4f3ed;
+  padding: 4px 10px;
+  border-radius: 6px;
+  display: inline-block;
+  margin-bottom: 0.5rem;
+}
+
+.sora-ticket-instruction {
+  font-size: 0.75rem;
+  color: #6a6c66;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.sora-ticket-actions {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem 1.75rem 1.5rem;
+  background: #fdfbf7;
+  border-top: 1px solid #f0ece3;
+}
+
+.sora-ticket-actions button {
+  flex: 1;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .sora-ticket-overlay,
+  .sora-ticket-overlay * {
+    visibility: visible;
+  }
+  .sora-ticket-overlay {
+    position: absolute;
+    inset: 0;
+    background: transparent;
+    padding: 0;
+  }
+  .sora-ticket-card {
+    box-shadow: none;
+    border: 1px solid #ccc;
+    margin: 20px auto;
+  }
+  .sora-ticket-actions {
+    display: none !important;
+  }
+}

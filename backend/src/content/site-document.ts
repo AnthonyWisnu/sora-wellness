@@ -8,7 +8,7 @@ export const pageSections = {
 } as const;
 
 export type SectionType = typeof pageSections[keyof typeof pageSections][number];
-export type SiteItem = { title: string; body: string; caption: string; mediaId: string | null };
+export type SiteItem = { title: string; body: string; caption: string; mediaId: string | null; link?: string };
 export type SiteSection = {
   type: SectionType; visible: boolean; title: string; body: string; label: string;
   link: string; items: SiteItem[]; featuredClassTypeIds: string[]; featuredPackageOptionIds: string[];
@@ -93,7 +93,15 @@ export function parseSiteDocument(value: unknown): SiteDocument {
       if (link && !['/jadwal', '/membership', '/kontak', '/masuk'].includes(link)) fail('Tautan tombol tidak tersedia');
       const items = list(section.items, 12, 'Isi blok').map((rawItem) => {
         const item = object(rawItem, 'Isi blok');
-        return { title: string(item.title, 160, 'Judul item'), body: string(item.body, 1000, 'Isi item'), caption: string(item.caption, 120, 'Keterangan item'), mediaId: mediaId(item.mediaId) };
+        const link = item.link != null && item.link !== '' ? string(item.link, 40, 'Tautan item') : '';
+        if (link && !['/jadwal', '/membership', '/kontak', '/masuk'].includes(link)) fail('Tautan item tidak tersedia');
+        return {
+          title: string(item.title, 160, 'Judul item'),
+          body: string(item.body, 1000, 'Isi item'),
+          caption: string(item.caption, 120, 'Keterangan item'),
+          mediaId: mediaId(item.mediaId),
+          link,
+        };
       });
       return {
         type, visible: section.visible as boolean, title: string(section.title, 160, 'Judul blok'),
@@ -115,6 +123,18 @@ export function parseSiteDocument(value: unknown): SiteDocument {
     footer: { tagline: string(footer.tagline, 300, 'Tagline footer') },
     pages: resultPages,
   };
+}
+
+export function validatePublishedDocument(document: SiteDocument): void {
+  for (const [page, sections] of Object.entries(document.pages)) {
+    for (const section of sections) {
+      if (!section.visible) continue;
+      const populated = !['features', 'testimonials', 'faq', 'gallery'].includes(section.type)
+        || (section.type === 'gallery' ? document.profile.galleryMediaIds.length > 0 : section.items.length > 0);
+      if (populated && !section.title.trim()) fail(`Judul blok ${section.type} pada halaman ${page} wajib diisi sebelum terbit`);
+      if (page === 'membership' && section.type === 'features' && section.items.some(item => !item.title.trim())) fail('Setiap manfaat membership wajib memiliki judul');
+    }
+  }
 }
 
 export function referencedMedia(document: SiteDocument): string[] {

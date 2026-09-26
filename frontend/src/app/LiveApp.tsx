@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { X } from 'lucide-react'
 import {
   api,
@@ -43,6 +43,10 @@ export default function LiveApp() {
   const [classTypes, setClassTypes] = useState<PublicClassType[]>([])
   const [packages, setPackages] = useState<Packages | null>(null)
   const [sessions, setSessions] = useState<Session[]>([])
+  const [siteStatus, setSiteStatus] = useState<'loading' | 'ready' | 'error'>('loading')
+  const [packagesStatus, setPackagesStatus] = useState<'loading' | 'ready' | 'error'>('loading')
+  const [sessionsStatus, setSessionsStatus] = useState<'loading' | 'ready' | 'error'>('loading')
+  const sessionRequest = useRef(0)
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState('')
   const [category, setCategory] = useState('Semua')
@@ -80,11 +84,33 @@ export default function LiveApp() {
   )
 
   const loadSessions = useCallback(async () => {
-    const first = await api<Session[]>('/public/sessions?limit=100')
-    const all = [...first]
-    if (first.length === 100)
-      all.push(...(await api<Session[]>('/public/sessions?limit=100&page=2')))
-    setSessions(all)
+    const request = ++sessionRequest.current
+    setSessionsStatus('loading')
+    try {
+      const all: Session[] = []
+      for (let page = 1; ; page++) {
+        const batch = await api<Session[]>(`/public/sessions?limit=100&page=${page}`)
+        if (request !== sessionRequest.current) return
+        all.push(...batch)
+        if (batch.length < 100) break
+      }
+      setSessions(all)
+      setSessionsStatus('ready')
+    } catch (error) {
+      if (request !== sessionRequest.current) return
+      setSessionsStatus('error')
+      throw error
+    }
+  }, [])
+  const loadPackages = useCallback(async () => {
+    setPackagesStatus('loading')
+    try {
+      setPackages(await api<Packages>('/public/packages'))
+      setPackagesStatus('ready')
+    } catch (error) {
+      setPackagesStatus('error')
+      throw error
+    }
   }, [])
   const {
     selected,
@@ -124,27 +150,40 @@ export default function LiveApp() {
   useEffect(() => {
     let active = true
     const preview = new URLSearchParams(window.location.search).has('preview')
-    void Promise.all([
-      api<Studio>('/public/studio'),
-      api<Packages>('/public/packages'),
-      api<SiteDocument>(preview ? '/admin/site/preview' : '/public/site'),
-      api<PublicClassType[]>('/public/class-types'),
-    ])
-      .then(([nextStudio, nextPackages, nextSite, nextClasses]) => {
-        if (active) {
-          setStudio(nextStudio)
-          setPackages(nextPackages)
-          setSite(nextSite)
-          setClassTypes(nextClasses)
-        }
+    void api<Studio>('/public/studio')
+      .then((value) => {
+        if (active) setStudio(value)
       })
       .catch((error) => {
         if (active) show(message(error))
       })
+    void loadPackages().catch((error) => {
+      if (active) show(message(error))
+    })
+    void api<PublicClassType[]>('/public/class-types')
+      .then((value) => {
+        if (active) setClassTypes(value)
+      })
+      .catch((error) => {
+        if (active) show(message(error))
+      })
+    void api<SiteDocument>(preview ? '/admin/site/preview' : '/public/site')
+      .then((value) => {
+        if (active) {
+          setSite(value)
+          setSiteStatus('ready')
+        }
+      })
+      .catch((error) => {
+        if (active) {
+          setSiteStatus('error')
+          show(message(error))
+        }
+      })
     return () => {
       active = false
     }
-  }, [show])
+  }, [show, loadPackages])
   useEffect(() => {
     void loadSessions().catch((error) => show(message(error)))
   }, [actor, loadSessions, show])
@@ -192,11 +231,41 @@ export default function LiveApp() {
               guestDays,
               memberDays,
               busy,
+              sessionsStatus,
+              packagesStatus,
+              retrySessions: () => {
+                void loadSessions().catch((error) => show(message(error)))
+              },
+              retryPackages: () => {
+                void loadPackages().catch((error) => show(message(error)))
+              },
               go,
               openBooking,
               buyPackage,
             }}
           />
+        )}
+      {!site &&
+        siteStatus !== 'ready' &&
+        (path === '/' || path === '/jadwal' || path === '/membership' || path === '/kontak') && (
+          <main
+            className="shell zeira-public-state"
+            role={siteStatus === 'error' ? 'alert' : 'status'}
+          >
+            <h1>
+              {siteStatus === 'loading'
+                ? 'Memuat situs studio…'
+                : 'Konten situs belum dapat dimuat'}
+            </h1>
+            {siteStatus === 'error' && (
+              <button
+                className="zeira-btn zeira-btn-primary"
+                onClick={() => window.location.reload()}
+              >
+                Coba lagi
+              </button>
+            )}
+          </main>
         )}
 
       {path === '/masuk' && (

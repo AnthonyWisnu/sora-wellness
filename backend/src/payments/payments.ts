@@ -13,8 +13,11 @@ export class PaymentsService {
   async createSnapForBooking(client: PoolClient, bookingId: string, amount: number, holdMinutes: number) {
     const { serverKey } = await this.settings.credentials();
     const orderId = `CLS-${bookingId}`;
+    const customer = await client.query<{ email: string; name: string; title: string; wallet_reserved_idr: number }>(`SELECT u.email,u.full_name AS name,t.title,b.wallet_reserved_idr FROM bookings b JOIN app_users u ON u.id=b.customer_id JOIN class_sessions s ON s.id=b.session_id JOIN class_types t ON t.id=s.class_type_id WHERE b.id=$1`, [bookingId]);
+    if (!customer.rows[0]) throw new NotFoundException('Pelanggan booking tidak ditemukan');
     const payment = await client.query<{ id: string }>(`INSERT INTO payment_transactions (booking_id,order_id,gross_amount_idr,status) VALUES ($1,$2,$3,'pending') RETURNING id`, [bookingId,orderId,amount]);
-    const snap = await new MidtransClient(serverKey).createSnapTransaction(orderId, amount, holdMinutes);
+    const buyer = customer.rows[0];
+    const snap = await new MidtransClient(serverKey).createSnapTransaction(orderId, amount, holdMinutes, { email: buyer.email, name: buyer.name, itemName: `${buyer.wallet_reserved_idr > 0 ? 'Sisa pembayaran' : 'Pembayaran'} kelas ${buyer.title}` });
     await client.query('UPDATE payment_transactions SET snap_token=$1,redirect_url=$2,updated_at=now() WHERE id=$3', [snap.token,snap.redirect_url,payment.rows[0].id]);
     return { paymentId: payment.rows[0].id, orderId, snapToken: snap.token, redirectUrl: snap.redirect_url };
   }
@@ -22,8 +25,11 @@ export class PaymentsService {
   async createSnapForPackage(client: PoolClient, purchaseId: string, amount: number) {
     const { serverKey } = await this.settings.credentials();
     const orderId = `PKG-${purchaseId}`;
+    const customer = await client.query<{ email: string; name: string; duration_months: number }>(`SELECT u.email,u.full_name AS name,p.duration_months FROM package_purchases p JOIN app_users u ON u.id=p.customer_id WHERE p.id=$1`, [purchaseId]);
+    if (!customer.rows[0]) throw new NotFoundException('Pelanggan paket tidak ditemukan');
     const payment = await client.query<{ id: string }>(`INSERT INTO payment_transactions (package_purchase_id,order_id,gross_amount_idr,status) VALUES ($1,$2,$3,'pending') RETURNING id`, [purchaseId,orderId,amount]);
-    const snap = await new MidtransClient(serverKey).createSnapTransaction(orderId,amount,PACKAGE_CHECKOUT_MINUTES);
+    const buyer = customer.rows[0];
+    const snap = await new MidtransClient(serverKey).createSnapTransaction(orderId,amount,PACKAGE_CHECKOUT_MINUTES, { email: buyer.email, name: buyer.name, itemName: `Membership ${buyer.duration_months} bulan` });
     await client.query('UPDATE payment_transactions SET snap_token=$1,redirect_url=$2,updated_at=now() WHERE id=$3', [snap.token,snap.redirect_url,payment.rows[0].id]);
     return { orderId, redirectUrl: snap.redirect_url };
   }

@@ -5,6 +5,7 @@ const snapUrl = 'https://app.sandbox.midtrans.com/snap/v1/transactions';
 const statusBaseUrl = 'https://api.sandbox.midtrans.com/v2';
 
 export type SnapTransaction = { token: string; redirect_url: string };
+export type SnapCustomer = { email: string; name: string; itemName: string };
 export type MidtransStatus = {
   order_id?: string;
   merchant_id?: string;
@@ -27,10 +28,11 @@ export class MidtransClient {
 
   private authorization() { return `Basic ${Buffer.from(`${this.serverKey}:`).toString('base64')}`; }
 
-  async createSnapTransaction(orderId: string, grossAmountIdr: number, expiryMinutes?: number): Promise<SnapTransaction> {
+  async createSnapTransaction(orderId: string, grossAmountIdr: number, expiryMinutes?: number, customer?: SnapCustomer): Promise<SnapTransaction> {
     if (!/^[a-zA-Z0-9._~-]{1,50}$/.test(orderId)) throw new Error('order_id Midtrans tidak valid');
     if (!Number.isSafeInteger(grossAmountIdr) || grossAmountIdr <= 0) throw new Error('Nominal Midtrans tidak valid');
     if (expiryMinutes !== undefined && (!Number.isInteger(expiryMinutes) || expiryMinutes < 1 || expiryMinutes > 10080)) throw new Error('Durasi pembayaran tidak valid');
+    if (customer && (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customer.email) || !customer.name.trim() || !customer.itemName.trim())) throw new Error('Data pelanggan Midtrans tidak valid');
     const notificationUrl = process.env.MIDTRANS_NOTIFICATION_URL;
     if (notificationUrl) {
       const url = new URL(notificationUrl);
@@ -42,6 +44,10 @@ export class MidtransClient {
       headers: { Authorization: this.authorization(), Accept: 'application/json', 'Content-Type': 'application/json', ...(notificationUrl ? { 'X-Override-Notification': notificationUrl } : {}) },
       body: JSON.stringify({
         transaction_details: { order_id: orderId, gross_amount: grossAmountIdr },
+        ...(customer ? {
+          customer_details: { email: customer.email, first_name: customer.name.trim().slice(0, 50) },
+          item_details: [{ id: orderId.slice(0, 50), price: grossAmountIdr, quantity: 1, name: customer.itemName.trim().slice(0, 50) }],
+        } : {}),
         ...(expiryMinutes === undefined ? {} : {
           expiry: { start_time: jakartaNow, duration: Math.max(expiryMinutes, 15), unit: 'minutes' },
           page_expiry: { duration: Math.max(expiryMinutes, 15), unit: 'minutes' },
@@ -65,6 +71,17 @@ export class MidtransClient {
     // Pada fase itu Status API mengembalikan HTTP 404 untuk order yang sama.
     if (response.status === 404) return { status_code: '404' };
     if (!response.ok) throw new ServiceUnavailableException(`Pemeriksaan status Midtrans gagal (HTTP ${response.status})`);
+    return await response.json() as MidtransStatus;
+  }
+
+  async cancelPendingTransaction(orderId: string): Promise<MidtransStatus> {
+    if (!/^[a-zA-Z0-9._~-]{1,50}$/.test(orderId)) throw new Error('order_id Midtrans tidak valid');
+    const response = await fetch(`${statusBaseUrl}/${encodeURIComponent(orderId)}/cancel`, {
+      method: 'POST',
+      headers: { Authorization: this.authorization(), Accept: 'application/json' },
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!response.ok) throw new ServiceUnavailableException(`Midtrans menolak pembatalan (HTTP ${response.status})`);
     return await response.json() as MidtransStatus;
   }
 

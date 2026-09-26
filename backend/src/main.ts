@@ -44,12 +44,43 @@ async function bootstrap() {
   await app.listen(Number(process.env.PORT ?? 3000), '127.0.0.1');
   const payments = app.get(PaymentsService);
   const lockers = app.get(LockersService);
-  const sweep = setInterval(() => { void payments.expirePending().catch(() => { /* next sweep retries */ }); void payments.expirePendingPackages().catch(() => { /* next sweep retries */ }); }, 60000);
-  const lockerSweep = setInterval(() => { void lockers.releaseExpired().catch(() => { /* next sweep retries */ }); }, 60 * 60 * 1000);
-  lockerSweep.unref();
-  sweep.unref();
   const health = app.get(HealthService);
-  const healthSweep = setInterval(() => { void health.cleanup().catch(() => { /* next sweep retries */ }); }, 60 * 60 * 1000);
+
+  const runPaymentSweep = async () => {
+    try {
+      await payments.expirePending();
+      await payments.expirePendingPackages();
+    } catch (err) {
+      console.warn('[BackgroundWorker] Error during pending payment sweep:', err);
+    }
+  };
+
+  const runLockerSweep = async () => {
+    try {
+      await lockers.releaseExpired();
+    } catch (err) {
+      console.warn('[BackgroundWorker] Error during locker release sweep:', err);
+    }
+  };
+
+  const runHealthCleanup = async () => {
+    try {
+      await health.cleanup();
+    } catch (err) {
+      console.warn('[BackgroundWorker] Error during health snapshots cleanup:', err);
+    }
+  };
+
+  // Immediate sweep on server start
+  void runPaymentSweep();
+  void runLockerSweep();
+  void runHealthCleanup();
+
+  const sweep = setInterval(() => { void runPaymentSweep(); }, 60000);
+  const lockerSweep = setInterval(() => { void runLockerSweep(); }, 60 * 60 * 1000);
+  const healthSweep = setInterval(() => { void runHealthCleanup(); }, 60 * 60 * 1000);
+  sweep.unref();
+  lockerSweep.unref();
   healthSweep.unref();
 }
 

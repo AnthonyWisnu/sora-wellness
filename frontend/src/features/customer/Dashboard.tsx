@@ -1,9 +1,11 @@
-import { ArrowRight, CreditCard } from 'lucide-react'
+import { useState } from 'react'
+import { ArrowRight, CreditCard, QrCode } from 'lucide-react'
 import type { Actor, Booking, Membership, PackagePurchase, Payment } from '../../shared/api'
 import { formatDate, localDateTime, localTime, money, statusName } from '../../shared/format'
 import { CustomerProfilePanel } from './Profile'
 import { CustomerLockerPanel } from './Locker'
 import { CustomerWalletPanel } from './Wallet'
+import { TicketModal } from './TicketModal'
 
 type Props = {
   section: string
@@ -44,6 +46,7 @@ export function CustomerDashboard({
   show,
   onNameChanged,
 }: Props) {
+  const [ticketBooking, setTicketBooking] = useState<Booking | null>(null)
   return (
     <>
       {section === 'overview' && (
@@ -103,6 +106,15 @@ export function CustomerDashboard({
                     >
                       {statusName(row.status)}
                     </span>
+                    {row.status === 'confirmed' && (
+                      <button
+                        className="button button-outline"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                        onClick={() => setTicketBooking(row)}
+                      >
+                        <QrCode size={14} /> E-Ticket QR
+                      </button>
+                    )}
                     {row.status === 'pending_payment' && (
                       <>
                         <button
@@ -239,6 +251,14 @@ export function CustomerDashboard({
           timezone={timezone}
           onNameChanged={onNameChanged}
           show={show}
+        />
+      )}
+      {ticketBooking && (
+        <TicketModal
+          booking={ticketBooking}
+          actor={actor}
+          timezone={timezone}
+          onClose={() => setTicketBooking(null)}
         />
       )}
     </>

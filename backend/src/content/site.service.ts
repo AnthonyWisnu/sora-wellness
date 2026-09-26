@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import type { PoolClient } from 'pg';
 import { Db } from '../shared/db';
-import { initialSiteDocument, parseSiteDocument, referencedMedia, SiteDocument } from './site-document';
+import { initialSiteDocument, parseSiteDocument, referencedMedia, validatePublishedDocument, SiteDocument } from './site-document';
 
 type SiteRow = { draft: SiteDocument; published: SiteDocument; draft_version: number; published_version: number; updated_at: Date; published_at: Date };
 
@@ -78,6 +78,7 @@ export class SiteService {
       if (row.draft_version !== expectedVersion) throw new ConflictException('Draf telah berubah. Muat ulang sebelum menerbitkan.');
       if (row.published_version === row.draft_version) return;
       const document = parseSiteDocument(row.draft);
+      validatePublishedDocument(document);
       await this.validateFeatured(client, document);
       await this.syncMedia(client, 'published', document);
       const profile = document.profile;

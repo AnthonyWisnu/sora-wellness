@@ -66,6 +66,143 @@ export function SectionFields({ section, media, classes, packages, update }: Pro
           </label>
         </div>
       )}
+      {section.type === 'hero' && (
+        <fieldset style={{ marginTop: '1.25rem' }}>
+          <legend>Slide Banner Carousel (Dinamis)</legend>
+          <p style={{ margin: '4px 0 12px', fontSize: '0.85rem', color: 'var(--text-muted, #71717a)' }}>
+            Tambahkan slide banner agar beranda menampilkan teks, foto, dan tombol Call-To-Action yang berbeda di setiap slide. Jika kosong, beranda akan memutar foto galeri studio dengan teks judul default di atas.
+          </p>
+          {section.items.map((slide, index) => (
+            <div className="site-item" key={index}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <strong>Slide {index + 1}</strong>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  {index > 0 && (
+                    <button
+                      type="button"
+                      className="button button-text"
+                      title="Geser ke atas"
+                      onClick={() => {
+                        const next = [...section.items];
+                        const temp = next[index - 1];
+                        next[index - 1] = next[index];
+                        next[index] = temp;
+                        set('items', next);
+                      }}
+                    >
+                      ↑ Geser Atas
+                    </button>
+                  )}
+                  {index < section.items.length - 1 && (
+                    <button
+                      type="button"
+                      className="button button-text"
+                      title="Geser ke bawah"
+                      onClick={() => {
+                        const next = [...section.items];
+                        const temp = next[index + 1];
+                        next[index + 1] = next[index];
+                        next[index] = temp;
+                        set('items', next);
+                      }}
+                    >
+                      ↓ Geser Bawah
+                    </button>
+                  )}
+                  <button
+                    className="button button-text live-danger"
+                    type="button"
+                    onClick={() =>
+                      set(
+                        'items',
+                        section.items.filter((_, at) => at !== index),
+                      )
+                    }
+                  >
+                    Hapus Slide
+                  </button>
+                </div>
+              </div>
+              <label>
+                Judul Slide
+                <input
+                  maxLength={160}
+                  placeholder="Contoh: Temukan ruang untuk kembali seimbang."
+                  value={slide.title}
+                  onChange={(event) => updateItem(index, 'title', event.target.value)}
+                />
+              </label>
+              <label>
+                Deskripsi / Subtitle Slide
+                <textarea
+                  rows={2}
+                  maxLength={1000}
+                  placeholder="Deskripsi singkat yang tampil di bawah judul..."
+                  value={slide.body}
+                  onChange={(event) => updateItem(index, 'body', event.target.value)}
+                />
+              </label>
+              <div className="live-form-grid">
+                <label>
+                  Teks Tombol (CTA)
+                  <input
+                    maxLength={80}
+                    placeholder="Contoh: Jelajahi Kelas"
+                    value={slide.caption}
+                    onChange={(event) => updateItem(index, 'caption', event.target.value)}
+                  />
+                </label>
+                <label>
+                  Tujuan Tombol
+                  <select
+                    value={slide.link ?? ''}
+                    onChange={(event) => updateItem(index, 'link' as keyof SiteItem, event.target.value)}
+                  >
+                    <option value="">Ikuti tombol utama ({section.link || 'Tanpa tombol'})</option>
+                    <option value="/jadwal">Jadwal (/jadwal)</option>
+                    <option value="/membership">Paket (/membership)</option>
+                    <option value="/kontak">Kontak (/kontak)</option>
+                    <option value="/masuk">Masuk (/masuk)</option>
+                  </select>
+                </label>
+              </div>
+              <label>
+                Foto Latar Slide
+                <select
+                  value={slide.mediaId ?? ''}
+                  onChange={(event) => updateItem(index, 'mediaId', event.target.value || null)}
+                >
+                  <option value="">Default (Foto Utama Studio)</option>
+                  {media.map((asset) => (
+                    <option value={asset.id} key={asset.id}>
+                      {asset.filename}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          ))}
+          <button
+            className="button button-outline"
+            type="button"
+            disabled={section.items.length >= 8}
+            onClick={() =>
+              set('items', [
+                ...section.items,
+                {
+                  title: '',
+                  body: '',
+                  caption: section.label || 'Jelajahi kelas',
+                  link: section.link || '/jadwal',
+                  mediaId: null,
+                },
+              ])
+            }
+          >
+            + Tambah Slide Banner ({section.items.length}/8)
+          </button>
+        </fieldset>
+      )}
       {section.type === 'sessions' && (
         <fieldset>
           <legend>Jenis kelas yang ditonjolkan</legend>

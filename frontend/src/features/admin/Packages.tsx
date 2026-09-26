@@ -4,6 +4,7 @@ import { api, type AdminPackageOption } from '../../shared/api'
 import { money } from '../../shared/format'
 import { AdminDialog } from './AdminDialog'
 import { type PanelProps, errorMessage } from './management-common'
+import { PackageBenefits } from './PackageBenefits'
 
 export function AdminPackagesPanel({ show, onChanged }: PanelProps & { onChanged: () => void }) {
   const [rows, setRows] = useState<AdminPackageOption[]>([])
@@ -165,6 +166,7 @@ export function AdminPackagesPanel({ show, onChanged }: PanelProps & { onChanged
           </div>
         )}
       </div>
+      <PackageBenefits show={show} onPublished={onChanged} />
     </section>
   )
 }

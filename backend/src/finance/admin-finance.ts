@@ -1,7 +1,8 @@
-import { BadRequestException, Controller, Get, NotFoundException, Param, ParseUUIDPipe, Query, Req, UseGuards } from '@nestjs/common';
+import { BadRequestException, Controller, Get, NotFoundException, Param, ParseUUIDPipe, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiCookieAuth, ApiOkResponse, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsDateString, IsIn, IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min } from 'class-validator';
+import type { Response } from 'express';
 import { Db } from '../shared/db';
 import { AuthRequest, assertRole, SessionGuard } from '../shared/security';
 
@@ -96,6 +97,91 @@ export class AdminFinanceController {
         ORDER BY p.created_at DESC,p.id DESC LIMIT $6 OFFSET $7`,[...values,limit,(page-1)*limit]),
     ]);
     return { items: rows.rows,page,limit,total: total.rows[0].count };
+  }
+
+  @Get('payments/export')
+  async exportPayments(
+    @Req() req: AuthRequest,
+    @Query() filter: PaymentFilter,
+    @Res() res: Response,
+  ) {
+    assertRole(req, 'admin');
+    const [from, to] = datesOf(filter);
+    const values = [filter.q?.trim() || null, filter.status ?? null, filter.kind ?? null, from, to];
+    const where = `FROM payment_transactions p LEFT JOIN bookings b ON b.id=p.booking_id
+      LEFT JOIN class_sessions s ON s.id=b.session_id LEFT JOIN class_types t ON t.id=s.class_type_id
+      LEFT JOIN package_purchases pp ON pp.id=p.package_purchase_id
+      LEFT JOIN package_options po ON po.id=pp.package_option_id
+      JOIN app_users u ON u.id=COALESCE(b.customer_id,pp.customer_id)
+      CROSS JOIN studio st WHERE st.id=1
+        AND ($1::text IS NULL OR u.full_name ILIKE '%'||$1||'%' OR u.email::text ILIKE '%'||$1||'%' OR p.order_id ILIKE '%'||$1||'%')
+        AND ($2::text IS NULL OR p.status=$2)
+        AND ($3::text IS NULL OR ($3='class' AND p.booking_id IS NOT NULL) OR ($3='package' AND p.package_purchase_id IS NOT NULL))
+        AND ($4::date IS NULL OR (p.created_at AT TIME ZONE st.timezone)::date >= $4::date)
+        AND ($5::date IS NULL OR (p.created_at AT TIME ZONE st.timezone)::date <= $5::date)`;
+
+    const rows = await this.db.query<{
+      orderId: string;
+      grossAmountIdr: number;
+      status: string;
+      createdAt: Date;
+      kind: string;
+      customerName: string;
+      customerEmail: string;
+      itemName: string;
+    }>(
+      `SELECT p.order_id AS "orderId", p.gross_amount_idr AS "grossAmountIdr", p.status,
+              p.created_at AS "createdAt",
+              CASE WHEN p.booking_id IS NOT NULL THEN 'Kelas' ELSE 'Paket Membership' END AS kind,
+              u.full_name AS "customerName", u.email AS "customerEmail",
+              COALESCE(t.title, 'Membership ' || COALESCE(pp.duration_months, po.duration_months) || ' Bulan') AS "itemName"
+       ${where}
+       ORDER BY p.created_at DESC, p.id DESC LIMIT 5000`,
+      values,
+    );
+
+    const escapeCsv = (str: string | number | null | undefined) => {
+      const s = String(str ?? '');
+      return `"${s.replace(/"/g, '""')}"`;
+    };
+
+    const header = [
+      'Order ID',
+      'Waktu Transaksi',
+      'Kategori',
+      'Nama Item / Kelas',
+      'Nama Pelanggan',
+      'Email Pelanggan',
+      'Nominal Kotor (IDR)',
+      'Estimasi Biaya Gateway (IDR)',
+      'Nominal Bersih (IDR)',
+      'Status Pembayaran',
+    ].join(',');
+
+    const lines = rows.rows.map((r) => {
+      const gross = Number(r.grossAmountIdr) || 0;
+      const fee = r.status === 'success' ? Math.round(gross * 0.02) : 0;
+      const net = gross - fee;
+      const timeStr = new Date(r.createdAt).toISOString().replace('T', ' ').slice(0, 19);
+      return [
+        escapeCsv(r.orderId),
+        escapeCsv(timeStr),
+        escapeCsv(r.kind),
+        escapeCsv(r.itemName),
+        escapeCsv(r.customerName),
+        escapeCsv(r.customerEmail),
+        gross,
+        fee,
+        net,
+        escapeCsv(r.status),
+      ].join(',');
+    });
+
+    const csvContent = '\ufeff' + [header, ...lines].join('\r\n');
+    const dateTag = new Date().toISOString().slice(0, 10);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="sora-laporan-keuangan-${dateTag}.csv"`);
+    res.send(csvContent);
   }
 
   @Get('wallets')

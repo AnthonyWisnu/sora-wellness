@@ -1,4 +1,4 @@
-import { Body, ConflictException, Controller, Get, Injectable, NotFoundException, Param, ParseUUIDPipe, Put, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, ConflictException, Controller, Get, Injectable, NotFoundException, Param, ParseUUIDPipe, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiCookieAuth, ApiProperty, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
 import { IsBoolean, IsDateString, IsOptional, IsString, Length } from 'class-validator';
 import { PoolClient } from 'pg';
@@ -7,6 +7,7 @@ import { AuthRequest, assertRole, SessionGuard } from '../shared/security';
 
 class AttendanceDto { @ApiProperty({ example: true }) @IsBoolean() present!: boolean; }
 class CorrectionDto extends AttendanceDto { @ApiProperty({ minLength: 5, maxLength: 500 }) @IsString() @Length(5,500) reason!: string; }
+class CheckInDto { @ApiProperty({ example: 'b210d394-1909-4c41-82bb-040920cd65b6' }) @IsString() bookingId!: string; }
 class CoachSessionFilter { @ApiPropertyOptional({ format: 'date', example: '2026-09-25' }) @IsOptional() @IsDateString() date?: string; }
 
 type SessionRow = { id: string; coach_id: string; status: string; starts_at: Date; ends_at: Date };
@@ -20,11 +21,21 @@ export class AttendanceService {
   }
 
   async coachSummary(coachId: string) {
-    const [counts, sessions] = await Promise.all([
+    const [counts, sessions, performance] = await Promise.all([
       this.db.query<{ assignedCount: number; upcomingCount: number; participantCount: number }>(`SELECT count(*) FILTER (WHERE s.status='scheduled')::int AS "assignedCount",count(*) FILTER (WHERE s.status='scheduled' AND s.starts_at>=now())::int AS "upcomingCount",coalesce(sum((SELECT count(*) FROM bookings b WHERE b.session_id=s.id AND b.status='confirmed')) FILTER (WHERE s.status='scheduled' AND s.starts_at>=now()),0)::int AS "participantCount" FROM class_sessions s WHERE s.coach_id=$1`, [coachId]),
       this.db.query(`SELECT s.id,s.local_date::text AS "localDate",s.starts_at AS "startsAt",s.ends_at AS "endsAt",s.status,s.capacity,t.title,t.level,t.category,(SELECT count(*)::int FROM bookings b WHERE b.session_id=s.id AND b.status='confirmed') AS "participantCount" FROM class_sessions s JOIN class_types t ON t.id=s.class_type_id WHERE s.coach_id=$1 AND s.status='scheduled' AND s.starts_at>=now() ORDER BY s.starts_at ASC LIMIT 6`, [coachId]),
+      this.db.query<{ completedCount: number; attendedCount: number }>(`
+        SELECT 
+          count(DISTINCT s.id) FILTER (WHERE s.ends_at < now() AND s.status = 'scheduled')::int AS "completedCount",
+          count(a.booking_id) FILTER (WHERE a.present = true)::int AS "attendedCount"
+        FROM class_sessions s
+        LEFT JOIN attendance a ON a.session_id = s.id
+        WHERE s.coach_id = $1
+      `, [coachId]),
     ]);
-    return { ...counts.rows[0], sessions: sessions.rows };
+    const perf = performance.rows[0] ?? { completedCount: 0, attendedCount: 0 };
+    const estimatedEarnings = (perf.completedCount * 150000) + (perf.attendedCount * 15000);
+    return { ...counts.rows[0], ...perf, estimatedEarnings, sessions: sessions.rows };
   }
 
   async participants(coachId: string, sessionId: string) {
@@ -84,6 +95,63 @@ export class AttendanceService {
     if (!session.rows[0]) throw new NotFoundException('Sesi tidak ditemukan');
     return (await this.db.query(`SELECT b.id AS "bookingId",b.customer_id AS "customerId",u.full_name AS "fullName",a.present,a.recorded_at AS "recordedAt" FROM bookings b JOIN app_users u ON u.id=b.customer_id LEFT JOIN attendance a ON a.booking_id=b.id WHERE b.session_id=$1 AND b.status='confirmed' ORDER BY u.full_name,u.id`, [sessionId])).rows;
   }
+
+  async checkInByBooking(adminId: string, bookingId: string) {
+    const booking = await this.db.query<{
+      id: string;
+      sessionId: string;
+      customerId: string;
+      status: string;
+      customerName: string;
+      classTitle: string;
+      startsAt: Date;
+      endsAt: Date;
+    }>(
+      `SELECT b.id, b.session_id AS "sessionId", b.customer_id AS "customerId", b.status,
+              u.full_name AS "customerName", t.title AS "classTitle",
+              s.starts_at AS "startsAt", s.ends_at AS "endsAt"
+       FROM bookings b
+       JOIN class_sessions s ON s.id = b.session_id
+       JOIN class_types t ON t.id = s.class_type_id
+       JOIN app_users u ON u.id = b.customer_id
+       WHERE b.id = $1`,
+      [bookingId],
+    );
+
+    const row = booking.rows[0];
+    if (!row) throw new NotFoundException('Tiket booking tidak ditemukan');
+    if (row.status !== 'confirmed') {
+      throw new ConflictException(`Status booking adalah ${row.status}, belum terkonfirmasi/lunas`);
+    }
+
+    const prev = await this.db.query<{ present: boolean }>(
+      'SELECT present FROM attendance WHERE booking_id = $1',
+      [bookingId],
+    );
+
+    const alreadyPresent = prev.rows[0]?.present === true;
+
+    await this.db.query(
+      `INSERT INTO attendance (session_id, customer_id, booking_id, present, recorded_by, recorded_at)
+       VALUES ($1, $2, $3, true, $4, now())
+       ON CONFLICT (session_id, customer_id)
+       DO UPDATE SET present = true, recorded_by = $4, recorded_at = now()`,
+      [row.sessionId, row.customerId, row.id, adminId],
+    );
+
+    return {
+      success: true,
+      alreadyCheckedIn: alreadyPresent,
+      bookingId: row.id,
+      sessionId: row.sessionId,
+      customerId: row.customerId,
+      customerName: row.customerName,
+      classTitle: row.classTitle,
+      startsAt: row.startsAt,
+      endsAt: row.endsAt,
+      recordedAt: new Date(),
+    };
+  }
 }
 
 @ApiTags('coach') @ApiCookieAuth('wellness.sid') @UseGuards(SessionGuard) @Controller('coach/sessions')
@@ -108,4 +176,9 @@ export class AdminAttendanceController {
   correct(@Req() req: AuthRequest, @Param('id',ParseUUIDPipe) id: string, @Param('customerId',ParseUUIDPipe) customerId: string, @Body() body: CorrectionDto) { return this.attendance.correct(assertRole(req,'admin').id,id,customerId,body.present,body.reason); }
   @Get(':id/attendance-corrections')
   corrections(@Req() req: AuthRequest, @Param('id',ParseUUIDPipe) id: string) { assertRole(req,'admin'); return this.attendance.corrections(id); }
+  @Post('check-in')
+  checkIn(@Req() req: AuthRequest, @Body() body: CheckInDto) {
+    const admin = assertRole(req, 'admin');
+    return this.attendance.checkInByBooking(admin.id, body.bookingId.trim());
+  }
 }

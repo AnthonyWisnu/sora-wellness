@@ -22,45 +22,398 @@
 .live-profile-grid small {
   color: var(--muted);
 }
+/* Coach Master-Detail Attendance Layout */
 .live-coach-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 18px;
+  grid-template-columns: 390px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
 }
+
+.live-coach-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.live-coach-filter-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.live-coach-tabs {
+  display: flex;
+  background: #f1f5f2;
+  padding: 4px;
+  border-radius: 8px;
+  gap: 4px;
+}
+
+.live-coach-tab-btn {
+  flex: 1;
+  padding: 7px 8px;
+  border: none;
+  background: transparent;
+  color: var(--muted, #64748b);
+  font-size: 11.5px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.live-coach-tab-btn:hover {
+  color: var(--ink, #1e293b);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.live-coach-tab-btn.active {
+  background: #fff;
+  color: var(--green, #1e4534);
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.live-coach-search-date-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.live-coach-search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line, #e2e8f0);
+  background: #fff;
+  border-radius: 7px;
+  padding: 0 10px;
+}
+
+.live-coach-search-box input {
+  border: none;
+  padding: 8px 0;
+  font-size: 12.5px;
+  width: 100%;
+  outline: none;
+  background: transparent;
+}
+
+.live-date-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.live-date-input-wrap input {
+  flex: 1;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 7px 10px;
+  font-size: 12.5px;
+  color: var(--ink);
+  background: #fff;
+}
+
+.live-clear-date-btn {
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  background: #f8fafc;
+  color: var(--muted);
+  border-radius: 7px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.live-clear-date-btn:hover {
+  background: #fee2e2;
+  color: #ef4444;
+  border-color: #fca5a5;
+}
+
 .live-coach-sessions {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
-  align-content: start;
-  gap: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: calc(100vh - 240px);
+  min-height: 200px;
+  overflow-y: auto;
+  padding-right: 6px;
 }
+
+.live-coach-sessions::-webkit-scrollbar {
+  width: 5px;
+}
+.live-coach-sessions::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
 .live-coach-session {
   text-align: left;
-  border: 1px solid var(--line);
+  border: 1.5px solid var(--line, #e2e8f0);
   background: #fff;
-  display: grid;
-  gap: 10px;
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
   cursor: pointer;
   width: 100%;
+  transition: all 0.15s ease-in-out;
+  position: relative;
 }
+
+.live-coach-session:hover {
+  border-color: var(--green, #1e4534);
+  background: #fcfdfc;
+  transform: translateY(-1px);
+}
+
 .live-coach-session.selected {
-  border-color: var(--green);
-  box-shadow: 0 0 0 2px rgba(30, 69, 52, 0.1);
+  border-color: var(--green, #1e4534);
+  border-left: 5px solid var(--green, #1e4534);
+  background: #f4f8f5;
+  box-shadow: 0 2px 6px rgba(30, 69, 52, 0.08);
 }
-.live-coach-session strong {
-  font-size: 18px;
+
+.live-coach-session-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
-.live-coach-session small {
-  color: var(--muted);
-  line-height: 1.5;
+
+.live-coach-badge-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted, #64748b);
 }
+
+.live-coach-badge-date.today {
+  color: #15803d;
+  background: #dcfce7;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.live-coach-status-pill {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  text-transform: capitalize;
+}
+
+.live-coach-status-pill.upcoming {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.live-coach-status-pill.ongoing {
+  background: #dcfce7;
+  color: #15803d;
+  font-weight: 700;
+}
+
+.live-coach-status-pill.ended {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.live-coach-status-pill.cancelled {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.live-coach-session-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.live-coach-session-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--ink, #0f172a);
+  line-height: 1.3;
+}
+
+.live-coach-session-arrow {
+  color: var(--muted, #94a3b8);
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.live-coach-session.selected .live-coach-session-arrow {
+  color: var(--green, #1e4534);
+  transform: translateX(3px);
+}
+
+.live-coach-session-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11.5px;
+  color: var(--muted, #64748b);
+  border-top: 1px dashed var(--line, #e2e8f0);
+  padding-top: 6px;
+  margin-top: 2px;
+}
+
+.live-coach-session-time,
+.live-coach-session-capacity {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Detail & Attendance Column */
+.live-coach-participants {
+  position: sticky;
+  top: 20px;
+  border-radius: 12px;
+  border: 1px solid var(--line, #e2e8f0);
+  background: #fff;
+  padding: 24px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
 .live-coach-participants > h2 {
-  font-size: 25px;
-  margin: 13px 0 5px;
+  font-size: 24px;
+  font-weight: 700;
+  margin: 6px 0 4px;
+  color: var(--ink, #0f172a);
 }
-.live-coach-participants > p {
-  color: var(--muted);
+
+.live-coach-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-size: 12.5px;
+  color: var(--muted, #64748b);
+  margin-bottom: 14px;
+}
+
+.live-coach-detail-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.live-coach-detail-stats {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.live-stat-chip {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 14px;
+  background: #f8fafc;
+  border: 1px solid var(--line, #e2e8f0);
+  border-radius: 8px;
+  min-width: 80px;
+}
+
+.live-stat-chip .chip-label {
+  font-size: 10.5px;
+  color: var(--muted, #64748b);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.live-stat-chip .chip-val {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink, #0f172a);
+  margin-top: 2px;
+}
+
+.live-stat-chip.chip-success {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+.live-stat-chip.chip-success .chip-val {
+  color: #15803d;
+}
+
+.live-stat-chip.chip-warning {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+.live-stat-chip.chip-warning .chip-val {
+  color: #b45309;
+}
+
+.live-stat-chip.chip-muted {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+.live-stat-chip.chip-muted .chip-val {
+  color: #64748b;
+}
+
+.live-coach-quick-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #f8fafc;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  border: 1px solid var(--line, #e2e8f0);
+  flex-wrap: wrap;
+}
+
+.live-coach-period-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 12px;
+  color: var(--muted, #64748b);
 }
+
+.live-health-summary-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-left: 4px solid #ef4444;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  color: #991b1b;
+}
+
+.live-health-summary-banner strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.live-health-summary-banner p {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: #b91c1c;
+  line-height: 1.4;
+}
+
 .live-coach-empty {
   display: grid;
   justify-items: center;
@@ -70,13 +423,42 @@
 }
 .live-coach-empty h3 {
   color: var(--ink);
+  margin: 12px 0 6px;
 }
 .live-coach-person {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
   gap: 20px;
-  padding: 18px 0;
+  padding: 16px 0;
   border-top: 1px solid var(--line);
+}
+.live-coach-person-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1;
+}
+.live-coach-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.live-coach-person-details {
+  flex: 1;
+}
+.live-coach-person-name {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--ink, #0f172a);
 }
 .live-coach-person strong,
 .live-coach-person small {
@@ -93,8 +475,8 @@
   gap: 8px;
   background: #f5f2e9;
   border-radius: 8px;
-  margin-top: 12px;
-  padding: 12px;
+  margin-top: 10px;
+  padding: 10px 12px;
   max-width: 500px;
 }
 .live-health-note span {
@@ -113,13 +495,23 @@
   justify-content: flex-end;
   gap: 7px;
   flex-wrap: wrap;
-  align-self: flex-start;
+  align-self: center;
 }
 .live-attendance-actions span {
   font-size: 11px;
   color: var(--muted);
   width: 100%;
   text-align: right;
+  font-weight: 600;
+}
+.live-attendance-status.present {
+  color: #15803d;
+}
+.live-attendance-status.absent {
+  color: #b91c1c;
+}
+.live-attendance-status.pending {
+  color: #d97706;
 }
 .live-attendance-actions .button {
   font-size: 11px;
@@ -128,24 +520,40 @@
   display: flex;
   gap: 6px;
   align-items: center;
+  font-size: 12px;
+  color: var(--muted);
 }
-@media (max-width: 900px) {
+.live-coach-mobile-header {
+  display: none;
+}
+@media (max-width: 1024px) {
   .live-coach-layout {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: 330px minmax(0, 1fr);
+    gap: 16px;
   }
 }
-@media (max-width: 760px) {
-  .live-profile-grid {
+@media (max-width: 860px) {
+  .live-coach-layout {
     grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .live-coach-sessions {
+    max-height: 380px;
   }
   .live-coach-person {
     flex-direction: column;
+    gap: 12px;
   }
   .live-attendance-actions {
+    width: 100%;
     justify-content: flex-start;
   }
   .live-attendance-actions span {
     text-align: left;
+  }
+  .live-coach-mobile-header {
+    display: flex;
+    margin-bottom: 12px;
   }
 }
 .live-admin-attendance {
@@ -204,22 +612,18 @@
 }
 .live-coach-filter {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: 6px;
   color: var(--muted);
   font-size: 12px;
-  margin: -4px 0 18px;
+  margin: 0;
 }
 .live-coach-filter input {
   border: 1px solid var(--line);
   border-radius: 7px;
-  padding: 9px 11px;
+  padding: 8px 10px;
   color: var(--ink);
   background: #fff;
-}
-@media (max-width: 760px) {
-  .live-coach-filter {
-    align-items: flex-start;
-    flex-direction: column;
-  }
+  font-size: 12.5px;
+  width: 100%;
 }

@@ -12,6 +12,7 @@ import { sitePageNames, siteSectionNames } from '../../../shared/types/site'
 import { errorMessage } from '../../../shared/errors'
 import { SectionFields } from './SectionFields'
 import { MediaManager } from './MediaManager'
+import { useConfirm } from '../../../shared/confirm-context'
 import './SiteEditor.css'
 
 type PackageOption = { id: string; duration_months: number; active: boolean }
@@ -19,6 +20,7 @@ type Props = { show: (message: string) => void; onChanged: () => void }
 type Tab = 'profile' | 'pages' | 'contact' | 'media'
 
 export function SiteEditor({ show, onChanged }: Props) {
+  const confirm = useConfirm()
   const [draft, setDraft] = useState<SiteDraft | null>(null)
   const [media, setMedia] = useState<MediaAsset[]>([])
   const [classes, setClasses] = useState<PublicClassType[]>([])
@@ -100,7 +102,15 @@ export function SiteEditor({ show, onChanged }: Props) {
     }
   }
   async function publish() {
-    if (!draft || dirty || !window.confirm('Terbitkan seluruh isi draf untuk pengunjung?')) return
+    if (!draft || dirty) return
+    if (
+      !(await confirm({
+        title: 'Terbitkan seluruh situs?',
+        description: 'Semua isi draf akan terlihat oleh pengunjung setelah diterbitkan.',
+        confirmLabel: 'Terbitkan situs',
+      }))
+    )
+      return
     setBusy(true)
     try {
       const result = await api<SiteDraft>('/admin/site/publish', {
@@ -118,6 +128,18 @@ export function SiteEditor({ show, onChanged }: Props) {
   }
   if (!draft) return <p>Memuat editor situs...</p>
   const document = draft.document
+  const emptySections = (Object.entries(document.pages) as [SitePageKey, SiteSection[]][]).flatMap(
+    ([pageKey, sections]) =>
+      sections
+        .filter(
+          (section) =>
+            section.visible &&
+            ((['features', 'testimonials', 'faq'].includes(section.type) &&
+              !section.items.length) ||
+              (section.type === 'gallery' && !document.profile.galleryMediaIds.length)),
+        )
+        .map((section) => `${sitePageNames[pageKey]}: ${siteSectionNames[section.type]}`),
+  )
   return (
     <section className="admin-workspace site-editor">
       <div className="admin-workspace-head">
@@ -158,6 +180,12 @@ export function SiteEditor({ show, onChanged }: Props) {
           Terbitkan situs
         </button>
       </div>
+      {emptySections.length > 0 && (
+        <p className="site-editor-empty-notice">
+          Blok aktif yang belum berisi konten akan disembunyikan dari situs:{' '}
+          {emptySections.join(', ')}.
+        </p>
+      )}
       <div className="filter-list site-editor-tabs">
         {(
           [

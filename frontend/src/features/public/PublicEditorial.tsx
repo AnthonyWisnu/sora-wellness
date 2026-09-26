@@ -3,36 +3,9 @@ import type { SiteSection } from '../../shared/api'
 import { siteMediaUrl } from '../../shared/types/site'
 import type { SiteBlockContext } from './public-types'
 
-const demoFeatures = [
-  {
-    title: 'Pilih kelas sesuai ritme',
-    body: 'Jelajahi sesi dan tingkat kelas yang tersedia melalui jadwal studio.',
-    caption: 'KONTEN DEMO',
-    mediaId: null,
-  },
-  {
-    title: 'Booking dengan aturan jelas',
-    body: 'Harga, kursi tersisa, dan pilihan booking ditampilkan sebelum Anda mengonfirmasi.',
-    caption: 'KONTEN DEMO',
-    mediaId: null,
-  },
-  {
-    title: 'Riwayat dalam satu akun',
-    body: 'Lihat kembali booking dan paket Anda melalui dashboard pelanggan.',
-    caption: 'KONTEN DEMO',
-    mediaId: null,
-  },
-]
-const demoTestimonial = {
-  title: 'Contoh testimoni',
-  body: 'Pengalaman pelanggan akan ditampilkan di sini setelah studio menambahkan testimoni asli melalui CMS.',
-  caption: 'KONTEN DEMO',
-  mediaId: null,
-}
-
 export function PublicFeatures({ section }: { section: SiteSection }) {
-  const demo = !section.items.length
-  const items = demo ? demoFeatures : section.items
+  if (!section.items.length) return null
+  const items = section.items
   const icons = [Compass, CalendarDays, ShieldCheck]
   return (
     <section className="zeira-section shell zeira-features">
@@ -42,7 +15,6 @@ export function PublicFeatures({ section }: { section: SiteSection }) {
           <h2>{section.title}</h2>
           {section.body && <p>{section.body}</p>}
         </div>
-        {demo && <span className="zeira-demo-badge">Konten demo</span>}
       </div>
       <div className="zeira-feature-grid">
         {items.map((item, index) => {
@@ -50,7 +22,7 @@ export function PublicFeatures({ section }: { section: SiteSection }) {
           return (
             <article key={`${item.title}-${index}`}>
               <div className="zeira-feature-top">
-                <span>{item.caption && !demo ? item.caption : `0${index + 1} / STUDIO`}</span>
+                <span>{item.caption || `0${index + 1} / STUDIO`}</span>
                 <Icon size={20} />
               </div>
               <h3>{item.title}</h3>
@@ -64,8 +36,8 @@ export function PublicFeatures({ section }: { section: SiteSection }) {
 }
 
 export function PublicTestimonials({ section }: { section: SiteSection }) {
-  const demo = !section.items.length
-  const items = demo ? [demoTestimonial] : section.items
+  if (!section.items.length) return null
+  const items = section.items
   return (
     <section className="zeira-section shell zeira-testimonials">
       <div className="zeira-testimonial-intro">
@@ -86,7 +58,6 @@ export function PublicTestimonials({ section }: { section: SiteSection }) {
                 <strong>{item.title}</strong>
                 <small>{item.caption}</small>
               </span>
-              {demo && <em className="zeira-demo-badge">Konten demo</em>}
             </footer>
           </blockquote>
         ))}
@@ -163,7 +134,7 @@ export function PublicContact({ section, ctx }: { section: SiteSection; ctx: Sit
           {section.body && <p>{section.body}</p>}
         </div>
       </div>
-      <div className="zeira-contact-grid">
+      <div className={`zeira-contact-grid${contact.mapEmbedUrl ? '' : ' zeira-contact-no-map'}`}>
         <div className="zeira-contact-card">
           <MapPin size={23} />
           <h3>{profile.name}</h3>
@@ -191,20 +162,24 @@ export function PublicContact({ section, ctx }: { section: SiteSection; ctx: Sit
           </div>
         </div>
         {contact.mapEmbedUrl ? (
-          <iframe
-            title={`Peta ${profile.name}`}
-            src={contact.mapEmbedUrl}
-            loading="lazy"
-            referrerPolicy="strict-origin-when-cross-origin"
-            allowFullScreen
-          />
-        ) : (
-          <div className="zeira-contact-map-placeholder">
-            <MapPin size={30} />
-            <span>Alamat studio</span>
-            <p>{profile.address}</p>
-          </div>
-        )}
+          <>
+            <iframe
+              title={`Peta ${profile.name}`}
+              src={contact.mapEmbedUrl}
+              loading="lazy"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allowFullScreen
+            />
+            <a
+              className="zeira-contact-map-link"
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${profile.name}, ${profile.address}`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Buka lokasi di Google Maps ↗
+            </a>
+          </>
+        ) : null}
       </div>
     </section>
   )

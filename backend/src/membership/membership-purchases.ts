@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Controller, Get, Headers, Injectable, Param, Post, Body, Req, UseGuards } from '@nestjs/common';
+import { BadRequestException, ConflictException, Controller, Get, Headers, Injectable, NotFoundException, Param, Post, Body, Req, UseGuards } from '@nestjs/common';
 import { ApiCookieAuth, ApiCreatedResponse, ApiHeader, ApiProperty, ApiTags } from '@nestjs/swagger';
 import { IsUUID } from 'class-validator';
 import { PoolClient } from 'pg';
@@ -6,6 +6,8 @@ import { Db } from '../shared/db';
 import { membershipEndDate } from './membership-dates';
 import { PACKAGE_CHECKOUT_MINUTES } from './package-policy';
 import { PaymentsService } from '../payments/payments';
+import { PaymentSettings } from '../payments/payment-settings';
+import { MidtransClient } from '../payments/midtrans';
 import { AuthRequest, assertRole, SessionGuard } from '../shared/security';
 
 class PurchaseDto { @ApiProperty({ format: 'uuid', description: 'ID dari GET /api/v1/public/packages' }) @IsUUID() packageOptionId!: string; }
@@ -36,7 +38,7 @@ export async function activatePurchase(client: PoolClient, purchase: Pick<Purcha
 
 @Injectable()
 export class MembershipPurchasesService {
-  constructor(private readonly db: Db, private readonly payments: PaymentsService) {}
+  constructor(private readonly db: Db, private readonly payments: PaymentsService, private readonly settings: PaymentSettings) {}
 
   async create(customerId: string, optionId: string, key: string) {
     if (!key || key.length < 8 || key.length > 128) throw new BadRequestException('Header Idempotency-Key wajib 8–128 karakter');
@@ -73,6 +75,23 @@ export class MembershipPurchasesService {
     return this.details(this.db.pool,found.rows[0]);
   }
 
+  async cancelPending(customerId: string, id: string) {
+    const found = await this.db.query<{ status: string; order_id: string }>(`SELECT b.status,p.order_id FROM package_purchases b JOIN payment_transactions p ON p.package_purchase_id=b.id WHERE b.id=$1 AND b.customer_id=$2`, [id,customerId]);
+    if (!found.rows[0]) throw new NotFoundException('Pembelian paket tidak ditemukan');
+    if (found.rows[0].status !== 'pending_payment') throw new ConflictException('Hanya pembayaran paket yang masih pending dapat dibatalkan');
+    const orderId = found.rows[0].order_id;
+    const checked = await this.payments.refreshByOrder(orderId);
+    const providerStatus = 'providerStatus' in checked ? checked.providerStatus : undefined;
+    if (providerStatus === 'not_started') throw new ConflictException('Transaksi belum dimulai di Midtrans; biarkan checkout kedaluwarsa setelah 15 menit');
+    if (checked.paymentStatus !== 'pending' || providerStatus !== 'pending') throw new ConflictException('Transaksi tidak lagi pending; status terbaru sudah diperiksa');
+    const midtrans = new MidtransClient((await this.settings.credentials()).serverKey);
+    await midtrans.cancelPendingTransaction(orderId);
+    const result = await this.payments.refreshByOrder(orderId);
+    if (result.paymentStatus === 'pending') throw new ConflictException('Pembatalan Midtrans belum terkonfirmasi; periksa status lagi');
+    await this.db.query(`INSERT INTO audit_logs (actor_id,action,reason) VALUES ($1,'cancel_pending_package',$2)`, [customerId,id]);
+    return result;
+  }
+
   private async details(client: Pick<PoolClient,'query'>, purchase: Purchase) {
     const payment = await client.query<{ order_id: string; redirect_url: string; status: string }>('SELECT order_id,redirect_url,status FROM payment_transactions WHERE package_purchase_id=$1', [purchase.id]);
     const membership = await client.query<{ starts_on: string; ends_on: string }>('SELECT starts_on::text,ends_on::text FROM memberships WHERE purchase_id=$1', [purchase.id]);
@@ -95,4 +114,6 @@ export class MembershipPurchasesController {
   async one(@Req() req: AuthRequest, @Param('id') id: string) { return this.service.one(assertRole(req,'customer').id,id); }
   @Post(':id/refresh-payment')
   async refresh(@Req() req: AuthRequest, @Param('id') id: string) { return this.payments.refreshByPackage(id,assertRole(req,'customer').id); }
+  @Post(':id/cancel-pending')
+  async cancelPending(@Req() req: AuthRequest, @Param('id') id: string) { return this.service.cancelPending(assertRole(req,'customer').id,id); }
 }

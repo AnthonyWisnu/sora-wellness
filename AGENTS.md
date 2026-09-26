@@ -42,7 +42,14 @@ Panduan ini menetapkan cara mengubah repository. [PRD.md](PRD.md) adalah sumber 
 - Seed demo tidak memerlukan kredensial gateway untuk mengisi dataset. Checkout gateway baru tersedia setelah developer mengatur merchant Sandbox-nya sendiri.
 - `backend/scripts/seed.ts` (`npm run seed`) adalah seed dasar terpisah; ia mencetak sandi akun awal ke terminal satu kali. Jangan jalankan seed dasar dan seed penuh berurutan tanpa memahami efek masing-masing.
 - `npm run demo:refresh-schedule` memperbarui jadwal seed tanpa menjalankan reset penuh.
+- `npm run demo:rotate-passwords` merotasi sandi sembilan akun demo lokal tanpa reset data; ia menghapus sesi akun tersebut. Jalankan hanya pada database demo lokal port `55432` dengan Midtrans Sandbox.
 - Pertahankan source test di Git. Abaikan hanya hasil/generated artifacts seperti screenshot, trace, report, coverage, log, backup, dan fixture sementara; jangan mengabaikan source test.
+
+## MCP pembayaran uji lokal
+
+- Server MCP di `backend/scripts/mcp-wellness/` memakai API wellness pada loopback dan akun pelanggan demo lokal. Ia tidak memakai Server Key langsung. Jangan sambungkan MCP ke backend produksi atau mengirim sandi lewat argumen proses.
+- `npm run smoke:mcp-wellness` memeriksa koneksi dan pembacaan jadwal. `node dist/scripts/mcp-wellness/smoke.js --checkout` membuat checkout Sandbox berbayar dan membatalkan booking pending; jalankan hanya jika mutasi data uji memang dikehendaki.
+- Pembatalan paket pending memakai Midtrans Cancel API hanya setelah provider melaporkan `pending`; transaksi Snap yang belum dimulai dibiarkan kedaluwarsa. Refund gateway belum tersedia.
 
 ## Praktik perubahan kode
 
