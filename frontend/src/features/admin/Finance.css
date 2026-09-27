@@ -11,6 +11,13 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
 }
+.admin-finance-record-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+}
 .admin-finance-count {
   font-size: 12px;
   color: var(--muted);

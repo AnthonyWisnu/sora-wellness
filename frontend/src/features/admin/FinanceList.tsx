@@ -98,11 +98,17 @@ export function FinanceList({
                         {row.customerName} · {row.customerEmail}
                       </p>
                     </div>
-                    <strong>{money(row.grossAmountIdr)}</strong>
+                    <div className="admin-finance-record-meta">
+                      <strong>{money(row.grossAmountIdr)}</strong>
+                      <span
+                        className={`tag ${row.status === 'success' ? 'tag-green' : row.status === 'pending' ? 'tag-gold' : 'tag-gray'}`}
+                      >
+                        {label(row.status)}
+                      </span>
+                    </div>
                   </div>
                   <div className="admin-finance-details">
-                    <span>Status: {label(row.status)}</span>
-                    <span>Midtrans: {row.providerStatus ?? 'Belum ada'}</span>
+                    <span>Midtrans: {row.providerStatus ?? 'Menunggu proses'}</span>
                     <span>{dateTime(row.createdAt, timezone)}</span>
                     <span>Order: {row.orderId}</span>
                   </div>

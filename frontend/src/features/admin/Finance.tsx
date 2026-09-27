@@ -129,7 +129,14 @@ export function AdminFinancePanel({
     }
     if (tab === 'payments') {
       const items = data.items as AdminPaymentRecord[]
-      const settled = items.filter((p) => p.status === 'settlement' || p.status === 'capture')
+      const settled = items.filter(
+        (p) =>
+          p.status === 'success' ||
+          p.status === 'settlement' ||
+          p.status === 'capture' ||
+          p.providerStatus === 'settlement' ||
+          p.providerStatus === 'capture',
+      )
       const totalAmount = settled.reduce((sum, p) => sum + (p.grossAmountIdr || 0), 0)
       const pendingCount = items.filter((p) => p.status === 'pending').length
       return {
