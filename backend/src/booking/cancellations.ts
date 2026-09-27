@@ -38,6 +38,7 @@ export class CancellationsService {
     if (!['confirmed', 'pending_payment'].includes(booking.status)) throw new ConflictException('Booking tidak aktif');
     const quotaRetained = booking.source === 'quota' && !timely;
     await client.query(`UPDATE bookings SET status='cancelled',cancelled_at=now(),cancellation_origin=$2,quota_retained=$3 WHERE id=$1`, [booking.id,origin,quotaRetained]);
+    await client.query(`UPDATE payment_transactions SET status='expired',provider_status='booking_cancelled',updated_at=now() WHERE booking_id=$1 AND status='pending'`, [booking.id]);
     const credit = booking.status === 'pending_payment' ? booking.wallet_reserved_idr : booking.source === 'single' && timely ? booking.price_idr : 0;
     if (credit > 0) await this.payments.walletEntry(client,booking.customer_id,booking.id,credit,booking.status === 'pending_payment' ? 'reservation_release' : 'class_refund',`booking:${booking.id}:${booking.status === 'pending_payment' ? 'release' : 'refund'}`);
     return { id: booking.id, status: 'cancelled', cancellationOrigin: origin, creditedBalanceIdr: credit, quotaReturned: booking.source === 'quota' && timely };

@@ -14,8 +14,7 @@ export function PaymentModal({ paymentLink, setPaymentLink }: Props) {
         <span className="eyebrow">MIDTRANS SANDBOX</span>
         <h2>Lanjutkan pembayaran</h2>
         <p>
-          Buka halaman pembayaran Sandbox. Setelah kembali, pilih “Periksa status” pada transaksi di
-          dashboard.
+          Buka halaman pembayaran Sandbox. Jika halaman pembayaran tidak sengaja tertutup, Anda dapat membukanya kembali kapan saja dari menu Booking atau Riwayat Pembayaran selama batas waktu 15 menit belum habis.
         </p>
         <a
           className="button button-primary full-width"

@@ -62,6 +62,7 @@ export class PaymentsService {
   }
 
   async expirePending(customerId?: string) {
+    await this.db.query(`UPDATE payment_transactions p SET status='expired',provider_status=COALESCE(p.provider_status,'booking_cancelled'),updated_at=now() FROM bookings b WHERE p.booking_id=b.id AND b.status IN ('cancelled','expired') AND p.status='pending' AND ($1::uuid IS NULL OR b.customer_id=$1)`, [customerId ?? null]);
     const pending = await this.db.query<{ id: string }>(`SELECT id FROM bookings WHERE status='pending_payment' AND hold_expires_at<=now() AND ($1::uuid IS NULL OR customer_id=$1) ORDER BY hold_expires_at LIMIT 100`, [customerId ?? null]);
     for (const booking of pending.rows) await this.expireBooking(booking.id);
   }

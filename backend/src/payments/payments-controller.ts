@@ -46,6 +46,7 @@ export class PaymentsController {
   @Get('me/payments') @UseGuards(SessionGuard) @ApiCookieAuth('wellness.sid')
   async history(@Req() req: AuthRequest, @Query() filter: PageFilter) {
     const actor = assertRole(req, 'customer');
-    return (await this.db.query(`SELECT p.id,p.order_id AS "orderId",p.gross_amount_idr AS "grossAmountIdr",p.status,p.provider_status AS "providerStatus",p.created_at AS "createdAt",p.updated_at AS "updatedAt",p.booking_id AS "bookingId",p.package_purchase_id AS "packagePurchaseId" FROM payment_transactions p LEFT JOIN bookings b ON b.id=p.booking_id LEFT JOIN package_purchases pp ON pp.id=p.package_purchase_id WHERE COALESCE(b.customer_id,pp.customer_id)=$1 ORDER BY p.created_at DESC LIMIT $2 OFFSET $3`, [actor.id,filter.limit ?? 20,((filter.page ?? 1)-1)*(filter.limit ?? 20)])).rows;
+    await this.payments.expirePending(actor.id);
+    return (await this.db.query(`SELECT p.id,p.order_id AS "orderId",p.gross_amount_idr AS "grossAmountIdr",p.status,p.provider_status AS "providerStatus",p.created_at AS "createdAt",p.updated_at AS "updatedAt",p.booking_id AS "bookingId",p.package_purchase_id AS "packagePurchaseId",CASE WHEN p.status='pending' THEN p.redirect_url ELSE NULL END AS "redirectUrl" FROM payment_transactions p LEFT JOIN bookings b ON b.id=p.booking_id LEFT JOIN package_purchases pp ON pp.id=p.package_purchase_id WHERE COALESCE(b.customer_id,pp.customer_id)=$1 ORDER BY p.created_at DESC LIMIT $2 OFFSET $3`, [actor.id,filter.limit ?? 20,((filter.page ?? 1)-1)*(filter.limit ?? 20)])).rows;
   }
 }

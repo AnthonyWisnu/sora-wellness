@@ -41,10 +41,16 @@ function datesOf(filter: DatedFilter) {
 export class AdminFinanceController {
   constructor(private readonly db: Db) {}
 
+  private async reconcileStalePayments() {
+    await this.db.query(`UPDATE payment_transactions p SET status='expired',provider_status=COALESCE(p.provider_status,'booking_cancelled'),updated_at=now() FROM bookings b WHERE p.booking_id=b.id AND b.status IN ('cancelled','expired') AND p.status='pending'`);
+    await this.db.query(`UPDATE payment_transactions p SET status='expired',provider_status=COALESCE(p.provider_status,'snap_page_expired'),updated_at=now() FROM bookings b WHERE p.booking_id=b.id AND b.status='pending_payment' AND b.hold_expires_at<=now() AND p.status='pending'`);
+  }
+
   @Get('bookings')
   @ApiOkResponse({ description: 'Daftar booking terfilter dan dipaginasi tanpa data kesehatan.', schema: { example: { items: [{ id: 'booking-uuid', customerName: 'Ayu', title: 'Gentle Flow', status: 'confirmed', priceIdr: 75000 }], page: 1, limit: 20, total: 1 } } })
   async bookings(@Req() req: AuthRequest, @Query() filter: BookingFilter) {
     assertRole(req, 'admin');
+    await this.reconcileStalePayments();
     const { page,limit } = pageOf(filter);
     const [from,to] = datesOf(filter);
     const values = [filter.q?.trim() || null,filter.status ?? null,from,to];
@@ -71,6 +77,7 @@ export class AdminFinanceController {
   @ApiOkResponse({ description: 'Pembayaran kelas dan paket tanpa token Snap atau kredensial gateway.' })
   async payments(@Req() req: AuthRequest, @Query() filter: PaymentFilter) {
     assertRole(req, 'admin');
+    await this.reconcileStalePayments();
     const { page,limit } = pageOf(filter);
     const [from,to] = datesOf(filter);
     const values = [filter.q?.trim() || null,filter.status ?? null,filter.kind ?? null,from,to];

@@ -7,6 +7,7 @@ export type Payment = {
   createdAt: string
   bookingId: string | null
   packagePurchaseId: string | null
+  redirectUrl?: string | null
 }
 
 export type PaymentSettings = {

@@ -192,11 +192,11 @@ export function CustomerDashboard({
                     {row.status === 'pending_payment' && (
                       <>
                         <button
-                          className="button button-outline"
+                          className="button button-primary"
                           disabled={busy}
                           onClick={() => void paymentAction(row.id, false)}
                         >
-                          Buka pembayaran
+                          Lanjutkan bayar
                         </button>
                         <button
                           className="button button-text"
@@ -244,7 +244,18 @@ export function CustomerDashboard({
                   <CreditCard size={18} />
                   <span>{row.orderId}</span>
                   <strong>{money(row.grossAmountIdr)}</strong>
-                  <span className="tag tag-gray">{row.status}</span>
+                  <span className={`tag ${row.status === "success" ? "tag-green" : row.status === "pending" ? "tag-gold" : "tag-gray"}`}>
+                    {row.status === "success" ? "Berhasil" : row.status === "pending" ? "Menunggu" : row.status === "expired" ? "Kedaluwarsa" : row.status === "failed" ? "Gagal" : row.status}
+                  </span>
+                  {row.status === "pending" && row.redirectUrl && (
+                    <button
+                      className="button button-primary"
+                      style={{ padding: "0.3rem 0.75rem", fontSize: "0.82rem", marginLeft: "auto" }}
+                      onClick={() => setPaymentLink(row.redirectUrl!)}
+                    >
+                      Lanjutkan bayar
+                    </button>
+                  )}
                 </div>
               ))
             ) : (
@@ -288,10 +299,10 @@ export function CustomerDashboard({
                     <div className="live-booking-actions">
                       {purchase.payment?.redirectUrl && (
                         <button
-                          className="button button-outline"
+                          className="button button-primary"
                           onClick={() => setPaymentLink(purchase.payment!.redirectUrl!)}
                         >
-                          Buka pembayaran
+                          Lanjutkan bayar
                         </button>
                       )}
                       <button
