@@ -1,0 +1,57 @@
+name: Deploy SORA Wellness
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-vps-wellness
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, vps-wellness]
+
+    steps:
+      - name: Deploy SORA Wellness on VPS
+        run: |
+          (
+            flock -x -w 300 200 || { echo "ERROR: Deployment lain sedang berjalan di server"; exit 1; }
+
+            set -e
+            export PATH="/usr/local/bin:/usr/bin:$PATH"
+
+            cd /var/www/sora-wellness
+
+            rm -f .git/index.lock
+
+            echo "=== 1. Fetching latest main ==="
+            git fetch origin main
+            git reset --hard origin/main
+
+            echo "=== 2. Building Backend NestJS ==="
+            cd /var/www/sora-wellness/backend
+            npm install
+            NODE_OPTIONS="--max-old-space-size=512" nice -n 10 npm run build
+            npm run migrate || true
+
+            echo "=== 3. Building Frontend Vite ==="
+            cd /var/www/sora-wellness/frontend
+            npm install
+            NODE_OPTIONS="--max-old-space-size=512" nice -n 10 npm run build
+
+            echo "=== 4. Reloading PM2 sora-wellness-backend ==="
+            cd /var/www/sora-wellness/backend
+            pm2 describe sora-wellness-backend > /dev/null \
+              && pm2 reload sora-wellness-backend --update-env \
+              || pm2 start dist/src/main.js --name sora-wellness-backend --node-args="-r dotenv/config" --update-env
+
+            pm2 save
+
+            echo "=== 5. Reloading Nginx ==="
+            sudo systemctl reload nginx
+
+            echo "=== Deployment SORA Wellness Completed Successfully ==="
+          ) 200>/tmp/wellness_deploy.lock
