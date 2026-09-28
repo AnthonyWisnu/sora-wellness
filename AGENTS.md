@@ -1,84 +1,118 @@
-# Panduan Agen - Platform Wellness
+# Panduan Agen dan Kontributor - Platform Sora Wellness
 
-Panduan ini menetapkan cara mengubah repository. [PRD.md](PRD.md) adalah sumber kebutuhan, aturan bisnis, kriteria penerimaan, serta matriks status implementasi. [README.md](README.md) adalah panduan clone dan penggunaan lokal. Jangan menyimpulkan bahwa semua kebutuhan PRD sudah diuji hanya karena ada implementasinya.
+Dokumen ini menetapkan standar arsitektur, batasan teknis, etika modifikasi kode, dan alur kerja pengembangan pada repositori Sora Wellness Studio.
 
-## Konteks produk saat ini
+- [PRD.md](PRD.md) adalah sumber kebenaran resmi untuk kebutuhan produk, aturan bisnis, kriteria penerimaan, dan matriks status implementasi.
+- [README.md](README.md) adalah panduan instalasi lokal, ikhtisar fitur, dan konfigurasi lingkungan pengembang.
 
-- Aplikasi versi pertama melayani **satu studio dan satu lokasi**. Multi-perusahaan, isolasi tenant, pendaftaran perusahaan, operator platform, penggunaan kredensial produksi, dan deployment produksi belum dibangun.
-- Frontend React/TypeScript dan backend NestJS/TypeScript memakai API yang sama. React tidak boleh memiliki autentikasi, booking, pembayaran, atau data demo simulasi yang memintas API.
-- API harus bebas dari ketergantungan teknologi UI. Klien lain seperti Postman, curl, PHP, Next.js, atau Astro harus tunduk pada aturan backend yang sama.
-- Dashboard memiliki navigasi per peran dalam shell bersama. Jaga sidebar, header, konten, tabel/daftar, dialog form, dan tampilan mobile tetap konsisten serta mudah dibaca; jangan menyelesaikan ruang kosong dengan menaruh seluruh form panjang permanen di satu kolom.
+---
 
-## Sumber kebenaran dan perubahan keputusan
+## 1. Konteks Produk dan Arsitektur Sistem
 
-- Bedakan kebutuhan **Diputuskan**, **Asumsi prototipe**, dan **Terbuka** sebagaimana didefinisikan di PRD.
-- Jangan mengunci perilaku backend yang masih **Terbuka**. Tanyakan pemilik proyek untuk keputusan yang memang memengaruhi perilaku; lanjutkan pekerjaan independen.
-- Instruksi terbaru pemilik proyek yang mengubah produk mengalahkan keputusan lama. Perbarui PRD dalam perubahan yang sama.
-- Saat menyentuh fitur dengan matriks §3.2, pertahankan statusnya akurat: bedakan tersedia di kode, diuji lokal, dan telah diuji terhadap layanan Sandbox.
+- **Arsitektur API-First:** Backend NestJS memegang kendali mutlak atas seluruh aturan bisnis, validasi, otorisasi, dan mutasi data. Frontend React tidak boleh menduplikasi logika bisnis penting, mengasumsikan kalkulasi finansial di sisi klien, atau menggunakan data simulasi/mock yang memintas API.
+- **Kemandirian Klien:** Kontrak API di bawah `/api/v1` harus sepenuhnya independen dari teknologi antarmuka. Klien lain seperti curl, Postman, aplikasi mobile, atau backend PHP/Laravel harus tunduk pada validasi dan aturan integritas data yang sama.
+- **Cakupan Saat Ini:** Melayani satu boutique wellness studio (Yoga dan Pilates) dengan satu lokasi operasional. Ekstensi multi-tenant atau multi-perusahaan merupakan arah arsitektur masa depan yang belum diaktifkan pada skema database saat ini.
+- **Zona Waktu dan Presisi Keuangan:** Zona waktu bisnis studio contoh adalah `Asia/Makassar` (WITA). Seluruh nilai moneter disimpan sebagai integer IDR (Rupiah bulat) tanpa pecahan desimal.
 
-## Arsitektur repository
+---
 
-- Backend: NestJS, TypeScript, PostgreSQL. Modul fitur berada di `backend/src/`: `auth`, `catalog`, `booking`, `payments`, `membership`, `health`, `attendance`, `lockers`, `content`, dan `finance`; utilitas/akses database bersama berada di `shared`.
-- Frontend: React + TypeScript, dikelompokkan di `frontend/src/features/`: `public`, `auth`, `booking`, `customer`, `coach`, `admin`, dan `dashboard`. Komponen shell dan navigasi bersama untuk role dashboard berada di `features/dashboard`.
-- API berversi di `/api/v1`; Swagger UI di `/api/docs`; OpenAPI JSON di `/api/docs-json`. Perubahan endpoint, autentikasi, respons, atau error harus tetap konsisten dengan frontend, dokumentasi API, dan contoh request.
-- Migrasi skema PostgreSQL ada di `backend/migrations/`. Jangan mengubah database lewat asumsi UI; perubahan skema harus melalui migrasi dan tetap kompatibel dengan seed serta test.
+## 2. Alur Deployment Otomatis dan CI/CD VPS
 
-## Aturan bisnis dan keamanan
+Platform telah terintegrasi dengan pipeline CI/CD otomatis berbasis **GitHub Actions** yang terhubung langsung ke VPS Linux operasional:
 
-- Status member berasal dari masa aktif langganan pelanggan; jangan membuat role akun `member`. Paket berakhir tidak menghapus akun, profil, histori booking, pembayaran, atau saldo.
-- Semua pemeriksaan peran, sesi, tingkat kelas, masa paket, jatah, kapasitas, harga, pembayaran, pembatalan, loker, dan saldo dilakukan di backend. Jangan mempercayai hasil perhitungan frontend.
-- Gunakan zona waktu lokal studio (`Asia/Makassar` pada data contoh) untuk tanggal bisnis; simpan waktu kejadian tanpa ambiguitas. Uang disimpan sebagai integer IDR.
-- Saldo adalah buku transaksi yang dapat ditelusuri. Booking, kapasitas, kuota, pembayaran, webhook, retry, dan pengembalian harus idempoten serta aman terhadap request paralel.
-- Autentikasi memakai sesi tersimpan di PostgreSQL, cookie `HttpOnly` `wellness.sid`, dan proteksi CSRF untuk mutasi. Klien API mempertahankan cookie jar dan mengambil token baru dari `GET /api/v1/auth/csrf` setelah login/registrasi.
-- Nilai Server Key Midtrans, `SESSION_SECRET`, `MIDTRANS_SETTINGS_KEY`, password, cookie sesi, dan data pribadi tidak boleh masuk source, frontend, screenshot publik, log, atau Git. README boleh menjelaskan lokasi file kredensial lokal tanpa menyalin nilainya. Kredensial Sandbox diatur per developer melalui `.env` lokal atau dashboard admin; jangan memakai kredensial milik pemilik proyek.
-- Batasi isi kesehatan pada pelanggan pemilik dan pelatih yang mengajar sesi terkait. Jangan kirim isi kesehatan pada dashboard admin, endpoint publik, atau respons peserta yang tak berwenang.
-- Terapkan integrasi Midtrans sesuai dokumentasi resminya. Sandbox saja untuk demo; jangan mengklaim settlement/status yang belum diamati.
+- **Host Lingkungan:** VPS Linux Ubuntu Server (`43.157.248.201`)
+- **Domain Publik:** `https://wellness.anthonywj.my.id`
+- **Workflow:** [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)
+- **Runner:** Self-hosted runner `vps-wellness`
+- **Prosedur Rilis:**
+  1. Setiap `git push origin main` akan secara otomatis memicu job deployment di runner VPS.
+  2. Runner melakukan sinkronisasi kode, kompilasi frontend dan backend, eksekusi migrasi database PostgreSQL, reload proses NestJS via PM2, dan pembaruan berkas statis Nginx/Caddy.
+  3. Agen pengembang dapat memantau status eksekusi workflow secara langsung menggunakan GitHub CLI:
+     ```powershell
+     gh run list --limit 1
+     gh run watch <run-id>
+     ```
 
-## Seed dan data demo lokal
+---
 
-- `backend/scripts/demo-setup.ts` (`npm run demo:setup`) membuat dataset lengkap Sora yang seluruh identitas dan data pribadinya fiktif. Sandi sembilan akun dibuat acak dan disimpan lokal di `backend/.qa/demo-accounts.json`.
-- `.qa/` sengaja diabaikan Git karena berisi sandi, backup database/unggahan, screenshot, laporan, dan state uji. Jangan memindahkan sandi seed ke README atau commit.
-- Seed penuh hanya boleh berjalan pada PostgreSQL `localhost` port `55432`, mode nonproduksi, dengan `MIDTRANS_ENV=sandbox`. Ia membuat backup tetapi mengganti data aplikasi lokal. Pastikan target database benar sebelum menyarankannya atau menjalankannya; jangan jalankan sebagai langkah verifikasi biasa.
-- Seed demo tidak memerlukan kredensial gateway untuk mengisi dataset. Checkout gateway baru tersedia setelah developer mengatur merchant Sandbox-nya sendiri.
-- `backend/scripts/seed.ts` (`npm run seed`) adalah seed dasar terpisah; ia mencetak sandi akun awal ke terminal satu kali. Jangan jalankan seed dasar dan seed penuh berurutan tanpa memahami efek masing-masing.
-- `npm run demo:refresh-schedule` memperbarui jadwal seed tanpa menjalankan reset penuh.
-- `npm run demo:rotate-passwords` merotasi sandi sembilan akun demo lokal tanpa reset data; ia menghapus sesi akun tersebut. Jalankan hanya pada database demo lokal port `55432` dengan Midtrans Sandbox.
-- Pertahankan source test di Git. Abaikan hanya hasil/generated artifacts seperti screenshot, trace, report, coverage, log, backup, dan fixture sementara; jangan mengabaikan source test.
+## 3. Standar Antarmuka dan Pola UX (Design System)
 
-## MCP pembayaran uji lokal
+Semua dashboard (Admin, Coach, Customer) berbagi shell navigasi bersama dengan standar pengalaman pengguna sebagai berikut:
 
-- Server MCP di `backend/scripts/mcp-wellness/` memakai API wellness pada loopback dan akun pelanggan demo lokal. Ia tidak memakai Server Key langsung. Jangan sambungkan MCP ke backend produksi atau mengirim sandi lewat argumen proses.
-- `npm run smoke:mcp-wellness` memeriksa koneksi dan pembacaan jadwal. `node dist/scripts/mcp-wellness/smoke.js --checkout` membuat checkout Sandbox berbayar dan membatalkan booking pending; jalankan hanya jika mutasi data uji memang dikehendaki.
-- Pembatalan paket pending memakai Midtrans Cancel API hanya setelah provider melaporkan `pending`; transaksi Snap yang belum dimulai dibiarkan kedaluwarsa. Refund gateway belum tersedia.
+1. **Alur Presensi Pelatih 2-Tier (Coach Attendance):**
+   - *Tier 1 (Direktori Sesi):* Ditampilkan dalam kartu-kartu sesi interaktif dengan tab filter (Semua, Hari Ini, Mendatang, Selesai), bilah pencarian, dan kuota kehadiran (misal: '3/10 Hadir').
+   - *Tier 2 (Detail Sesi & Roster Peserta):* Tampilan penuh berfokus dengan breadcrumb 'Kembali ke Jadwal Kelas', indikator alert kondisi fisik, tombol massal 'Tandai Semua Hadir', dan toggle kehadiran individu.
+2. **Pemisahan Meja Depan (Front Desk Check-in) vs Presensi Matras:**
+   - Admin meja depan menggunakan antarmuka 'Verifikasi tiket' untuk memvalidasi QR e-ticket kedatangan peserta di lobi studio.
+   - Sistem secara otomatis menampilkan nomor loker fisik aktif pelanggan (contoh: 'Loker Pribadi: Loker A-01') saat tiket berhasil diverifikasi.
+   - Pelatih di ruang kelas fokus pada presensi kehadiran fisik di atas matras dan dapat melihat status kedatangan lobi peserta.
+3. **Matriks Loker Visual (Locker Matrix Japandi):**
+   - Loker fisik dikelola melalui grid visual dengan status warna (Tersedia, Terpakai, Perawatan) dan penugasan member berbasis modal dialog.
+4. **Pola Manajemen Data Admin:**
+   - Gunakan layout daftar/tabel lebar dengan pencarian, filter, dan paginasi.
+   - Formulir tambah dan edit data wajib dibuka melalui modal dialog atau drawer (`AdminDialog` pattern) untuk mencegah kekosongan ruang halaman.
+5. **Responsivitas dan Aksesibilitas:**
+   - Navigasi sidebar harus tetap dapat digulir jika item melebihi tinggi layar, dengan warna scrollbar menyatu dengan tema.
+   - Menu mobile drawer harus dapat dibuka dan ditutup dengan mudah serta ramah navigasi keyboard.
 
-## Praktik perubahan kode
+---
 
-- Pertahankan modularitas: file satu fitur tinggal bersama, UI menggunakan komponen bersama bila pola benar-benar berulang, dan tanggung jawab komponen dibuat jelas. Hindari file raksasa atau abstraksi generik yang tidak dipakai ulang.
-- Untuk layar pengelolaan admin, utamakan daftar lebar dengan filter/paginasi dan form tambah/edit dalam dialog/drawer sesuai pola komponen `AdminDialog`; tampilkan error, loading, dan konfirmasi aksi destruktif.
-- Dashboard harus tetap responsif. Sidebar dapat digulir bila navigasinya melampaui tinggi layar, tetapi scrollbar mesti menyatu dengan tema; menu mobile harus tetap dapat dibuka, ditutup dengan keyboard, dan tidak menutupi navigasi keyboard.
-- Perubahan UI tidak boleh mengubah aturan produk atau memalsukan data. Gunakan seed fiktif dan API aktual.
-- Jangan menambah dependensi sebelum memeriksa apakah kemampuan tersebut sudah ada di stack.
+## 4. Standar Tipografi dan Konsistensi Merek
 
-## Perintah dan verifikasi
+Patuhi aturan ketat berikut di seluruh berkas kode, antarmuka pengguna, dan dokumentasi markdown:
 
-Jalankan perintah dari folder aplikasi terkait:
+- **Bebas Emoji (Zero Emoji Policy):** Dilarang keras menggunakan ikon emoji apa pun (baik unicode emoji maupun shortcode emoji) di dalam teks UI, komponen, judul, dokumen, maupun commit message. Gunakan ikon SVG formal seperti Lucide React (`lucide-react`).
+- **Bebas Em-Dash dan En-Dash:** Karakter em-dash (`\u2014`) dan en-dash (`\u2013`) dilarang keras. Gunakan selalu tanda hubung baku (`-`) atau titik tengah (`·`) untuk pemisah teks.
+- **Konsistensi Merek SORA:** Nama merek studio resmi adalah **SORA Wellness Studio**. Jangan pernah menggunakan nama lama 'ZEIRA' dalam judul dokumen, teks antarmuka, metadata HTML, maupun pesan sistem.
 
-| Tujuan | Backend (`backend/`) | Frontend (`frontend/`) |
-| --- | --- | --- |
-| Build | `npm run build` | `npm run build` |
-| Lint | `npm run lint` | `npm run lint` |
-| Unit/integration test | `npm test` | Belum ada perintah unit test di package scripts |
-| Migrasi lokal | `npm run migrate` | - |
-| Test smoke umum | `npm run smoke` | - |
-| Smoke terarah | `npm run smoke:payments`, `smoke:cancellations`, `smoke:packages`, `smoke:health`, `smoke:content-lockers`, `smoke:admin-finance`, `smoke:site` | `npm run smoke:live`, `smoke:health`, `smoke:admin`, `smoke:content-lockers`, `smoke:admin-finance`, `smoke:site`, `smoke:dashboard` |
-| Format | - | `npm run format` / `npm run format:check` |
+---
 
-Smoke test live dapat memerlukan backend, frontend, Edge, atau fixture database. Baca script target sebelum menjalankan; pastikan ia memakai database lokal dan pahami apakah fixture akan dipulihkan. Jangan jalankan `demo:setup` hanya untuk memeriksa build atau dokumentasi.
+## 5. Protokol Pembayaran Midtrans Snap dan Keandalan Transaksi
 
-Untuk perubahan aturan bisnis, cocokkan dengan kriteria penerimaan PRD dan uji batas waktu, nominal, kapasitas, idempotensi, serta peran yang terdampak. Untuk perubahan tampilan, jalankan build/lint dan bila server lokal tersedia periksa layar pada ukuran desktop dan mobile. Jangan melaporkan test atau transaksi Sandbox yang tidak benar-benar dilakukan.
+1. **Batas Waktu Transaksi 15 Menit:**
+   - Parameter `expiry` dengan durasi 15 menit (`{ duration: 15, unit: 'minutes' }`) wajib dikirim pada setiap pembuatan transaksi Snap Midtrans untuk menyelaraskan waktu penahanan kursi backend dengan batas pembayaran gateway.
+2. **Dukungan Buka Kembali Modal Pembayaran (Resume Checkout):**
+   - Jika pelanggan tidak sengaja menutup modal Snap atau tab browser, tombol 'Lanjutkan Pembayaran' pada riwayat booking harus dapat memanggil kembali token Snap yang masih aktif tanpa membuat transaksi baru yang mubazir.
+3. **Keandalan dan Idempotensi:**
+   - Penanganan webhook dan sinkronisasi manual status transaksi harus idempoten. Notifikasi yang datang berulang atau tidak berurutan tidak boleh melipatgandakan saldo atau mengubah status booking lebih dari satu kali.
+   - Porsi saldo dompet yang ditahan dilepaskan otomatis ketika batas waktu penahanan kursi berakhir.
+4. **Simulator Pengujian:**
+   - Pengujian pembayaran dilakukan eksklusif pada environment **Midtrans Sandbox**. Dilarang mencoba transaksi dengan kartu kredit riil.
 
-## Pelaporan
+---
 
-- Sebutkan file serta perintah/alur yang benar-benar diperiksa. Tandai yang belum diuji.
-- Jika ada keterbatasan environment (misalnya workspace tanpa metadata `.git`, browser, atau database), katakan secara eksplisit alih-alih mengarang hasil.
-- Jangan menyebut proyek siap produksi; PRD membatasi implementasi ini pada demo satu studio dan deployment belum tervalidasi.
+## 6. Tata Kelola Keamanan dan Kerahasiaan Data
+
+1. **Penyimpanan Kredensial:**
+   - Berkas konfigurasi `.env`, folder `.qa/`, serta kredensial database dan payment gateway tidak boleh di-commit ke Git.
+   - Server Key Midtrans disimpan terenkripsi di PostgreSQL menggunakan algoritma AES-256 (`MIDTRANS_SETTINGS_KEY`) dan disamarkan saat dibaca oleh admin.
+2. **Autentikasi dan Proteksi Sesi:**
+   - Sesi disimpan pada tabel database PostgreSQL, ditransmisikan hanya melalui cookie `HttpOnly` bernama `wellness.sid` dengan konfigurasi `SameSite=Lax` dan atribut `Secure` pada koneksi HTTPS.
+   - Setiap mutasi data HTTP (`POST`, `PUT`, `PATCH`, `DELETE`) dilindungi oleh mekanisme CSRF token yang divalidasi oleh backend.
+3. **Privasi Data Kesehatan Peserta:**
+   - Formulir catatan kesehatan bersifat sukarela dengan persetujuan (*consent*) eksplisit pelanggan.
+   - Akses data kesehatan hanya diberikan kepada pelatih yang mengajar sesi kelas terkait dalam bentuk snapshot terbatas saat sesi berlangsung. Admin dan publik sama sekali tidak memiliki akses baca terhadap isi kondisi kesehatan.
+
+---
+
+## 7. Matriks Perintah dan Verifikasi Cepat
+
+Jalankan perintah dari folder modul terkait sebelum mengajukan commit:
+
+| Operasi | Modul Backend (`backend/`) | Modul Frontend (`frontend/`) |
+| :--- | :--- | :--- |
+| **Kompilasi (Build)** | `npm run build` | `npm run build` |
+| **Linter Kode** | `npm run lint` | `npm run lint` |
+| **Unit Testing** | `npm test` | - |
+| **Migrasi Database** | `npm run migrate` | - |
+| **Penyegaran Jadwal Demo** | `npm run demo:refresh-schedule` | - |
+| **Rotasi Sandi Akun Demo** | `npm run demo:rotate-passwords` | - |
+| **Smoke Test Khusus** | `npm run smoke:payments`, `smoke:health` | `npm run smoke:dashboard`, `smoke:admin` |
+
+---
+
+## 8. Panduan Pelaporan dan Audit Perubahan
+
+- Laporkan secara transparan berkas yang dimodifikasi, pengujian yang telah dijalankan, serta hasil build sebelum menyelesaikan tugas.
+- Jangan menyatakan suatu fitur telah selesai atau siap produksi apabila belum divalidasi dengan pengujian otomatis atau pengujian fungsional yang relevan.
+- Pertahankan struktur dokumen markdown tetap bersih, profesional, dan menggunakan format tautan standar GitHub Markdown (`file:///`).

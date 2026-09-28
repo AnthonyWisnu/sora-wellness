@@ -1,4 +1,4 @@
-# 🌿 Sora Wellness Studio Platform
+# Sora Wellness Studio Platform
 
 <div align="center">
 
@@ -9,107 +9,120 @@
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
 ![Midtrans](https://img.shields.io/badge/Payment-Midtrans_Snap-002B49?logoColor=white)
+![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub_Actions-2088FF?logo=githubactions&logoColor=white)
 
-**Platform Manajemen & Booking Studio Wellness Modern Berbasis API-First**  
-*Dirancang khusus untuk satu boutique studio (Yoga & Pilates) dengan arsitektur modular, keamanan tingkat enterprise, dan sistem pembayaran terintegrasi.*
+**Platform Manajemen dan Booking Studio Wellness Modern Berbasis API-First**  
+*Dirancang khusus untuk boutique studio (Yoga dan Pilates) dengan arsitektur modular, keamanan tingkat enterprise, presensi 2-tier, dan sistem pembayaran terintegrasi.*
 
-[Fitur Utama](#-fitur-utama) •
-[Arsitektur & Tech Stack](#-arsitektur--tech-stack) •
-[Panduan Instalasi](#-panduan-instalasi-cepat) •
-[Akun & Data Demo](#-akun--data-demo) •
-[Dokumentasi API](#-dokumentasi-api--pengujian) •
-[Struktur Direktori](#-struktur-direktori)
+[Fitur Utama](#fitur-utama) ·
+[Arsitektur dan Tech Stack](#arsitektur-dan-tech-stack) ·
+[Panduan Instalasi Cepat](#panduan-instalasi-cepat) ·
+[Akun dan Data Demo](#akun-dan-data-demo) ·
+[Dokumentasi API dan Pengujian](#dokumentasi-api-dan-pengujian) ·
+[Deployment VPS dan CI/CD](#deployment-vps-dan-cicd) ·
+[Struktur Direktori](#struktur-direktori)
 
 </div>
 
 ---
 
-## 📌 Tentang Proyek
+## Tentang Proyek
 
-**Sora Wellness Studio** adalah platform manajemen studio kebugaran terpadu yang memisahkan secara tegas antara aturan bisnis backend dan antarmuka frontend. Platform ini melayani operasional harian studio mulai dari reservasi kelas, kuota langganan (*membership*), pembatalan adaptif, buku besar saldo (*wallet ledger*), absensi pelatih, rekam kesehatan berizin (*consented health notes*), pengelolaan loker, hingga Content Management System (CMS) untuk situs publik.
+**Sora Wellness Studio** adalah platform manajemen studio kebugaran terpadu yang memisahkan secara tegas antara aturan bisnis backend dan antarmuka frontend. Platform ini melayani operasional harian studio mulai dari reservasi kelas, kuota langganan (membership), pembatalan adaptif, buku besar saldo (wallet ledger), presensi pelatih 2-tier, verifikasi tiket lobi meja depan, rekam kesehatan berizin (consented health notes), sistem matriks loker fisik, hingga Content Management System (CMS) untuk situs publik.
 
-> **Status Proyek:** Aplikasi demo tingkat produk (*production-grade demo*). Transaksi pembayaran terhubung langsung ke **Midtrans Sandbox** resmi tanpa uang riil.
+> **Status Proyek:** Aplikasi demo tingkat produk (production-grade demo). Transaksi pembayaran terhubung langsung ke **Midtrans Sandbox** resmi tanpa uang riil. Sistem telah dilengkapi pipeline CI/CD otomatis ke server VPS aktif.
 
 ---
 
-## ✨ Fitur Utama
+## Fitur Utama
 
-### 1. 🌐 Situs Publik & CMS Mandiri
-- **Profil Studio Dinamis:** Informasi studio, hero banner, teks promosi, dan galeri foto studio resolusi tinggi.
-- **CMS dengan Versioning:** Pengelolaan draf konten, pratinjau khusus admin (`?preview=1`), dan penerbitan satu klik (*atomic publish*) yang terlindung dari *race condition*.
-- **Pustaka Media Terproteksi:** Unggah dan validasi berkas gambar (JPG, PNG, WebP maks 5 MB) dengan pelacakan pemakaian aset agar tidak terhapus saat masih digunakan.
-- **Peta & Kontak Terintegrasi:** Dukungan URL sematan Google Maps resmi, tautan WhatsApp, dan nomor telepon langsung.
+### 1. Situs Publik dan Headless CMS Mandiri
+- **Profil Studio Dinamis:** Informasi studio, hero banner, teks promosi, dan galeri foto studio resolusi tinggi bergaya estetika Japandi modern.
+- **CMS dengan Versioning:** Pengelolaan draf konten, pratinjau khusus admin (`?preview=1`), dan penerbitan satu klik (atomic publish) yang terlindung dari *race condition*.
+- **Pustaka Media Terproteksi:** Unggah dan validasi berkas gambar (JPG, PNG, WebP maks 5 MB) dengan pelacakan pemakaian aset agar tidak terhapus saat masih digunakan di konten aktif.
+- **Peta dan Kontak Terintegrasi:** Dukungan URL sematan Google Maps resmi, tautan WhatsApp, dan nomor telepon langsung.
 
-### 2. 🎟️ Sistem Reservasi & Keanggotaan (*Booking Engine*)
+### 2. Sistem Reservasi dan Keanggotaan (Booking Engine)
 - **Tiga Tingkat Kelas:** *Beginner*, *Intermediate 1*, dan *Intermediate 2* dengan batas kapasitas dan harga per sesi.
 - **Jadwal Berulang Fleksibel:** Pengaturan pola jadwal mingguan otomatis hingga 180 hari ke depan, lengkap dengan penanganan hari libur atau pembatalan sesi tertentu.
-- **Hak Akses Member & Jatah Bulanan:** Perhitungan kuota kelas bulanan dengan prorata akurat sesuai kalender (termasuk penanganan tanggal 31 dan tahun kabisat).
-- **Auto-Expire Seat Hold:** Penahanan kursi 15 menit saat pembayaran berlangsung; otomatis dilepaskan oleh background sweeper jika transaksi tidak diselesaikan.
+- **Hak Akses Member dan Jatah Bulanan:** Perhitungan kuota kelas bulanan dengan prorata akurat sesuai kalender (termasuk penanganan tanggal 31 dan tahun kabisat).
+- **Auto-Expire Seat Hold 15 Menit:** Penahanan kursi selama 15 menit saat checkout berlangsung; otomatis dilepaskan oleh background sweeper jika transaksi tidak diselesaikan.
 
-### 3. 💳 Pembayaran & Dompet Digital (*Wallet Ledger*)
-- **Integrasi Midtrans Snap Sandbox:** Checkout kelas dan paket membership langsung memanggil gateway resmi Midtrans.
-- **Pembayaran Kombinasi:** Fleksibilitas menggunakan saldo dompet (*wallet*) yang digabung dengan pembayaran sisa tagihan via payment gateway.
-- **Buku Besar Transaksi (*Double-Entry Ledger*):** Setiap rupiah mutasi (pembelian, pengembalian dana, pembebasan saldo tahanan) tercatat transparan dan tidak dapat dimanipulasi.
-- **Penanganan Webhook Aman:** Verifikasi signature notifikasi menggunakan SHA-512 dengan Server Key terenkripsi AES-256.
+### 3. Pembayaran Terintegrasi dan Dompet Digital (Wallet Ledger)
+- **Integrasi Midtrans Snap Sandbox:** Checkout kelas dan paket membership langsung memanggil gateway resmi Midtrans dengan batas waktu transaksi 15 menit presisi.
+- **Resilience Pembayaran (Resume Modal):** Jika pelanggan tidak sengaja menutup pop-up Snap atau tab pembayaran, sistem menyediakan opsi 'Lanjutkan Pembayaran' di riwayat booking untuk membuka kembali sesi transaksi aktif selama masih dalam batas 15 menit.
+- **Pembayaran Kombinasi:** Fleksibilitas menggunakan saldo dompet (wallet) yang digabung dengan pembayaran sisa tagihan via payment gateway.
+- **Buku Besar Transaksi (Double-Entry Ledger):** Setiap rupiah mutasi (pembelian, pengembalian dana, pembebasan saldo tahanan) tercatat transparan dan tidak dapat dimanipulasi.
+- **Penanganan Webhook Aman:** Verifikasi signature notifikasi menggunakan SHA-512 dengan Server Key terenkripsi AES-256 di database.
 
-### 4. 🔄 Kebijakan Pembatalan Adaptif
-- **Pembatalan oleh Pelanggan:** Kebijakan pembatalan 24 jam. Pembatalan tepat waktu mengembalikan jatah/saldo 100%, sedangkan pembatalan terlambat menghanguskan jatah/biaya.
-- **Pembatalan Sepihak oleh Studio:** Jika studio membatalkan sesi kelas, seluruh hak pelanggan dipulihkan otomatis dalam satu transaksi atomik-termasuk memulihkan hak pelanggan yang sebelumnya sempat membatalkan terlambat.
+### 4. Kebijakan Pembatalan Adaptif
+- **Pembatalan oleh Pelanggan:** Kebijakan pembatalan 24 jam sebelum kelas dimulai. Pembatalan tepat waktu mengembalikan jatah/saldo 100%, sedangkan pembatalan terlambat menghanguskan jatah/biaya.
+- **Pembatalan Sepihak oleh Studio:** Jika studio membatalkan sesi kelas, seluruh hak pelanggan dipulihkan otomatis dalam satu transaksi atomik, termasuk memulihkan hak pelanggan yang sebelumnya sempat membatalkan terlambat.
 
-### 5. 🩺 Kesehatan, Absensi & Privasi Pelatih
-- **Rekam Riwayat Kesehatan Berizin:** Formulir kondisi fisik dengan persetujuan (*consent*) yang dapat dihapus sewaktu-waktu oleh pelanggan.
-- **Snapshot Kesehatan Terbatas:** Pelatih hanya dapat melihat kondisi kesehatan peserta yang tercatat pada saat sesi kelas berlangsung.
-- **Pencatatan & Koreksi Absensi:** Pelatih mencatat kehadiran dalam jendela 24 jam; Admin dapat melakukan koreksi data absensi yang wajib disertai alasan audit.
+### 5. Presensi Pelatih 2-Tier dan Rekam Kesehatan Berizin
+- **Arsitektur Presensi 2-Tier:** 
+  - *Tier 1 (Direktori Sesi Kelas):* Grid kartu kelas interaktif dengan filter tab (Semua, Hari Ini, Mendatang, Selesai), pencarian instan, pemilih tanggal, indikator kuota kehadiran (misal: '3/10 Hadir'), dan tombol 'Buka Kelas & Absensi'.
+  - *Tier 2 (Detail Sesi & Roster Peserta):* Tampilan penuh berfokus dengan breadcrumb kembali, statistik kehadiran, banner alert kondisi fisik peserta, tombol massal 'Tandai Semua Hadir', serta toggle kehadiran per peserta lengkap dengan indikator kedatangan lobi.
+- **Rekam Riwayat Kesehatan Berizin:** Formulir kondisi fisik dengan persetujuan (consent) yang dapat dihapus sewaktu-waktu oleh pelanggan.
+- **Snapshot Kesehatan Terbatas:** Pelatih hanya dapat melihat kondisi kesehatan peserta yang tercatat pada saat sesi kelas berlangsung. Admin tidak memiliki akses ke isi rekam kesehatan demi privasi.
 
-### 6. 🔐 Manajemen Loker Studio
-- Penomoran loker fisik dan penetapan loker eksklusif kepada member aktif.
-- Pelepasan loker otomatis (*auto-release*) saat masa paket langganan pelanggan berakhir.
+### 6. Verifikasi Masuk Meja Depan (Front Desk Check-in)
+- **Pemisahan Wewenang Lobi dan Matras:** Admin meja depan bertugas melakukan verifikasi e-ticket QR di lobi studio, mencatat timestamp kedatangan peserta, dan memvalidasi tiket masuk.
+- **Deteksi Loker Fisik Instan:** Saat QR e-ticket pelanggan berhasil diverifikasi di meja depan, sistem langsung menampilkan nomor loker fisik aktif pelanggan (contoh: 'Loker Pribadi: Loker A-01') untuk kemudahan operasional resepsionis.
+
+### 7. Manajemen Loker Matriks (Japandi Style)
+- **Matriks Loker Visual:** Tampilan grid loker interaktif dengan pemetaan zona, status visual (Tersedia, Terpakai, Perawatan), serta modal penugasan member.
+- **Pelepasan Otomatis (Auto-Release):** Pelepasan loker otomatis oleh sistem ketika masa paket keanggotaan pelanggan berakhir.
 
 ---
 
-## 🏗 Arsitektur & Tech Stack
+## Arsitektur dan Tech Stack
 
 ```mermaid
 graph TD
-    Client[Browser / Klien HTTP] -->|HTTP / JSON + Session Cookie| Proxy[Vite Proxy :5173]
+    Client[Browser / Klien HTTP] -->|HTTP / JSON + Session Cookie| Proxy[Nginx / Vite Proxy :5173]
     Proxy -->|Reverse Proxy /api/v1| Nest[Backend NestJS :3000]
     Nest -->|Connection Pool| PG[(PostgreSQL 16 :55432)]
-    Nest -->|Snap API & Webhooks| Midtrans[Midtrans Sandbox]
-    Nest -->|Storage| Disk[Uploads Media Storage]
+    Nest -->|Snap API & Webhooks| Midtrans[Midtrans Sandbox Gateway]
+    Nest -->|File Storage| Disk[Uploads Media Storage]
+    GitHub[GitHub Repo: main] -->|Webhook / Push| Runner[VPS Self-Hosted Runner]
+    Runner -->|Build & Restart| Nest
+    Runner -->|Build Dist| Proxy
 ```
 
 | Lapisan | Teknologi | Keterangan |
 | :--- | :--- | :--- |
-| **Frontend** | React 19, TypeScript, Vite 6 | Arsitektur modular per fitur, responsif ponsel & desktop |
-| **Desain & UI** | CSS Modern, Lucide React, Google Fonts | Tipografi *Cormorant Garamond*, *Manrope*, *Plus Jakarta Sans* |
-| **Backend API** | NestJS 11, TypeScript, Express | Arsitektur controller-service-module dengan DTO Validation |
-| **Database** | PostgreSQL 16 (Docker) | Akses via `pg.Pool`, transaksi atomik & *pessimistic locking* |
-| **Keamanan** | Helmet, CSRF-Sync, PG Session | Sesi server-side `HttpOnly`, proteksi CSRF, sanitasi header |
+| **Frontend** | React 19, TypeScript, Vite 6 | Arsitektur modular per fitur, responsif ponsel dan desktop |
+| **Desain dan UI** | Modern CSS, Lucide React, Google Fonts | Estetika Japandi, tipografi *Plus Jakarta Sans* dan *Cormorant Garamond* |
+| **Backend API** | NestJS 11, TypeScript, Express | Arsitektur controller-service-module dengan DTO Validation Pipe |
+| **Database** | PostgreSQL 16 (Docker) | Akses via `pg.Pool`, transaksi atomik dan *pessimistic locking* |
+| **Keamanan** | Helmet, CSRF-Sync, PG Session | Sesi server-side `HttpOnly`, proteksi CSRF, sanitasi header OWASP |
 | **Payment Gateway** | Midtrans Snap Sandbox | Enkripsi Server Key AES-256, verifikasi notifikasi SHA-512 |
-| **Testing** | Node.js Test Runner, Playwright | 15/15 Unit test lulus, smoke test browser otomatis |
+| **CI/CD Pipeline** | GitHub Actions, Self-Hosted Runner | Otomatisasi pengujian, build, dan zero-downtime reload di VPS |
+| **Testing** | Node.js Test Runner, Playwright | Unit test logika bisnis mandiri dan smoke test browser |
 
 ---
 
-## 🚀 Panduan Instalasi Cepat
+## Panduan Instalasi Cepat
 
 ### Prasyarat Sistem
-- **Node.js** v22.x & **npm**
+- **Node.js** v22.x dan **npm**
 - **Docker Desktop** (untuk database PostgreSQL)
-- **Git** & **PowerShell** (Windows) / Terminal (macOS/Linux)
+- **Git** dan **PowerShell** (Windows) / Terminal (macOS/Linux)
 
 ---
 
-### Langkah 1: Kloning & Persiapan Konfigurasi
+### Langkah 1: Kloning dan Persiapan Konfigurasi
 
 ```powershell
-# 1. Masuk ke folder proyek
+# 1. Masuk ke direktori repositori
 Set-Location C:\laragon\www\wellness
 
 # 2. Salin template konfigurasi backend
 Copy-Item backend/.env.example backend/.env
 ```
 
-Buka `backend/.env` dan isi variabel konfigurasi lokal berikut:
+Buka `backend/.env` dan sesuaikan variabel konfigurasi lokal berikut:
 
 ```env
 DATABASE_URL=postgresql://wellness:password-acak-anda@127.0.0.1:55432/wellness
@@ -126,16 +139,16 @@ MIDTRANS_SETTINGS_KEY=kunci-base64-32-byte-acak
 ```
 
 > [!TIP]
-> **Cara Cepat Menghasilkan Kunci Acak via Terminal:**
+> **Cara Menghasilkan Kunci Acak via Terminal:**
 > ```powershell
-> node -e "console.log(require('node:crypto').randomBytes(24).toString('base64url'))" # untuk DB_PASSWORD
-> node -e "console.log(require('node:crypto').randomBytes(48).toString('base64url'))" # untuk SESSION_SECRET
-> node -e "console.log(require('node:crypto').randomBytes(32).toString('base64'))"    # untuk MIDTRANS_SETTINGS_KEY
+> node -e "console.log(require('node:crypto').randomBytes(24).toString('base64url'))" # DB_PASSWORD
+> node -e "console.log(require('node:crypto').randomBytes(48).toString('base64url'))" # SESSION_SECRET
+> node -e "console.log(require('node:crypto').randomBytes(32).toString('base64'))"    # MIDTRANS_SETTINGS_KEY
 > ```
 
 ---
 
-### Langkah 2: Setup Database & Dataset Demo
+### Langkah 2: Setup Database dan Dataset Demo
 
 Jalankan rangkaian perintah berikut di dalam direktori `backend`:
 
@@ -146,7 +159,7 @@ npm install
 # 1. Jalankan PostgreSQL melalui Docker
 docker compose up -d db
 
-# 2. Jalankan migrasi skema tabel
+# 2. Jalankan skrip migrasi skema database
 npm run migrate
 
 # 3. Muat dataset demo lengkap Sora Wellness Studio
@@ -155,9 +168,9 @@ npm run demo:setup
 
 Skrip `demo:setup` akan secara otomatis:
 - Mengisi 7 katalog kelas dan jadwal rutin 45 hari ke depan.
-- Mengunggah foto studio dan mengonfigurasi CMS situs publik.
-- Mengonfigurasi nomor kontak dan peta dari `backend/.demo.local.json`.
-- Membuat 9 akun demo dan mencatat password uniknya ke:
+- Mengunggah foto studio dan mengonfigurasi dokumen CMS situs publik.
+- Mengonfigurasi nomor kontak dan peta studio.
+- Membuat 9 akun demo dengan kredensial tersimpan aman di:
   ```
   backend/.qa/demo-accounts.json
   ```
@@ -168,14 +181,14 @@ Skrip `demo:setup` akan secara otomatis:
 
 Buka dua jendela terminal terpisah:
 
-**Terminal 1 (Backend API):**
+**Terminal 1 (Backend API NestJS):**
 ```powershell
 Set-Location backend
 npm run dev
 ```
 *API aktif di: `http://127.0.0.1:3000/api/v1`*
 
-**Terminal 2 (Frontend React):**
+**Terminal 2 (Frontend React Vite):**
 ```powershell
 Set-Location frontend
 npm install
@@ -187,30 +200,30 @@ Buka peramban di **`http://127.0.0.1:5173`**.
 
 ---
 
-## 👥 Akun & Data Demo
+## Akun dan Data Demo
 
-Buka berkas [`backend/.qa/demo-accounts.json`](backend/.qa/demo-accounts.json) yang terbuat di komputer Anda untuk melihat password login masing-masing akun:
+Buka berkas lokal [`backend/.qa/demo-accounts.json`](backend/.qa/demo-accounts.json) yang dibuat oleh skrip setup untuk melihat password unik masing-masing akun demo:
 
 | Peran | Nama Akun | Email Login | Hak Akses Utama |
 | :--- | :--- | :--- | :--- |
-| **Admin** | Admin Sora | `admin@sora.example.test` | Kelola jadwal, kelas, staf, CMS, loker, audit absensi, & keuangan |
-| **Coach** | Nadia Putri | `nadia@sora.example.test` | Jadwal mengajar, rekam kehadiran, & lihat catatan kesehatan kelasnya |
-| **Coach** | Made Arya | `arya@sora.example.test` | Jadwal mengajar, rekam kehadiran, & lihat catatan kesehatan kelasnya |
-| **Customer** | Ayu Lestari | `ayu.lestari@sora.example.test` | Booking kelas pemula, beli paket, kelola profil |
-| **Customer** | Dimas Saputra | `dimas.saputra@sora.example.test` | Booking kelas pemula, beli paket, kelola profil |
-| **Customer** | Lila Mahendra | `lila.mahendra@sora.example.test` | Riwayat kelas lampau, loker, & catatan kesehatan tersimpan |
+| **Admin** | Admin Sora | `admin@sora.example.test` | Kelola jadwal, kelas, staf, CMS, matriks loker, verifikasi tiket lobi, audit absensi, dan keuangan |
+| **Coach** | Nadia Putri | `nadia@sora.example.test` | Jadwal mengajar 2-tier, presensi matras kelas, dan pantauan alert kesehatan peserta |
+| **Coach** | Made Arya | `arya@sora.example.test` | Jadwal mengajar 2-tier, presensi matras kelas, dan pantauan alert kesehatan peserta |
+| **Customer** | Ayu Lestari | `ayu.lestari@sora.example.test` | Booking kelas pemula, beli paket langganan, dompet saldo, profil |
+| **Customer** | Dimas Saputra | `dimas.saputra@sora.example.test` | Booking kelas pemula, beli paket langganan, dompet saldo, profil |
+| **Customer** | Lila Mahendra | `lila.mahendra@sora.example.test` | Riwayat kelas lampau, loker pribadi, dan riwayat kesehatan tersimpan |
 | **Customer** | Maya Kirana | `maya.kirana@sora.example.test` | Booking kelas aktif mendatang |
-| **Customer** | Raka Pratama | `raka.pratama@sora.example.test` | Pelanggan reguler |
-| **Customer** | Sinta Dewi | `sinta.dewi@sora.example.test` | Riwayat kelas & koreksi absensi admin |
+| **Customer** | Raka Pratama | `raka.pratama@sora.example.test` | Pelanggan reguler studio |
+| **Customer** | Sinta Dewi | `sinta.dewi@sora.example.test` | Riwayat kelas dan koreksi absensi admin |
 
 ---
 
-## 📖 Dokumentasi API & Pengujian
+## Dokumentasi API dan Pengujian
 
 Aplikasi menyediakan dokumentasi OpenAPI interaktif yang dapat diakses langsung saat backend berjalan:
 
-* **Swagger UI Interaktif:** `http://127.0.0.1:3000/api/docs`
-* **Spesifikasi OpenAPI JSON:** `http://127.0.0.1:3000/api/docs-json`
+- **Swagger UI Interaktif:** `http://127.0.0.1:3000/api/docs`
+- **Spesifikasi OpenAPI JSON:** `http://127.0.0.1:3000/api/docs-json`
 
 ### Menjalankan Pengujian Mandiri
 
@@ -219,11 +232,12 @@ Aplikasi menyediakan dokumentasi OpenAPI interaktif yang dapat diakses langsung 
 cd backend
 npm test
 
-# Jalankan linter kode
+# Jalankan linter kode backend dan frontend
+npm run lint
+cd ../frontend
 npm run lint
 
-# Jalankan skrip smoke test Playwright di frontend (opsional)
-cd ../frontend
+# Jalankan skrip smoke test browser Playwright (opsional)
 npm run smoke:dashboard
 npm run smoke:admin
 npm run smoke:site
@@ -231,82 +245,78 @@ npm run smoke:public-data
 npm run smoke:package-benefits
 ```
 
-### Email pembayaran Midtrans Sandbox
+### Konfigurasi Midtrans Sandbox
 
-Checkout kelas dan paket berbayar mengirim **email akun pelanggan** ke Midtrans Snap. Aktifkan pengiriman di dashboard merchant Sandbox melalui **Settings → Email Notifications**: centang **Send email to customer** dan **Send email to me**, lalu isi **Notification receiver email** serta **Notification sender/support email** dengan alamat bisnis Sandbox milik Anda. Alamat ini diatur per merchant dan tidak disimpan di repository. Periksa penerimaan email dengan akun pelanggan uji yang inbox-nya Anda kuasai; alamat akun demo `example.test` bersifat fiktif dan tidak dapat membuktikan pengiriman. Status pembayaran tetap ditentukan oleh webhook/status API, bukan oleh email. Panduan resmi: [Email Notifications Midtrans](https://docs.midtrans.com/docs/email-notifications).
-
-### MCP pembayaran uji untuk Codex
-
-Repository ini memiliki MCP lokal `wellness-midtrans` untuk menguji alur pembayaran **melalui API wellness**. MCP ini berbeda dari paket PyPI `mcp-midtrans` yang hanya menyediakan dokumentasi. MCP lokal tidak menerima Server Key: backend membaca kredensial Sandbox terenkripsi dari pengaturan pembayaran studio.
-
-Jalankan PostgreSQL dan backend seperti pada panduan di atas, pastikan merchant Sandbox sudah diatur di dashboard admin, lalu dari `backend/` jalankan:
-
-```powershell
-npm run build
-npm run smoke:mcp-wellness
-node dist/scripts/mcp-wellness/smoke.js --checkout
-```
-
-Perintah terakhir membuat satu booking berbayar di Midtrans Sandbox, memeriksa statusnya, lalu membatalkan booking pending. Perintah itu **tidak menyelesaikan pembayaran**. Untuk memasang MCP pada Codex di komputer lain, jalankan perintah berikut dengan path lokal Anda sendiri:
-
-```powershell
-codex mcp add wellness-midtrans -- "C:\Program Files\nodejs\node.exe" "C:\path\ke\wellness\backend\dist\scripts\mcp-wellness\server.js"
-codex mcp list
-```
-
-Muat ulang sesi Codex sesudah menambahkan server. Secara default MCP login sebagai pelanggan demo Ayu menggunakan sandi dari `backend/.qa/demo-accounts.json`. Anda dapat mengganti akun dengan `WELLNESS_MCP_ACCOUNT` dan `WELLNESS_MCP_PASSWORD` pada lingkungan lokal; jangan masukkan sandi ke konfigurasi Git atau argumen command. MCP hanya menerima alamat backend HTTP loopback (`WELLNESS_MCP_API_URL`, default `http://127.0.0.1:3000`). Tool yang tersedia mencakup daftar sesi/paket, booking/pembelian paket uji, pembacaan dan refresh status, serta pembatalan pending. Pembatalan booking melepaskan booking lokal; bila pembayaran gateway datang kemudian, aturan saldo terlambat tetap berlaku. Pembatalan paket hanya dapat diteruskan ke Midtrans jika transaksi provider sudah berstatus `pending`; token Snap yang belum dipakai akan kedaluwarsa setelah 15 menit. Refund tidak tersedia lewat MCP.
-
-Jika sandi demo perlu diganti tanpa menghapus jadwal dan konten lokal, jalankan `npm run demo:rotate-passwords` dari `backend/`. Sandi baru hanya disimpan di `backend/.qa/demo-accounts.json`. File itu diabaikan Git dan tidak boleh dibagikan.
+1. Kredensial Server Key dan Client Key Sandbox dimasukkan melalui menu **Pengaturan Pembayaran** di Dashboard Admin Sora. Kunci Server dienkripsi dengan AES-256 sebelum disimpan di database.
+2. Setiap transaksi Snap dikonfigurasi dengan batas kedaluwarsa 15 menit (`expiry: { duration: 15, unit: 'minutes' }`).
+3. Endpoint webhook menerima notifikasi HTTPS di `/api/v1/webhooks/midtrans` dengan validasi SHA-512 signature.
 
 ---
 
-## 📁 Struktur Direktori
+## Deployment VPS dan CI/CD
+
+Platform Sora Wellness Studio telah didukung pipeline CI/CD otomatis berbasis **GitHub Actions** yang terhubung langsung ke VPS Linux operasional:
+
+- **Domain Publik Aktif:** `https://wellness.anthonywj.my.id`
+- **Host VPS:** Linux Ubuntu Server (Alamat IP: `43.157.248.201`)
+- **Workflow:** [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)
+- **Runner:** Self-Hosted GitHub Runner (`vps-wellness`)
+- **Mekanisme Deployment:** Pada setiap `git push origin main`, runner di VPS otomatis menjalankan penarikan kode terbaru, instalasi dependensi, migrasi database, build produksi frontend dan backend, serta reload layanan backend melalui PM2 dan reload static server Nginx/Caddy.
+
+---
+
+## Struktur Direktori
 
 ```text
 wellness/
-├── backend/                  # Layanan NestJS & Business Engine
-│   ├── migrations/           # Skema & migrasi tabel PostgreSQL
-│   ├── scripts/              # Skrip demo, MCP lokal, & smoke test
-│   ├── src/                  # Kode sumber modular per fitur
-│   │   ├── attendance/       # Modul absensi pelatih & koreksi admin
-│   │   ├── auth/             # Sesi, login, CSRF, & ganti kata sandi
-│   │   ├── booking/          # Reservasi kelas & aturan pembatalan
-│   │   ├── catalog/          # Katalog kelas & jadwal sesi
-│   │   ├── content/          # CMS dokumen publik, versi draf, & media
-│   │   ├── finance/          # Pemantauan transaksi & buku besar saldo
-│   │   ├── health/           # Rekam kesehatan & retensi snapshot
-│   │   ├── lockers/          # Manajemen loker & auto-release
-│   │   ├── membership/       # Pembelian paket & kuota prorata
-│   │   ├── payments/         # Integrasi Midtrans Snap & webhooks
-│   │   └── shared/           # Koneksi DB, guard keamanan, & CSRF
-│   ├── uploads/              # Penyimpanan berkas media studio
-│   └── compose.yaml          # Konfigurasi container PostgreSQL
+├── .github/
+│   └── workflows/            # Workflow CI/CD deployment otomatis ke VPS
+│       └── deploy.yml
 │
-├── frontend/                 # Aplikasi Web React 19 + TypeScript
-│   ├── public/images/        # Aset gambar & ilustrasi bawaan
+├── backend/                  # Layanan NestJS dan Business Logic Engine
+│   ├── migrations/           # Skema dan migrasi tabel PostgreSQL
+│   ├── scripts/              # Skrip demo setup, MCP, dan utilitas QA
+│   ├── src/                  # Modul fitur backend modular
+│   │   ├── attendance/       # Modul presensi pelatih dan verifikasi tiket lobi
+│   │   ├── auth/             # Sesi PostgreSQL, login, CSRF, dan reset sandi
+│   │   ├── booking/          # Reservasi kelas, hold 15 menit, dan pembatalan
+│   │   ├── catalog/          # Katalog jenis kelas dan jadwal berulang 180 hari
+│   │   ├── content/          # CMS headless draf, publikasi, dan pustaka media
+│   │   ├── finance/          # Audit transaksi pembayaran dan buku besar saldo
+│   │   ├── health/           # Rekam kesehatan berizin dan isolasi snapshot
+│   │   ├── lockers/          # Matriks loker Japandi dan auto-release
+│   │   ├── membership/       # Pembelian paket langganan dan jatah prorata
+│   │   ├── payments/         # Integrasi Midtrans Snap Sandbox dan webhooks
+│   │   └── shared/           # Database pool, auth guards, dan interceptors
+│   ├── uploads/              # Direktori penyimpanan berkas media studio
+│   └── compose.yaml          # Konfigurasi container PostgreSQL lokal
+│
+├── frontend/                 # Aplikasi Web React 19 + TypeScript + Vite
+│   ├── public/images/        # Aset gambar studio bawaan
 │   ├── src/
-│   │   ├── app/              # Komponen root aplikasi & router
-│   │   ├── features/         # Komponen dashboard per peran & publik
-│   │   ├── shared/           # Klien HTTP API, formatter, & tipe data
-│   │   └── styles/           # Desain CSS modular & styling Stitch
+│   │   ├── app/              # Komponen root aplikasi dan router
+│   │   ├── features/         # Modul antarmuka per peran (admin, coach, customer, public)
+│   │   ├── shared/           # Klien HTTP API, tipe data, dan formatters
+│   │   └── styles/           # Desain CSS modular dan styling sistem
 │   └── vite.config.ts        # Konfigurasi proxy Vite ke backend
 │
-├── .demo.local.json          # Konfigurasi kontak & peta studio
-├── AGENTS.md                 # Panduan etika & batasan teknis tim
-├── PRD.md                    # Product Requirements Document lengkap
+├── .demo.local.json          # Konfigurasi lokal kontak dan peta studio
+├── AGENTS.md                 # Panduan etika, batasan teknis, dan alur CI/CD tim
+├── PRD.md                    # Product Requirements Document resmi
 └── README.md                 # Dokumentasi panduan utama proyek
 ```
 
 ---
 
-## 🔒 Kebijakan Keamanan & Data
+## Kebijakan Keamanan dan Tata Kelola Data
 
-1. **Berkas Lingkungan:** Berkas `.env` tidak pernah dikomit ke repository. Kredensial merchant dan database dikelola per lingkungan pengembang.
-2. **Kunci Server Midtrans:** Tersimpan di database PostgreSQL dalam bentuk terenkripsi AES-256 menggunakan `MIDTRANS_SETTINGS_KEY`.
-3. **Data Demo:** Seluruh nama pelanggan, catatan kesehatan, testimoni, dan histori transaksi pada dataset demo adalah fiktif untuk kebutuhan pengujian.
+1. **Kerahasiaan Kredensial:** Berkas `.env` dan direktori `.qa/` tidak pernah dikomit ke repositori. Kredensial merchant dan database dikelola terisolasi per lingkungan.
+2. **Enkripsi Kunci Server:** Kunci Server Midtrans dienkripsi menggunakan algoritma AES-256 dengan `MIDTRANS_SETTINGS_KEY`.
+3. **Privasi Rekam Medis:** Rekam riwayat kesehatan peserta dilindungi dengan consent eksplisit dan snapshot terbatas yang hanya dapat diakses oleh pelatih yang bertugas saat kelas berlangsung. Admin tidak memiliki akses baca terhadap isi kondisi kesehatan.
+4. **Data Demo:** Seluruh nama pelanggan, rekam kesehatan, testimoni, dan histori transaksi pada dataset demo bersifat fiktif untuk keperluan demonstrasi dan pengujian kualitas perangkat lunak.
 
 ---
 
 <div align="center">
-  <sub>Dibuat dengan dedikasi untuk keunggulan arsitektur perangkat lunak · © 2026 Sora Wellness Studio</sub>
+  <sub>Dibuat dengan dedikasi untuk keunggulan rekayasa perangkat lunak · © 2026 Sora Wellness Studio</sub>
 </div>
