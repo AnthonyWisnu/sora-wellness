@@ -15,7 +15,8 @@
 *Dirancang khusus untuk boutique studio (Yoga dan Pilates) dengan arsitektur modular, keamanan tingkat enterprise, presensi 2-tier, dan sistem pembayaran terintegrasi.*
 
 [Fitur Utama](#fitur-utama) ·
-[Arsitektur dan Tech Stack](#arsitektur-dan-tech-stack) ·
+[Gambaran Umum Sistem](#gambaran-umum-arsitektur-sistem) ·
+[Struktur Database (ERD)](#struktur-database-entity-relationship-diagram--erd) ·
 [Panduan Instalasi Cepat](#panduan-instalasi-cepat) ·
 [Akun dan Data Demo](#akun-dan-data-demo) ·
 [Dokumentasi API dan Pengujian](#dokumentasi-api-dan-pengujian) ·
@@ -78,17 +79,210 @@
 
 ## Arsitektur dan Tech Stack
 
+### Gambaran Umum Arsitektur Sistem
+
 ```mermaid
-graph TD
-    Client[Browser / Klien HTTP] -->|HTTP / JSON + Session Cookie| Proxy[Nginx / Vite Proxy :5173]
-    Proxy -->|Reverse Proxy /api/v1| Nest[Backend NestJS :3000]
-    Nest -->|Connection Pool| PG[(PostgreSQL 16 :55432)]
-    Nest -->|Snap API & Webhooks| Midtrans[Midtrans Sandbox Gateway]
-    Nest -->|File Storage| Disk[Uploads Media Storage]
-    GitHub[GitHub Repo: main] -->|Webhook / Push| Runner[VPS Self-Hosted Runner]
-    Runner -->|Build & Restart| Nest
-    Runner -->|Build Dist| Proxy
+flowchart TD
+    subgraph ACTORS["Aktor Pengguna"]
+        Guest["Pengunjung Tamu"]
+        Customer["Pelanggan / Member"]
+        Coach["Pelatih (Coach)"]
+        Admin["Staf Meja Depan / Admin"]
+    end
+
+    subgraph FRONTEND["Frontend SPA (React 19 + TypeScript + Vite)"]
+        PublicApp["Portal Publik & CMS Viewer"]
+        MemberApp["Portal Reservasi & Dompet Saldo"]
+        CoachApp["Coach Console (Presensi 2-Tier)"]
+        AdminApp["Admin Terminal (Front Desk Check-in & Loker)"]
+    end
+
+    subgraph GATEWAY["Reverse Proxy & Keamanan"]
+        Nginx["Nginx / Vite Dev Proxy (:5173 / :80 / :443)"]
+        SecMiddleware["Cookie Sesi HttpOnly (wellness.sid) + CSRF-Sync Token"]
+    end
+
+    subgraph BACKEND["Backend Core Engines (NestJS 11 + Express)"]
+        AuthMod["Auth & Session Module"]
+        CatalogMod["Catalog & Schedule Engine (180 Hari)"]
+        BookingMod["Booking Engine (Seat Hold 15 Menit)"]
+        PaymentMod["Midtrans Payment & Wallet Ledger"]
+        AttendMod["Attendance & Front Desk Lobby Engine"]
+        LockerMod["Locker Matrix & Auto-Release Engine"]
+        HealthMod["Health Consent & Isolated Snapshot"]
+        CMSMod["Headless CMS & Versioned Document Engine"]
+    end
+
+    subgraph STORAGE["Penyimpanan Data Terpusat"]
+        PG[("PostgreSQL 16 Relational DB")]
+        DiskStorage["Penyimpanan Berkas Media Lokal (uploads/)"]
+    end
+
+    subgraph EXTERNAL["Layanan Pihak Ketiga (External Services)"]
+        Midtrans["Midtrans Snap Sandbox Payment Gateway"]
+        GoogleMaps["Google Maps Embed API"]
+    end
+
+    subgraph CICD["Otomatisasi CI/CD & Infrastruktur"]
+        GH["GitHub Repository (branch: main)"]
+        GHActions["GitHub Actions CI/CD Pipeline"]
+        VPS["Self-Hosted Runner (VPS Ubuntu 43.157.248.201)"]
+    end
+
+    %% Hubungan alur data
+    Guest --> PublicApp
+    Customer --> MemberApp
+    Coach --> CoachApp
+    Admin --> AdminApp
+
+    PublicApp & MemberApp & CoachApp & AdminApp -->|HTTP JSON + Cookie| Nginx
+    Nginx --> SecMiddleware
+    SecMiddleware -->|Reverse Proxy /api/v1| AuthMod & CatalogMod & BookingMod & PaymentMod & AttendMod & LockerMod & HealthMod & CMSMod
+
+    AuthMod & CatalogMod & BookingMod & PaymentMod & AttendMod & LockerMod & HealthMod & CMSMod -->|Connection Pool pg.Pool| PG
+    CMSMod -->|Write / Read File| DiskStorage
+
+    PaymentMod -->|Snap Token API & Webhook SHA-512| Midtrans
+    PublicApp -.->|Embed Map Iframe| GoogleMaps
+
+    GH -->|Push Webhook| GHActions
+    GHActions -->|Trigger Job| VPS
+    VPS -->|Auto Build, Migrate, Reload PM2| BACKEND
+    VPS -->|Deploy Static Bundle| Nginx
 ```
+
+---
+
+### Struktur Database (Entity Relationship Diagram · ERD)
+
+```mermaid
+erDiagram
+    APP_USERS ||--o{ BOOKINGS : "memesan"
+    APP_USERS ||--o{ MEMBERSHIPS : "memiliki paket"
+    APP_USERS ||--o{ PACKAGE_PURCHASES : "membeli paket"
+    APP_USERS ||--o| WALLET_ACCOUNTS : "memiliki saldo"
+    APP_USERS ||--o| HEALTH_PROFILES : "mencatat riwayat"
+    APP_USERS ||--o{ CLASS_SESSIONS : "mengajar sesi (coach)"
+    APP_USERS ||--o{ LOCKER_ASSIGNMENTS : "ditetapkan loker"
+
+    CLASS_TYPES ||--o{ SCHEDULE_RULES : "aturan jadwal template"
+    CLASS_TYPES ||--o{ CLASS_SESSIONS : "kategori kelas"
+    SCHEDULE_RULES ||--o{ CLASS_SESSIONS : "menghasilkan sesi rutin"
+
+    PACKAGE_OPTIONS ||--o{ PACKAGE_PURCHASES : "opsi yang dibeli"
+    PACKAGE_PURCHASES ||--o| MEMBERSHIPS : "mengaktifkan keanggotaan"
+
+    CLASS_SESSIONS ||--o{ BOOKINGS : "menampung reservasi"
+    CLASS_SESSIONS ||--o{ ATTENDANCE : "mencatat kehadiran"
+
+    BOOKINGS ||--o| PAYMENT_TRANSACTIONS : "transaksi pembayaran kelas"
+    PACKAGE_PURCHASES ||--o| PAYMENT_TRANSACTIONS : "transaksi pembayaran paket"
+    BOOKINGS ||--o| ATTENDANCE : "tiket masuk sesi"
+    BOOKINGS ||--o| HEALTH_SNAPSHOTS : "snapshot catatan fisik"
+
+    WALLET_ACCOUNTS ||--o{ WALLET_ENTRIES : "mutasi buku besar saldo"
+    BOOKINGS ||--o{ WALLET_ENTRIES : "referensi mutasi booking"
+
+    LOCKERS ||--o{ LOCKER_ASSIGNMENTS : "kompartemen fisik"
+    MEMBERSHIPS ||--o{ LOCKER_ASSIGNMENTS : "mengikat hak loker"
+
+    APP_USERS {
+        uuid id PK
+        citext email UK
+        text full_name
+        text role "admin | coach | customer"
+        text password_hash
+        boolean password_change_required
+        timestamptz created_at
+    }
+
+    CLASS_TYPES {
+        uuid id PK
+        text title
+        text category
+        text level "beginner | intermediate_1 | intermediate_2"
+        integer duration_minutes
+        integer default_capacity
+        integer default_price_idr
+        boolean active
+    }
+
+    CLASS_SESSIONS {
+        uuid id PK
+        uuid class_type_id FK
+        uuid coach_id FK
+        date local_date
+        timestamptz starts_at
+        timestamptz ends_at
+        integer capacity
+        integer price_idr
+        text status "scheduled | cancelled | finished"
+    }
+
+    BOOKINGS {
+        uuid id PK
+        uuid customer_id FK
+        uuid session_id FK
+        text status "pending_payment | confirmed | cancelled | expired"
+        text source "free | quota | single"
+        integer price_idr
+        integer wallet_reserved_idr
+        integer gateway_due_idr
+        timestamptz hold_expires_at
+    }
+
+    PAYMENT_TRANSACTIONS {
+        uuid id PK
+        uuid booking_id FK
+        uuid package_purchase_id FK
+        text order_id UK
+        integer gross_amount_idr
+        text status "pending | success | failed | expired"
+        text snap_token
+        text redirect_url
+    }
+
+    MEMBERSHIPS {
+        uuid id PK
+        uuid customer_id FK
+        uuid purchase_id FK
+        date starts_on
+        date ends_on
+    }
+
+    WALLET_ACCOUNTS {
+        uuid customer_id PK, FK
+        bigint balance_idr
+    }
+
+    ATTENDANCE {
+        uuid session_id PK, FK
+        uuid customer_id PK, FK
+        uuid booking_id UK, FK
+        boolean present
+        uuid recorded_by FK
+        timestamptz recorded_at
+    }
+
+    LOCKERS {
+        uuid id PK
+        text code UK
+        boolean active
+    }
+
+    LOCKER_ASSIGNMENTS {
+        uuid id PK
+        uuid locker_id FK
+        uuid customer_id FK
+        uuid membership_id FK
+        timestamptz assigned_at
+        timestamptz released_at
+    }
+```
+
+---
+
+### Matriks Teknologi (Tech Stack)
 
 | Lapisan | Teknologi | Keterangan |
 | :--- | :--- | :--- |

@@ -43,7 +43,7 @@ Semua dashboard (Admin, Coach, Customer) berbagi shell navigasi bersama dengan s
    - *Tier 1 (Direktori Sesi):* Ditampilkan dalam kartu-kartu sesi interaktif dengan tab filter (Semua, Hari Ini, Mendatang, Selesai), bilah pencarian, dan kuota kehadiran (misal: '3/10 Hadir').
    - *Tier 2 (Detail Sesi & Roster Peserta):* Tampilan penuh berfokus dengan breadcrumb 'Kembali ke Jadwal Kelas', indikator alert kondisi fisik, tombol massal 'Tandai Semua Hadir', dan toggle kehadiran individu.
 2. **Pemisahan Meja Depan (Front Desk Check-in) vs Presensi Matras:**
-   - Admin meja depan menggunakan antarmuka 'Verifikasi tiket' untuk memvalidasi QR e-ticket kedatangan peserta di lobi studio.
+   - Admin meja depan menggunakan antarmuka 'Verifikasi tiket' untuk memvalidasi QR e-ticket kedatangan peserta di lobi studio. Layar ini murni berfungsi sebagai terminal resepsionis tanpa formulir absensi manual kelas.
    - Sistem secara otomatis menampilkan nomor loker fisik aktif pelanggan (contoh: 'Loker Pribadi: Loker A-01') saat tiket berhasil diverifikasi.
    - Pelatih di ruang kelas fokus pada presensi kehadiran fisik di atas matras dan dapat melihat status kedatangan lobi peserta.
 3. **Matriks Loker Visual (Locker Matrix Japandi):**

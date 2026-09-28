@@ -1,15 +1,20 @@
-import { useEffect, useState, type FormEvent } from 'react'
-import { AlertCircle, CheckCircle2, KeyRound, QrCode } from 'lucide-react'
+import { useState, type FormEvent } from 'react'
 import {
-  api,
-  type AdminParticipant,
-  type AdminSession,
-  type AttendanceCorrection,
-  type CheckInResult,
-} from '../../shared/api'
+  AlertCircle,
+  CheckCircle2,
+  KeyRound,
+  QrCode,
+  ShieldCheck,
+  UserCheck,
+} from 'lucide-react'
+import { api, type CheckInResult } from '../../shared/api'
 import { localDateTime } from '../../shared/format'
 import { errorMessage } from '../../shared/errors'
 import '../dashboard/Panels.css'
+
+interface RecentCheckIn extends CheckInResult {
+  timestamp: Date
+}
 
 export function AdminAttendancePanel({
   timezone,
@@ -18,82 +23,11 @@ export function AdminAttendancePanel({
   timezone: string
   show: (text: string) => void
 }) {
-  const [date, setDate] = useState(() =>
-    new Intl.DateTimeFormat('en-CA', {
-      timeZone: timezone,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    }).format(new Date()),
-  )
-  const [sessions, setSessions] = useState<AdminSession[]>([])
-  const [sessionId, setSessionId] = useState('')
-  const [participants, setParticipants] = useState<AdminParticipant[]>([])
-  const [corrections, setCorrections] = useState<AttendanceCorrection[]>([])
-  const [target, setTarget] = useState<{
-    customerId: string
-    fullName: string
-    present: boolean
-  } | null>(null)
-  const [reason, setReason] = useState('')
   const [busy, setBusy] = useState(false)
   const [scanInput, setScanInput] = useState('')
   const [scanResult, setScanResult] = useState<CheckInResult | null>(null)
   const [scanError, setScanError] = useState<string | null>(null)
-  const selected = sessions.find((session) => session.id === sessionId)
-  useEffect(() => {
-    let active = true
-    void api<AdminSession[]>(`/admin/sessions?date=${encodeURIComponent(date)}`)
-      .then((rows) => {
-        if (active) setSessions(rows)
-      })
-      .catch((error) => {
-        if (active) show(errorMessage(error))
-      })
-    return () => {
-      active = false
-    }
-  }, [date, show])
-
-  async function load(id: string) {
-    const [people, audit] = await Promise.all([
-      api<AdminParticipant[]>(`/admin/sessions/${id}/participants`),
-      api<AttendanceCorrection[]>(`/admin/sessions/${id}/attendance-corrections`),
-    ])
-    setParticipants(people)
-    setCorrections(audit)
-  }
-  async function choose(id: string) {
-    setSessionId(id)
-    setTarget(null)
-    setParticipants([])
-    setCorrections([])
-    if (!id) return
-    try {
-      await load(id)
-    } catch (error) {
-      show(errorMessage(error))
-    }
-  }
-  async function correct(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (!target || !sessionId) return
-    setBusy(true)
-    try {
-      await api(`/admin/sessions/${sessionId}/attendance/${target.customerId}`, {
-        method: 'PUT',
-        body: { present: target.present, reason: reason.trim() },
-      })
-      await load(sessionId)
-      setTarget(null)
-      setReason('')
-      show('Koreksi absensi tersimpan bersama alasan dan nama admin.')
-    } catch (error) {
-      show(errorMessage(error))
-    } finally {
-      setBusy(false)
-    }
-  }
+  const [recentList, setRecentList] = useState<RecentCheckIn[]>([])
 
   async function handleQuickCheckIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -102,7 +36,7 @@ export function AdminAttendancePanel({
     setScanError(null)
     setScanResult(null)
 
-    // Handle JSON payload from QR
+    // Handle JSON payload from QR scanner
     if (raw.startsWith('{') && raw.endsWith('}')) {
       try {
         const parsed = JSON.parse(raw) as { bookingId?: string }
@@ -125,14 +59,15 @@ export function AdminAttendancePanel({
       })
       setScanResult(res)
       setScanInput('')
+      setRecentList((prev) => [
+        { ...res, timestamp: new Date() },
+        ...prev.filter((item) => item.bookingId !== res.bookingId).slice(0, 9),
+      ])
       show(
         res.alreadyCheckedIn
           ? `Perhatian: Tiket ${res.customerName} sudah diverifikasi sebelumnya.`
           : `Sukses: ${res.customerName} berhasil check-in kelas ${res.classTitle}!`,
       )
-      if (sessionId) {
-        await load(sessionId)
-      }
     } catch (err) {
       setScanError(errorMessage(err))
       show(errorMessage(err))
@@ -142,93 +77,106 @@ export function AdminAttendancePanel({
   }
 
   return (
-    <section className="live-admin-attendance">
-      <div className="panel live-form" style={{ gridColumn: '1 / -1', borderLeft: '4px solid #2e5932' }}>
+    <section className="live-admin-attendance" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      {/* 1. Terminal Scanner Masuk Lobi */}
+      <div className="panel live-form" style={{ borderLeft: '4px solid #17392e' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-          <QrCode size={20} style={{ color: '#2e5932' }} />
-          <h2 style={{ margin: 0 }}>Verifikasi Masuk & Lobi Studio (Scan QR E-Ticket)</h2>
+          <QrCode size={22} style={{ color: '#17392e' }} />
+          <h2 style={{ margin: 0, fontSize: '1.25rem' }}>Verifikasi Masuk & Lobi Studio (Scan QR E-Ticket)</h2>
         </div>
-        <p style={{ margin: '0 0 12px', fontSize: '0.85rem', color: '#666' }}>
-          Arahkan scanner ke QR Code tiket peserta di meja resepsionis (atau masukkan ID Booking). Sistem memverifikasi keabsahan tiket, mengonfirmasi nomor loker pribadi, dan mencatat kedatangan tamu di studio.
+        <p style={{ margin: '0 0 16px', fontSize: '0.88rem', color: '#666', lineHeight: 1.5 }}>
+          Arahkan scanner ke QR Code e-ticket peserta di meja resepsionis (atau ketik ID Booking). Sistem memverifikasi keabsahan tiket, mencatat waktu tiba di lobi studio, dan mengonfirmasi nomor loker fisik aktif pelanggan.
         </p>
-        <form onSubmit={handleQuickCheckIn} style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+
+        <form onSubmit={handleQuickCheckIn} style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
           <input
-            style={{ flex: '1', minWidth: '280px', padding: '10px 14px', borderRadius: '8px', border: '1px solid #ccc', fontSize: '0.9rem' }}
+            style={{
+              flex: '1',
+              minWidth: '280px',
+              padding: '12px 16px',
+              borderRadius: '8px',
+              border: '1px solid #cbd5e1',
+              fontSize: '0.92rem',
+              outline: 'none',
+            }}
             placeholder="Scan atau paste kode QR / ID Booking / Order ID (misal: b210d394...)"
             value={scanInput}
             onChange={(e) => setScanInput(e.target.value)}
+            disabled={busy}
+            autoFocus
           />
           <button
             className="button button-primary"
             type="submit"
             disabled={busy || !scanInput.trim()}
-            style={{ whiteSpace: 'nowrap' }}
+            style={{ whiteSpace: 'nowrap', padding: '12px 20px', fontWeight: 600 }}
           >
-            Verifikasi & Masuk
+            {busy ? 'Memverifikasi...' : 'Verifikasi & Masuk'}
           </button>
         </form>
 
+        {/* Hasil Scan Sukses / Peringatan */}
         {scanResult && (
           <div
             style={{
-              marginTop: '14px',
-              padding: '16px',
+              marginTop: '16px',
+              padding: '18px',
               borderRadius: '10px',
               background: scanResult.alreadyCheckedIn ? '#fffbeb' : '#f0fdf4',
               border: scanResult.alreadyCheckedIn ? '1px solid #fde68a' : '1px solid #bbf7d0',
               display: 'flex',
               alignItems: 'flex-start',
-              gap: '12px',
+              gap: '14px',
             }}
           >
             {scanResult.alreadyCheckedIn ? (
-              <AlertCircle size={22} style={{ color: '#d97706', marginTop: '2px', flexShrink: 0 }} />
+              <AlertCircle size={24} style={{ color: '#d97706', marginTop: '2px', flexShrink: 0 }} />
             ) : (
-              <CheckCircle2 size={22} style={{ color: '#16a34a', marginTop: '2px', flexShrink: 0 }} />
+              <CheckCircle2 size={24} style={{ color: '#16a34a', marginTop: '2px', flexShrink: 0 }} />
             )}
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
                 <strong
                   style={{
                     color: scanResult.alreadyCheckedIn ? '#92400e' : '#166534',
-                    fontSize: '1rem',
+                    fontSize: '1.05rem',
                   }}
                 >
                   {scanResult.alreadyCheckedIn
-                    ? 'Tiket Sudah Diverifikasi Sebelumnya'
+                    ? 'Tiket Sudah Pernah Diverifikasi Sebelumnya'
                     : 'Verifikasi Masuk Berhasil · Tamu Tiba di Studio'}
                 </strong>
                 <span className={`tag ${scanResult.alreadyCheckedIn ? 'tag-gold' : 'tag-green'}`}>
-                  {scanResult.alreadyCheckedIn ? 'Tamu Tiba' : 'Check-in Lobi Sukses'}
+                  {scanResult.alreadyCheckedIn ? 'Tamu Sudah Masuk' : 'Check-in Lobi Sukses'}
                 </span>
               </div>
-              <div style={{ fontSize: '0.88rem', color: '#374151', marginTop: '6px', lineHeight: 1.6 }}>
+              <div style={{ fontSize: '0.9rem', color: '#374151', marginTop: '8px', lineHeight: 1.6 }}>
                 <div>
                   Nama Murid: <strong>{scanResult.customerName}</strong>
                 </div>
                 <div>
                   Kelas: <strong>{scanResult.classTitle}</strong> · Jadwal: {localDateTime(scanResult.startsAt, timezone)}
                 </div>
-                <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                   {scanResult.lockerCode ? (
                     <span
                       style={{
-                        padding: '4px 10px',
+                        padding: '6px 12px',
                         background: '#e0f2fe',
                         border: '1px solid #bae6fd',
                         borderRadius: '6px',
                         color: '#0369a1',
-                        fontSize: '0.82rem',
+                        fontSize: '0.85rem',
                         fontWeight: 700,
                         display: 'inline-flex',
                         alignItems: 'center',
-                        gap: '5px',
+                        gap: '6px',
                       }}
                     >
-                      <KeyRound size={14} /> Loker Pribadi: {scanResult.lockerCode}
+                      <KeyRound size={15} /> Loker Pribadi: {scanResult.lockerCode}
                     </span>
                   ) : (
-                    <span style={{ fontSize: '0.82rem', color: '#64748b' }}>
+                    <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
                       (Tidak ada loker khusus terdaftar)
                     </span>
                   )}
@@ -239,145 +187,116 @@ export function AdminAttendancePanel({
           </div>
         )}
 
+        {/* Error Feedback */}
         {scanError && (
-          <div style={{ marginTop: '12px', padding: '10px 14px', borderRadius: '8px', background: '#fef2f2', border: '1px solid #fecaca', display: 'flex', alignItems: 'center', gap: '8px', color: '#991b1b', fontSize: '0.85rem' }}>
-            <AlertCircle size={18} style={{ color: '#dc2626', flexShrink: 0 }} />
+          <div
+            style={{
+              marginTop: '14px',
+              padding: '12px 16px',
+              borderRadius: '8px',
+              background: '#fef2f2',
+              border: '1px solid #fecaca',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              color: '#991b1b',
+              fontSize: '0.88rem',
+            }}
+          >
+            <AlertCircle size={20} style={{ color: '#dc2626', flexShrink: 0 }} />
             <span>{scanError}</span>
           </div>
         )}
       </div>
 
-      <div className="panel live-form">
-        <h2>Koreksi absensi manual</h2>
-        <p>
-          Pilih sesi dan peserta. Koreksi dicatat dengan nama admin, waktu, keadaan sebelumnya, dan
-          alasan. Saldo serta jatah tidak berubah.
-        </p>
-        <label>
-          Tanggal kelas
-          <input
-            type="date"
-            value={date}
-            onChange={(event) => {
-              setDate(event.target.value)
-              setSessionId('')
-              setTarget(null)
-              setParticipants([])
-              setCorrections([])
-            }}
-          />
-        </label>
-        <label>
-          Sesi kelas
-          <select value={sessionId} onChange={(event) => void choose(event.target.value)}>
-            <option value="">Pilih sesi</option>
-            {sessions
-              .filter((session) => session.status !== 'cancelled')
-              .map((session) => (
-                <option value={session.id} key={session.id}>
-                  {session.title} · {localDateTime(session.starts_at, timezone)}
-                </option>
-              ))}
-          </select>
-        </label>
-      </div>
-      {selected && (
-        <div className="panel">
-          <span className="eyebrow">PESERTA TERKONFIRMASI</span>
-          <h3>{selected.title}</h3>
-          {participants.length ? (
-            participants.map((person) => (
-              <div className="live-admin-person" key={person.bookingId}>
+      {/* 2. Riwayat Verifikasi Terkini di Sesi Ini */}
+      {recentList.length > 0 && (
+        <div className="panel" style={{ borderLeft: '4px solid #0284c7' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+            <UserCheck size={20} style={{ color: '#0284c7' }} />
+            <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Tamu yang Baru Saja Diverifikasi di Lobi</h3>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {recentList.map((item) => (
+              <div
+                key={item.bookingId}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '10px 14px',
+                  borderRadius: '6px',
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  gap: '12px',
+                  flexWrap: 'wrap',
+                }}
+              >
                 <div>
-                  <strong>{person.fullName}</strong>
-                  <small>
-                    {person.present === null
-                      ? 'Belum dicatat'
-                      : person.present
-                        ? 'Hadir'
-                        : 'Tidak hadir'}
+                  <strong>{item.customerName}</strong>
+                  <span style={{ color: '#64748b', fontSize: '0.85rem', marginLeft: '8px' }}>
+                    {item.classTitle}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  {item.lockerCode && (
+                    <span
+                      style={{
+                        padding: '2px 8px',
+                        background: '#e0f2fe',
+                        borderRadius: '4px',
+                        color: '#0369a1',
+                        fontSize: '0.8rem',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {item.lockerCode}
+                    </span>
+                  )}
+                  <small style={{ color: '#94a3b8' }}>
+                    {new Intl.DateTimeFormat('id-ID', {
+                      timeZone: timezone,
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      second: '2-digit',
+                    }).format(item.timestamp)}
                   </small>
                 </div>
-                <button
-                  className="button button-outline"
-                  disabled={new Date(selected.starts_at).getTime() > Date.now()}
-                  onClick={() => {
-                    setTarget({
-                      customerId: person.customerId,
-                      fullName: person.fullName,
-                      present: person.present ?? true,
-                    })
-                    setReason('')
-                  }}
-                >
-                  Koreksi
-                </button>
               </div>
-            ))
-          ) : (
-            <p>Belum ada peserta terkonfirmasi.</p>
-          )}
-        </div>
-      )}
-      {target && (
-        <form className="panel live-form" onSubmit={(event) => void correct(event)}>
-          <h3>Koreksi: {target.fullName}</h3>
-          <div className="live-admin-attendance-choices">
-            <label>
-              <input
-                type="radio"
-                checked={target.present}
-                onChange={() => setTarget({ ...target, present: true })}
-              />{' '}
-              Hadir
-            </label>
-            <label>
-              <input
-                type="radio"
-                checked={!target.present}
-                onChange={() => setTarget({ ...target, present: false })}
-              />{' '}
-              Tidak hadir
-            </label>
+            ))}
           </div>
-          <label>
-            Alasan koreksi
-            <input
-              value={reason}
-              minLength={5}
-              maxLength={500}
-              required
-              onChange={(event) => setReason(event.target.value)}
-              placeholder="Contoh: daftar hadir kertas diverifikasi"
-            />
-          </label>
-          <button className="button button-primary" disabled={busy}>
-            Simpan koreksi
-          </button>
-        </form>
-      )}
-      {selected && corrections.length > 0 && (
-        <div className="panel">
-          <h3>Riwayat koreksi</h3>
-          {corrections.map((row) => (
-            <div className="live-admin-audit" key={row.id}>
-              <strong>
-                {row.customerName}:{' '}
-                {row.previousPresent === null
-                  ? 'Belum dicatat'
-                  : row.previousPresent
-                    ? 'Hadir'
-                    : 'Tidak hadir'}{' '}
-                → {row.newPresent ? 'Hadir' : 'Tidak hadir'}
-              </strong>
-              <small>
-                {row.adminName} · {localDateTime(row.correctedAt, timezone)}
-              </small>
-              <p>{row.reason}</p>
-            </div>
-          ))}
         </div>
       )}
+
+      {/* 3. Panduan SOP Meja Depan Resepsionis */}
+      <div className="panel" style={{ background: '#fcfbf8', border: '1px solid #e7e5e4' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+          <ShieldCheck size={20} style={{ color: '#17392e' }} />
+          <h3 style={{ margin: 0, fontSize: '1rem', color: '#17392e' }}>
+            Prosedur Standar Operasional Meja Depan (Front Desk SOP)
+          </h3>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '14px', fontSize: '0.86rem', color: '#444' }}>
+          <div style={{ padding: '12px', background: '#fff', borderRadius: '8px', border: '1px solid #eee' }}>
+            <strong style={{ display: 'block', color: '#17392e', marginBottom: '4px' }}>
+              1. Validasi E-Ticket QR
+            </strong>
+            Pindai kode QR atau masukkan ID Booking peserta saat tiba di lobi studio untuk memvalidasi tiket masuk.
+          </div>
+          <div style={{ padding: '12px', background: '#fff', borderRadius: '8px', border: '1px solid #eee' }}>
+            <strong style={{ display: 'block', color: '#17392e', marginBottom: '4px' }}>
+              2. Konfirmasi & Pengarahan Loker
+            </strong>
+            Sistem secara otomatis menampilkan nomor loker fisik aktif member. Arahkan murid ke kompartemen loker dan ruang ganti.
+          </div>
+          <div style={{ padding: '12px', background: '#fff', borderRadius: '8px', border: '1px solid #eee' }}>
+            <strong style={{ display: 'block', color: '#17392e', marginBottom: '4px' }}>
+              3. Presensi Matras Kelas (Wewenang Coach)
+            </strong>
+            Presensi kehadiran fisik di atas matras latihan dilakukan secara eksklusif oleh Pelatih di dalam ruang kelas melalui Coach Dashboard.
+          </div>
+        </div>
+      </div>
     </section>
   )
 }

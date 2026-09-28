@@ -177,9 +177,9 @@ Bagian kebutuhan dan aturan bisnis mendeskripsikan perilaku produk yang disepaka
 - Dashboard admin dan respons API admin dibatasi dari isi data kesehatan demi kepatuhan terhadap privasi medis.
 
 ### 9.2 Presensi Kelas dan Verifikasi Masuk Meja Depan
-- **Verifikasi Masuk Meja Depan (Lobi):** Dikelola oleh admin/resepsionis melalui pemindaian e-ticket QR. Berfungsi mencatat kehadiran fisik pelanggan di area lobi studio dan menampilkan informasi loker aktif.
+- **Verifikasi Masuk Meja Depan (Lobi):** Dikelola oleh admin/resepsionis melalui pemindaian e-ticket QR. Berfungsi mencatat kehadiran fisik pelanggan di area lobi studio dan menampilkan informasi loker aktif. Antarmuka admin difokuskan secara murni untuk Terminal Meja Depan (validasi tiket dan loker), tanpa formulir absensi kelas.
 - **Presensi Kehadiran Kelas (Matras):** Dikelola secara eksklusif oleh pelatih pengajar di dalam ruang kelas melalui alur presensi 2-tier. Pelatih dapat menandai kehadiran individu atau massal hingga 24 jam setelah sesi selesai.
-- Ketidakhadiran peserta di kelas tidak mengembalikan jatah atau pembayaran kelas yang telah digunakan. Koreksi absensi administratif oleh admin setelah batas 24 jam mewajibkan pencatatan alasan audit resmi.
+- Ketidakhadiran peserta di kelas tidak mengembalikan jatah atau pembayaran kelas yang telah digunakan. Operasional presensi latihan fisik sepenuhnya menjadi tanggung jawab pelatih pengajar.
 
 ### 9.3 Matriks Loker Visual (Japandi System)
 - Pengelolaan loker fisik menggunakan antarmuka matriks visual interaktif dengan status warna yang jelas (Tersedia, Terpakai, Perawatan).
@@ -216,6 +216,135 @@ Bagian kebutuhan dan aturan bisnis mendeskripsikan perilaku produk yang disepaka
 | `POST /attendance/check-in/booking` | Admin | Verifikasi tiket lobi meja depan, mengembalikan konfirmasi `lockerCode`. |
 | `GET /admin/lockers` | Admin | Matriks visual status seluruh loker studio dan histori penetapan. |
 | `POST /webhooks/midtrans` | Midtrans | Penerimaan notifikasi pembayaran gateway dengan validasi SHA-512. |
+
+---
+
+### 10.3 Struktur Database (Entity Relationship Diagram · ERD)
+
+```mermaid
+erDiagram
+    APP_USERS ||--o{ BOOKINGS : "memesan"
+    APP_USERS ||--o{ MEMBERSHIPS : "memiliki paket"
+    APP_USERS ||--o{ PACKAGE_PURCHASES : "membeli paket"
+    APP_USERS ||--o| WALLET_ACCOUNTS : "memiliki saldo"
+    APP_USERS ||--o| HEALTH_PROFILES : "mencatat riwayat"
+    APP_USERS ||--o{ CLASS_SESSIONS : "mengajar sesi (coach)"
+    APP_USERS ||--o{ LOCKER_ASSIGNMENTS : "ditetapkan loker"
+
+    CLASS_TYPES ||--o{ SCHEDULE_RULES : "aturan jadwal template"
+    CLASS_TYPES ||--o{ CLASS_SESSIONS : "kategori kelas"
+    SCHEDULE_RULES ||--o{ CLASS_SESSIONS : "menghasilkan sesi rutin"
+
+    PACKAGE_OPTIONS ||--o{ PACKAGE_PURCHASES : "opsi yang dibeli"
+    PACKAGE_PURCHASES ||--o| MEMBERSHIPS : "mengaktifkan keanggotaan"
+
+    CLASS_SESSIONS ||--o{ BOOKINGS : "menampung reservasi"
+    CLASS_SESSIONS ||--o{ ATTENDANCE : "mencatat kehadiran"
+
+    BOOKINGS ||--o| PAYMENT_TRANSACTIONS : "transaksi pembayaran kelas"
+    PACKAGE_PURCHASES ||--o| PAYMENT_TRANSACTIONS : "transaksi pembayaran paket"
+    BOOKINGS ||--o| ATTENDANCE : "tiket masuk sesi"
+    BOOKINGS ||--o| HEALTH_SNAPSHOTS : "snapshot catatan fisik"
+
+    WALLET_ACCOUNTS ||--o{ WALLET_ENTRIES : "mutasi buku besar saldo"
+    BOOKINGS ||--o{ WALLET_ENTRIES : "referensi mutasi booking"
+
+    LOCKERS ||--o{ LOCKER_ASSIGNMENTS : "kompartemen fisik"
+    MEMBERSHIPS ||--o{ LOCKER_ASSIGNMENTS : "mengikat hak loker"
+
+    APP_USERS {
+        uuid id PK
+        citext email UK
+        text full_name
+        text role "admin | coach | customer"
+        text password_hash
+        boolean password_change_required
+        timestamptz created_at
+    }
+
+    CLASS_TYPES {
+        uuid id PK
+        text title
+        text category
+        text level "beginner | intermediate_1 | intermediate_2"
+        integer duration_minutes
+        integer default_capacity
+        integer default_price_idr
+        boolean active
+    }
+
+    CLASS_SESSIONS {
+        uuid id PK
+        uuid class_type_id FK
+        uuid coach_id FK
+        date local_date
+        timestamptz starts_at
+        timestamptz ends_at
+        integer capacity
+        integer price_idr
+        text status "scheduled | cancelled | finished"
+    }
+
+    BOOKINGS {
+        uuid id PK
+        uuid customer_id FK
+        uuid session_id FK
+        text status "pending_payment | confirmed | cancelled | expired"
+        text source "free | quota | single"
+        integer price_idr
+        integer wallet_reserved_idr
+        integer gateway_due_idr
+        timestamptz hold_expires_at
+    }
+
+    PAYMENT_TRANSACTIONS {
+        uuid id PK
+        uuid booking_id FK
+        uuid package_purchase_id FK
+        text order_id UK
+        integer gross_amount_idr
+        text status "pending | success | failed | expired"
+        text snap_token
+        text redirect_url
+    }
+
+    MEMBERSHIPS {
+        uuid id PK
+        uuid customer_id FK
+        uuid purchase_id FK
+        date starts_on
+        date ends_on
+    }
+
+    WALLET_ACCOUNTS {
+        uuid customer_id PK, FK
+        bigint balance_idr
+    }
+
+    ATTENDANCE {
+        uuid session_id PK, FK
+        uuid customer_id PK, FK
+        uuid booking_id UK, FK
+        boolean present
+        uuid recorded_by FK
+        timestamptz recorded_at
+    }
+
+    LOCKERS {
+        uuid id PK
+        text code UK
+        boolean active
+    }
+
+    LOCKER_ASSIGNMENTS {
+        uuid id PK
+        uuid locker_id FK
+        uuid customer_id FK
+        uuid membership_id FK
+        timestamptz assigned_at
+        timestamptz released_at
+    }
+```
 
 ---
 
