@@ -1,10 +1,11 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { AlertCircle, CheckCircle2, QrCode } from 'lucide-react'
+import { AlertCircle, CheckCircle2, KeyRound, QrCode } from 'lucide-react'
 import {
   api,
   type AdminParticipant,
   type AdminSession,
   type AttendanceCorrection,
+  type CheckInResult,
 } from '../../shared/api'
 import { localDateTime } from '../../shared/format'
 import { errorMessage } from '../../shared/errors'
@@ -37,14 +38,7 @@ export function AdminAttendancePanel({
   const [reason, setReason] = useState('')
   const [busy, setBusy] = useState(false)
   const [scanInput, setScanInput] = useState('')
-  const [scanResult, setScanResult] = useState<{
-    success: boolean
-    alreadyCheckedIn?: boolean
-    customerName: string
-    classTitle: string
-    bookingId: string
-    recordedAt: string
-  } | null>(null)
+  const [scanResult, setScanResult] = useState<CheckInResult | null>(null)
   const [scanError, setScanError] = useState<string | null>(null)
   const selected = sessions.find((session) => session.id === sessionId)
   useEffect(() => {
@@ -125,14 +119,7 @@ export function AdminAttendancePanel({
 
     setBusy(true)
     try {
-      const res = await api<{
-        success: boolean
-        alreadyCheckedIn: boolean
-        customerName: string
-        classTitle: string
-        bookingId: string
-        recordedAt: string
-      }>('/admin/sessions/check-in', {
+      const res = await api<CheckInResult>('/admin/sessions/check-in', {
         method: 'POST',
         body: { bookingId: raw },
       })
@@ -140,7 +127,7 @@ export function AdminAttendancePanel({
       setScanInput('')
       show(
         res.alreadyCheckedIn
-          ? `Perhatian: ${res.customerName} sudah tercatat hadir sebelumnya.`
+          ? `Perhatian: Tiket ${res.customerName} sudah diverifikasi sebelumnya.`
           : `Sukses: ${res.customerName} berhasil check-in kelas ${res.classTitle}!`,
       )
       if (sessionId) {
@@ -159,10 +146,10 @@ export function AdminAttendancePanel({
       <div className="panel live-form" style={{ gridColumn: '1 / -1', borderLeft: '4px solid #2e5932' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
           <QrCode size={20} style={{ color: '#2e5932' }} />
-          <h2 style={{ margin: 0 }}>Fast Check-in Resepsionis (Scan QR / ID Booking)</h2>
+          <h2 style={{ margin: 0 }}>Verifikasi Masuk & Lobi Studio (Scan QR E-Ticket)</h2>
         </div>
         <p style={{ margin: '0 0 12px', fontSize: '0.85rem', color: '#666' }}>
-          Arahkan barcode scanner, atau paste teks dari QR Code tiket peserta (atau masukkan ID Booking / Order ID). Kehadiran akan tercatat otomatis seketika.
+          Arahkan scanner ke QR Code tiket peserta di meja resepsionis (atau masukkan ID Booking). Sistem memverifikasi keabsahan tiket, mengonfirmasi nomor loker pribadi, dan mencatat kedatangan tamu di studio.
         </p>
         <form onSubmit={handleQuickCheckIn} style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
           <input
@@ -177,25 +164,76 @@ export function AdminAttendancePanel({
             disabled={busy || !scanInput.trim()}
             style={{ whiteSpace: 'nowrap' }}
           >
-            Check-in Hadir
+            Verifikasi & Masuk
           </button>
         </form>
 
         {scanResult && (
-          <div style={{ marginTop: '12px', padding: '12px 14px', borderRadius: '8px', background: scanResult.alreadyCheckedIn ? '#fffbeb' : '#f0fdf4', border: scanResult.alreadyCheckedIn ? '1px solid #fde68a' : '1px solid #bbf7d0', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+          <div
+            style={{
+              marginTop: '14px',
+              padding: '16px',
+              borderRadius: '10px',
+              background: scanResult.alreadyCheckedIn ? '#fffbeb' : '#f0fdf4',
+              border: scanResult.alreadyCheckedIn ? '1px solid #fde68a' : '1px solid #bbf7d0',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '12px',
+            }}
+          >
             {scanResult.alreadyCheckedIn ? (
-              <AlertCircle size={20} style={{ color: '#d97706', marginTop: '2px', flexShrink: 0 }} />
+              <AlertCircle size={22} style={{ color: '#d97706', marginTop: '2px', flexShrink: 0 }} />
             ) : (
-              <CheckCircle2 size={20} style={{ color: '#16a34a', marginTop: '2px', flexShrink: 0 }} />
+              <CheckCircle2 size={22} style={{ color: '#16a34a', marginTop: '2px', flexShrink: 0 }} />
             )}
-            <div>
-              <strong style={{ display: 'block', color: scanResult.alreadyCheckedIn ? '#92400e' : '#166534', fontSize: '0.95rem' }}>
-                {scanResult.alreadyCheckedIn ? 'Sudah Tercatat Hadir Sebelumnya' : 'Check-in Berhasil! Kehadiran Tercatat'}
-              </strong>
-              <div style={{ fontSize: '0.85rem', color: '#374151', marginTop: '4px', lineHeight: 1.5 }}>
-                <span>Peserta: <strong>{scanResult.customerName}</strong></span> · <span>Kelas: <strong>{scanResult.classTitle}</strong></span>
-                <br />
-                <small style={{ color: '#6b7280' }}>ID Booking: {scanResult.bookingId}</small>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
+                <strong
+                  style={{
+                    color: scanResult.alreadyCheckedIn ? '#92400e' : '#166534',
+                    fontSize: '1rem',
+                  }}
+                >
+                  {scanResult.alreadyCheckedIn
+                    ? 'Tiket Sudah Diverifikasi Sebelumnya'
+                    : 'Verifikasi Masuk Berhasil · Tamu Tiba di Studio'}
+                </strong>
+                <span className={`tag ${scanResult.alreadyCheckedIn ? 'tag-gold' : 'tag-green'}`}>
+                  {scanResult.alreadyCheckedIn ? 'Tamu Tiba' : 'Check-in Lobi Sukses'}
+                </span>
+              </div>
+              <div style={{ fontSize: '0.88rem', color: '#374151', marginTop: '6px', lineHeight: 1.6 }}>
+                <div>
+                  Nama Murid: <strong>{scanResult.customerName}</strong>
+                </div>
+                <div>
+                  Kelas: <strong>{scanResult.classTitle}</strong> · Jadwal: {localDateTime(scanResult.startsAt, timezone)}
+                </div>
+                <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                  {scanResult.lockerCode ? (
+                    <span
+                      style={{
+                        padding: '4px 10px',
+                        background: '#e0f2fe',
+                        border: '1px solid #bae6fd',
+                        borderRadius: '6px',
+                        color: '#0369a1',
+                        fontSize: '0.82rem',
+                        fontWeight: 700,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                      }}
+                    >
+                      <KeyRound size={14} /> Loker Pribadi: {scanResult.lockerCode}
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: '0.82rem', color: '#64748b' }}>
+                      (Tidak ada loker khusus terdaftar)
+                    </span>
+                  )}
+                  <small style={{ color: '#6b7280' }}>ID Booking: {scanResult.bookingId}</small>
+                </div>
               </div>
             </div>
           </div>

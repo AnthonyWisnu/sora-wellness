@@ -249,17 +249,17 @@ export default function LiveApp() {
         siteStatus !== 'ready' &&
         (path === '/' || path === '/jadwal' || path === '/membership' || path === '/kontak') && (
           <main
-            className="shell zeira-public-state"
+            className="shell sora-public-state"
             role={siteStatus === 'error' ? 'alert' : 'status'}
           >
             <h1>
               {siteStatus === 'loading'
-                ? 'Memuat situs studio…'
+                ? 'Memuat situs studio...'
                 : 'Konten situs belum dapat dimuat'}
             </h1>
             {siteStatus === 'error' && (
               <button
-                className="zeira-btn zeira-btn-primary"
+                className="button button-primary"
                 onClick={() => window.location.reload()}
               >
                 Coba lagi

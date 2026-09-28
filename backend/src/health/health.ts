@@ -22,7 +22,7 @@ export class HealthService {
 
   async save(customerId: string, note: string) {
     const cleaned = note.trim();
-    if (!cleaned || cleaned.length > 2000) throw new BadRequestException('Catatan kesehatan harus 1–2000 karakter');
+    if (!cleaned || cleaned.length > 2000) throw new BadRequestException('Catatan kesehatan harus 1-2000 karakter');
     await this.db.transaction(async (client) => {
       await client.query('SELECT id FROM app_users WHERE id=$1 FOR UPDATE', [customerId]);
       const timestamp = await client.query<{ at: Date }>('SELECT clock_timestamp() AS at');

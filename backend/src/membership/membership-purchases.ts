@@ -41,7 +41,7 @@ export class MembershipPurchasesService {
   constructor(private readonly db: Db, private readonly payments: PaymentsService, private readonly settings: PaymentSettings) {}
 
   async create(customerId: string, optionId: string, key: string) {
-    if (!key || key.length < 8 || key.length > 128) throw new BadRequestException('Header Idempotency-Key wajib 8–128 karakter');
+    if (!key || key.length < 8 || key.length > 128) throw new BadRequestException('Header Idempotency-Key wajib 8-128 karakter');
     await this.payments.expirePendingPackages(customerId);
     return this.db.transaction(async (client) => {
       await client.query('SELECT id FROM app_users WHERE id=$1 FOR UPDATE', [customerId]);

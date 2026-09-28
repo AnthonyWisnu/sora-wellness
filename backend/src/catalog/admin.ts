@@ -125,7 +125,7 @@ export class AdminController {
     assertRole(req, 'admin');
     if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(b.localStartTime)) throw new BadRequestException('Jam harus HH:mm');
     const dates = await this.db.query<{ days: number }>(`SELECT ($2::date-$1::date)::int AS days`, [b.startsOn,b.endsOn]);
-    if (dates.rows[0].days < 0 || dates.rows[0].days > 180) throw new BadRequestException('Rentang jadwal 0–180 hari');
+    if (dates.rows[0].days < 0 || dates.rows[0].days > 180) throw new BadRequestException('Rentang jadwal 0-180 hari');
     return this.db.transaction(async (client) => {
       const rule = await client.query<{ id: string }>(`INSERT INTO schedule_rules (class_type_id,coach_id,iso_weekday,local_start_time,starts_on,ends_on,capacity,price_idr) SELECT t.id,u.id,$3,$4::time,$5::date,$6::date,$7,$8 FROM class_types t JOIN app_users u ON u.id=$2 AND u.role='coach' WHERE t.id=$1 RETURNING id`, [b.classTypeId,b.coachId,b.isoWeekday,b.localStartTime,b.startsOn,b.endsOn,b.capacity,b.priceIdr]);
       if (!rule.rows[0]) throw new BadRequestException('Jenis kelas atau pelatih tidak valid');

@@ -24,7 +24,7 @@ export function demoDocument(media: Media, classes: Record<string, string>, pack
     phone: local.phone ?? '',
     whatsapp: local.whatsapp ?? '',
     email: 'halo@sora.example.test',
-    hours: 'Senin–Jumat 06.30–20.00 · Sabtu–Minggu 07.00–17.00 (jam contoh)',
+    hours: 'Senin-Jumat 06.30-20.00 · Sabtu-Minggu 07.00-17.00 (jam contoh)',
     mapEmbedUrl: local.mapEmbedUrl ?? 'https://maps.google.com/maps?q=Fakultas%20Teknik%20Universitas%20Udayana%20Jimbaran&output=embed',
     socialLinks: [],
   };

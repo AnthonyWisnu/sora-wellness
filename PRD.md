@@ -1,4 +1,4 @@
-# PRD — Platform Wellness Berbasis API
+# PRD - Platform Wellness Berbasis API
 
 **Status:** spesifikasi produk dan catatan implementasi versi pertama  
 **Bahasa produk:** Indonesia  
@@ -41,7 +41,7 @@ Bagian kebutuhan dan aturan bisnis mendeskripsikan perilaku produk yang disepaka
 4. OpenAPI dan contoh request memungkinkan pengembang lain mencoba API tanpa memahami kode React.
 5. Kasus batas pada bagian 12 lolos pengujian; hasil yang belum dapat diuji dinyatakan secara terbuka.
 
-### 2.4 Arah produk jangka panjang — belum diimplementasikan
+### 2.4 Arah produk jangka panjang - belum diimplementasikan
 
 **Diputuskan sebagai arah produk.** Pemilik proyek ingin membuat frontend baru per perusahaan, termasuk kemungkinan Next.js, Laravel/PHP, atau Astro, dengan kontrak API dan aturan bisnis yang dapat digunakan kembali. Tiap perusahaan memiliki domain, konten, akun, kelas, harga, pembayaran, saldo, dan fitur pilihan sendiri. Orang dengan email sama di dua perusahaan tidak otomatis berbagi akun, profil, atau saldo. Perusahaan berikutnya memakai satu instalasi backend bersama; isolasi data dan kredensial gateway per perusahaan harus ditegakkan di backend, sedangkan pemilik proyek sebagai operator menentukan fitur yang tersedia. **Tidak satu pun kemampuan multi-perusahaan ini dinyatakan sudah ada dalam implementasi satu perusahaan sekarang.**
 
@@ -61,10 +61,10 @@ Bagian kebutuhan dan aturan bisnis mendeskripsikan perilaku produk yang disepaka
 
 Urutan berikut adalah riwayat tahapan proyek, bukan daftar fitur yang masih harus dimulai:
 
-1. **Prototipe frontend — selesai dan telah ditinjau.** Prototipe dipakai untuk memilih arah tampilan. Login, booking, atau pembayaran simulasi tidak menjadi bagian aplikasi yang berjalan.
-2. **Fondasi API — telah diimplementasikan untuk satu perusahaan.** Mencakup sesi autentikasi, otorisasi peran, katalog, jadwal, paket, booking, jatah, dan kontrak OpenAPI.
-3. **Pembayaran dan modul lanjutan — telah diimplementasikan pada cakupan versi pertama.** Mencakup Midtrans Sandbox, saldo, pembatalan, konten, kesehatan, absensi, loker, dan operasi admin.
-4. **Integrasi dan demo — aplikasi React saat ini memakai API.** Skenario yang belum diverifikasi tetap dicatat sebagai belum diuji dan tidak boleh diasumsikan lulus hanya karena endpoint atau layar tersedia.
+1. **Prototipe frontend - selesai dan telah ditinjau.** Prototipe dipakai untuk memilih arah tampilan. Login, booking, atau pembayaran simulasi tidak menjadi bagian aplikasi yang berjalan.
+2. **Fondasi API - telah diimplementasikan untuk satu perusahaan.** Mencakup sesi autentikasi, otorisasi peran, katalog, jadwal, paket, booking, jatah, dan kontrak OpenAPI.
+3. **Pembayaran dan modul lanjutan - telah diimplementasikan pada cakupan versi pertama.** Mencakup Midtrans Sandbox, saldo, pembatalan, konten, kesehatan, absensi, loker, dan operasi admin.
+4. **Integrasi dan demo - aplikasi React saat ini memakai API.** Skenario yang belum diverifikasi tetap dicatat sebagai belum diuji dan tidak boleh diasumsikan lulus hanya karena endpoint atau layar tersedia.
 
 Urutan ini tidak berarti fitur tahap berikutnya opsional: seluruh fitur inti pada dokumen ini dituju sebagai hasil akhir tugas. Revisi prioritas hanya melalui keputusan baru dari pemilik proyek.
 
@@ -192,7 +192,7 @@ Status ini mencatat keberadaan fitur di kode dan batas verifikasi yang diketahui
 
 - Jatah dihitung menurut **bulan kalender tempat sesi berlangsung**, bukan bulan saat booking dibuat. Jatah awal tiap bulan adalah `ceil(jatah_normal_bulanan × jumlah_hari_aktif_di_bulan / jumlah_hari_di_bulan)`.
 - `jumlah_hari_aktif_di_bulan` menghitung hari unik yang dicakup paket pada bulan itu. Paket yang saling menyambung atau perpanjangan awal tidak boleh menghitung hari yang sama dua kali. Jatah tidak boleh melebihi jatah normal bulanan.
-- Contoh keputusan: jatah normal 8 kelas, paket 20 September–19 Oktober menghasilkan `ceil(8 × 11/30) = 3` untuk September dan `ceil(8 × 19/31) = 5` untuk Oktober.
+- Contoh keputusan: jatah normal 8 kelas, paket 20 September-19 Oktober menghasilkan `ceil(8 × 11/30) = 3` untuk September dan `ceil(8 × 19/31) = 5` untuk Oktober.
 - Booking memakai jatah bulan sesi hanya jika paket aktif pada tanggal sesi dan jatah bulan itu masih ada. Booking yang dikonfirmasi **dengan pilihan jatah** memakai satu jatah; pembatalan tepat waktu atau pembatalan sesi oleh perusahaan mengembalikannya ke bulan sesi yang sama. Kelas Rp0 tidak memakai jatah.
 - Ketika jatah habis, member masih dapat membeli kelas satuan dengan harga yang sama seperti pelanggan tanpa paket.
 - **Diputuskan:** kelas dengan harga satuan Rp0 tidak mengurangi jatah member, meskipun pelanggan yang memesan adalah member.

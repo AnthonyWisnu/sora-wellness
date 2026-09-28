@@ -24,7 +24,7 @@ export function SiteHeader({ studio, primaryName, path, actor, go }: Props) {
           <span className="ribbon-dot" /> Pembayaran memakai Midtrans Sandbox
         </div>
       )}
-      <header className={`site-header${publicPage ? ' zeira-public-header' : ''}`}>
+      <header className={`site-header${publicPage ? ' sora-public-header' : ''}`}>
         <div className="shell header-inner">
           <button
             className="wordmark"

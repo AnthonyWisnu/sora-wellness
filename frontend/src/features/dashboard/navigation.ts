@@ -13,7 +13,7 @@ export const dashboardNavigation: Record<DashboardRole, DashboardGroup[]> = {
         { id: 'manage', label: 'Kelola sesi' },
         { id: 'classes', label: 'Jenis kelas' },
         { id: 'rules', label: 'Jadwal berulang' },
-        { id: 'attendance', label: 'Absensi' },
+        { id: 'attendance', label: 'Verifikasi tiket' },
       ],
     },
     {

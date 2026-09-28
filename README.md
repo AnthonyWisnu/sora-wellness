@@ -54,7 +54,7 @@
 
 ### 4. 🔄 Kebijakan Pembatalan Adaptif
 - **Pembatalan oleh Pelanggan:** Kebijakan pembatalan 24 jam. Pembatalan tepat waktu mengembalikan jatah/saldo 100%, sedangkan pembatalan terlambat menghanguskan jatah/biaya.
-- **Pembatalan Sepihak oleh Studio:** Jika studio membatalkan sesi kelas, seluruh hak pelanggan dipulihkan otomatis dalam satu transaksi atomik—termasuk memulihkan hak pelanggan yang sebelumnya sempat membatalkan terlambat.
+- **Pembatalan Sepihak oleh Studio:** Jika studio membatalkan sesi kelas, seluruh hak pelanggan dipulihkan otomatis dalam satu transaksi atomik-termasuk memulihkan hak pelanggan yang sebelumnya sempat membatalkan terlambat.
 
 ### 5. 🩺 Kesehatan, Absensi & Privasi Pelatih
 - **Rekam Riwayat Kesehatan Berizin:** Formulir kondisi fisik dengan persetujuan (*consent*) yang dapat dihapus sewaktu-waktu oleh pelanggan.

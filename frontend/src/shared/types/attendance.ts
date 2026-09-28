@@ -9,6 +9,7 @@ export type CoachSession = {
   level: string
   category: string
   participantCount: number
+  attendedCount?: number
 }
 
 export type CoachParticipant = {
@@ -19,6 +20,7 @@ export type CoachParticipant = {
   recordedAt: string | null
   healthNote: string | null
   healthSource: 'current' | 'snapshot' | null
+  lobbyCheckedIn?: boolean
 }
 
 export type CoachParticipants = {
@@ -45,4 +47,18 @@ export type AttendanceCorrection = {
   reason: string
   correctedAt: string
   adminName: string
+}
+
+export type CheckInResult = {
+  success: boolean
+  alreadyCheckedIn: boolean
+  bookingId: string
+  sessionId: string
+  customerId: string
+  customerName: string
+  classTitle: string
+  startsAt: string
+  endsAt: string
+  recordedAt: string
+  lockerCode: string | null
 }

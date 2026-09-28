@@ -82,6 +82,7 @@ export type {
   CoachParticipants,
   AdminParticipant,
   AttendanceCorrection,
+  CheckInResult,
 } from './types/attendance'
 export type { LockerMine, AdminLocker, AdminLockers, EligibleMember } from './types/lockers'
 export type { StudioContent, MediaAsset } from './types/content'

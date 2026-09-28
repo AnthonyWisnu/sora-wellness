@@ -1,4 +1,4 @@
-# Wellness API — fondasi satu studio
+# Wellness API - fondasi satu studio
 
 ## Dataset demo lokal Sora
 
@@ -32,7 +32,7 @@ npm run dev
 
 ### Pemantauan transaksi admin
 
-Endpoint baca khusus admin `GET /api/v1/admin/bookings`, `GET /api/v1/admin/payments`, dan `GET /api/v1/admin/wallets` mendukung `q`, `page`, dan `limit` (1–100). Booking mendukung `status`, `from`, `to` berdasarkan tanggal kelas lokal. Pembayaran mendukung `status`, `kind=class|package`, `from`, `to` berdasarkan tanggal transaksi lokal. `GET /api/v1/admin/wallets/:customerId/entries` menampilkan buku saldo pelanggan dengan `kind`, `from`, `to`, `page`, dan `limit`. Filter tanggal memakai `YYYY-MM-DD`. Respons daftar berisi `items`, `page`, `limit`, dan `total`; entri saldo juga memuat pelanggan serta saldo terkini. Nominal memakai angka rupiah bulat. Endpoint ini membaca status transaksi yang tercatat di database; pengecekan ulang ke Midtrans tetap melalui alur refresh pembayaran yang sudah tersedia.
+Endpoint baca khusus admin `GET /api/v1/admin/bookings`, `GET /api/v1/admin/payments`, dan `GET /api/v1/admin/wallets` mendukung `q`, `page`, dan `limit` (1-100). Booking mendukung `status`, `from`, `to` berdasarkan tanggal kelas lokal. Pembayaran mendukung `status`, `kind=class|package`, `from`, `to` berdasarkan tanggal transaksi lokal. `GET /api/v1/admin/wallets/:customerId/entries` menampilkan buku saldo pelanggan dengan `kind`, `from`, `to`, `page`, dan `limit`. Filter tanggal memakai `YYYY-MM-DD`. Respons daftar berisi `items`, `page`, `limit`, dan `total`; entri saldo juga memuat pelanggan serta saldo terkini. Nominal memakai angka rupiah bulat. Endpoint ini membaca status transaksi yang tercatat di database; pengecekan ulang ke Midtrans tetap melalui alur refresh pembayaran yang sudah tersedia.
 
 ### Konten publik, gambar, dan loker
 

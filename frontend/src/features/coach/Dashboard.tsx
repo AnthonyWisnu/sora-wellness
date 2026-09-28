@@ -3,6 +3,7 @@ import {
   AlertTriangle,
   ArrowLeft,
   CalendarDays,
+  CheckCircle2,
   ChevronRight,
   Clock,
   Search,
@@ -59,14 +60,7 @@ export function CoachDashboard({
       `/coach/sessions${date ? `?date=${encodeURIComponent(date)}` : ''}`,
     )
     setSessions(rows)
-    const first =
-      rows.find((session) => session.status !== 'cancelled' && session.participantCount > 0) ??
-      rows.find((session) => session.status !== 'cancelled') ??
-      rows[0]
-    setSelected(first ?? null)
-    setDetails(
-      first ? await api<CoachParticipants>(`/coach/sessions/${first.id}/participants`) : null,
-    )
+    setSelected((prev) => (prev ? (rows.find((s) => s.id === prev.id) ?? null) : null))
   }, [date])
 
   useEffect(() => {
@@ -91,6 +85,12 @@ export function CoachDashboard({
     }
   }
 
+  function closeDetail() {
+    setSelected(null)
+    setDetails(null)
+    void loadSessions()
+  }
+
   async function mark(customerId: string, present: boolean) {
     if (!selected) return
     setBusy(true)
@@ -99,8 +99,10 @@ export function CoachDashboard({
         method: 'PUT',
         body: { present },
       })
-      setDetails(await api<CoachParticipants>(`/coach/sessions/${selected.id}/participants`))
+      const updatedDetails = await api<CoachParticipants>(`/coach/sessions/${selected.id}/participants`)
+      setDetails(updatedDetails)
       show('Absensi tersimpan.')
+      void loadSessions()
     } catch (error) {
       show(errorMessage(error))
     } finally {
@@ -154,15 +156,6 @@ export function CoachDashboard({
   const handleTabClick = (tab: 'all' | 'today' | 'upcoming' | 'completed') => {
     setFilterTab(tab)
     setDate('')
-    const targetSessions = sessions.filter((s) => {
-      if (tab === 'today') return s.localDate === todayStr
-      if (tab === 'upcoming') return new Date(s.endsAt).getTime() >= Date.now() && s.status !== 'cancelled'
-      if (tab === 'completed') return new Date(s.endsAt).getTime() < Date.now() || s.status === 'cancelled'
-      return true
-    })
-    if (targetSessions.length > 0 && (!selected || !targetSessions.some((s) => s.id === selected.id))) {
-      void open(targetSessions[0])
-    }
   }
 
   const presentCount = details?.participants.filter((p) => p.present === true).length ?? 0
@@ -189,6 +182,7 @@ export function CoachDashboard({
       )
       setDetails(await api<CoachParticipants>(`/coach/sessions/${selected.id}/participants`))
       show(`Berhasil mencatat ${pending.length} peserta hadir.`)
+      void loadSessions()
     } catch (error) {
       show(errorMessage(error))
     } finally {
@@ -225,13 +219,13 @@ export function CoachDashboard({
             <div className="panel" style={{ borderLeft: '3px solid #2e5932' }}>
               <span className="eyebrow" style={{ color: '#2e5932' }}>ESTIMASI HONOR</span>
               <h2 style={{ color: '#1b261b' }}>{money(summary?.estimatedEarnings ?? 0)}</h2>
-              <p>Honor sesi mengajar & kehadiran.</p>
+              <p>Honor sesi mengajar dan kehadiran.</p>
             </div>
           </div>
           <div className="live-section-head">
             <h2>Kelas mendatang</h2>
             <button className="button button-outline" onClick={() => go('/dashboard/attendance')}>
-              Buka peserta & absensi
+              Buka kelas dan absensi
             </button>
           </div>
           <div className="live-booking-list">
@@ -250,8 +244,14 @@ export function CoachDashboard({
                     {localDateTime(session.startsAt, timezone)} · {session.participantCount} peserta
                   </p>
                 </div>
-                <button className="button button-text" onClick={() => go('/dashboard/attendance')}>
-                  Lihat peserta
+                <button
+                  className="button button-primary"
+                  onClick={() => {
+                    void open(session)
+                    go('/dashboard/attendance')
+                  }}
+                >
+                  Buka kelas & absensi
                 </button>
               </article>
             ))}
@@ -264,12 +264,19 @@ export function CoachDashboard({
         </>
       ) : (
         <>
-          <div className="live-section-head">
-            <h2>Kelas yang Anda ajar</h2>
-          </div>
-          <div className="live-coach-layout">
-            <aside className="live-coach-sidebar">
-              <div className="live-coach-filter-bar">
+          {!selected ? (
+            /* TINGKAT 1: KATALOG / JADWAL KELAS SAYA */
+            <div className="live-coach-list-view">
+              <div className="live-section-head">
+                <div>
+                  <h2>Kelas yang Anda ajar</h2>
+                  <p style={{ margin: '4px 0 0', color: 'var(--muted)', fontSize: '0.88rem' }}>
+                    Pilih sesi kelas untuk melihat daftar murid, catatan medis khusus, dan mencatat absensi.
+                  </p>
+                </div>
+              </div>
+
+              <div className="live-coach-filter-bar" style={{ marginTop: '16px' }}>
                 <div className="live-coach-tabs">
                   <button
                     type="button"
@@ -352,10 +359,9 @@ export function CoachDashboard({
                 </div>
               </div>
 
-              <div className="live-coach-sessions">
+              <div className="live-coach-card-grid">
                 {filteredSessions.length ? (
                   filteredSessions.map((session) => {
-                    const isSelected = selected?.id === session.id
                     const isToday = session.localDate === todayStr
                     const isEnded = new Date(session.endsAt).getTime() < Date.now()
                     const isOngoing =
@@ -363,20 +369,8 @@ export function CoachDashboard({
                       Date.now() <= new Date(session.endsAt).getTime()
 
                     return (
-                      <button
-                        key={session.id}
-                        type="button"
-                        className={`panel live-coach-session ${isSelected ? 'selected' : ''}`}
-                        onClick={() => {
-                          void open(session)
-                          if (typeof window !== 'undefined' && window.innerWidth <= 860) {
-                            setTimeout(() => {
-                              document.querySelector('.live-coach-participants')?.scrollIntoView({ behavior: 'smooth' })
-                            }, 50)
-                          }
-                        }}
-                      >
-                        <div className="live-coach-session-top">
+                      <article className="live-coach-card" key={session.id}>
+                        <div className="live-coach-card-top">
                           <span className={`live-coach-badge-date ${isToday ? 'today' : ''}`}>
                             <CalendarDays size={13} />{' '}
                             {isToday
@@ -408,25 +402,44 @@ export function CoachDashboard({
                           </span>
                         </div>
 
-                        <div className="live-coach-session-main">
-                          <strong className="live-coach-session-title">{session.title}</strong>
-                          <ChevronRight size={16} className="live-coach-session-arrow" />
+                        <div className="live-coach-card-body">
+                          <span className="live-coach-card-tag">
+                            {session.category} · {session.level}
+                          </span>
+                          <h3>{session.title}</h3>
+                          <div className="live-coach-card-meta">
+                            <span>
+                              <Clock size={13} /> {localDateTime(session.startsAt, timezone)}
+                            </span>
+                            <span>
+                              <UsersRound size={13} /> {session.participantCount} / {session.capacity} murid terdaftar
+                            </span>
+                            {session.participantCount > 0 && (
+                              <span>
+                                <UserCheck size={13} />{' '}
+                                {session.attendedCount && session.attendedCount > 0
+                                  ? `${session.attendedCount} / ${session.participantCount} hadir`
+                                  : 'Belum ada presensi'}
+                              </span>
+                            )}
+                          </div>
                         </div>
 
-                        <div className="live-coach-session-bottom">
-                          <span className="live-coach-session-time">
-                            <Clock size={13} /> {localDateTime(session.startsAt, timezone)}
-                          </span>
-                          <span className="live-coach-session-capacity">
-                            <UsersRound size={13} /> {session.participantCount} peserta
-                          </span>
+                        <div className="live-coach-card-footer">
+                          <button
+                            type="button"
+                            className="button button-primary full-width"
+                            onClick={() => void open(session)}
+                          >
+                            Buka Kelas & Absensi <ChevronRight size={15} />
+                          </button>
                         </div>
-                      </button>
+                      </article>
                     )
                   })
                 ) : (
-                  <div className="panel" style={{ padding: '24px 16px', textAlign: 'center' }}>
-                    <p style={{ margin: 0, color: 'var(--muted)', fontSize: '13px' }}>
+                  <div className="panel" style={{ gridColumn: '1 / -1', padding: '40px 20px', textAlign: 'center' }}>
+                    <p style={{ margin: 0, color: 'var(--muted)' }}>
                       {date
                         ? 'Tidak ada kelas pada tanggal yang dipilih.'
                         : 'Tidak ada kelas dalam kategori ini.'}
@@ -434,181 +447,197 @@ export function CoachDashboard({
                   </div>
                 )}
               </div>
-            </aside>
-
-            <div className="panel live-coach-participants">
-              <div className="live-coach-mobile-header">
+            </div>
+          ) : (
+            /* TINGKAT 2: DETAIL SESI KELAS & DAFTAR MURID TERFOKUS */
+            <div className="live-coach-detail-view">
+              <div className="live-coach-back-bar">
                 <button
                   type="button"
-                  className="button button-text"
-                  onClick={() => {
-                    document.querySelector('.live-coach-sidebar')?.scrollIntoView({ behavior: 'smooth' })
-                  }}
+                  className="button button-outline"
+                  onClick={closeDetail}
                 >
-                  <ArrowLeft size={15} /> Pilih kelas lain
+                  <ArrowLeft size={16} /> Kembali ke Jadwal Kelas
                 </button>
               </div>
-              {!selected ? (
-                <div className="live-coach-empty">
-                  <UsersRound size={32} />
-                  <h3>Pilih sesi kelas</h3>
-                  <p>Klik salah satu kelas di sebelah kiri untuk melihat daftar peserta dan mengelola absensi.</p>
-                </div>
-              ) : !details ? (
-                <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--muted)' }}>
-                  <p>Memuat daftar peserta...</p>
-                </div>
-              ) : (
-                <>
-                  <div className="live-coach-detail-header">
-                    <span className="eyebrow">DAFTAR PESERTA & ABSENSI</span>
-                    <h2>{selected.title}</h2>
-                    <div className="live-coach-detail-meta">
-                      <span>
-                        <CalendarDays size={14} />
-                        {formatDate(selected.localDate, {
-                          weekday: 'long',
-                          day: 'numeric',
-                          month: 'long',
-                          year: 'numeric',
-                        })}
-                      </span>
-                      <span>
-                        <Clock size={14} />
-                        {localDateTime(selected.startsAt, timezone)}
-                      </span>
-                    </div>
-                  </div>
 
-                  <div className="live-coach-detail-stats">
-                    <div className="live-stat-chip">
-                      <span className="chip-label">Total Peserta</span>
-                      <strong className="chip-val">{details.participants.length}</strong>
-                    </div>
-                    <div className="live-stat-chip chip-success">
-                      <span className="chip-label">Hadir</span>
-                      <strong className="chip-val">{presentCount}</strong>
-                    </div>
-                    <div className="live-stat-chip chip-warning">
-                      <span className="chip-label">Belum Dicatat</span>
-                      <strong className="chip-val">{unrecordedCount}</strong>
-                    </div>
-                    {absentCount > 0 && (
-                      <div className="live-stat-chip chip-muted">
-                        <span className="chip-label">Tidak Hadir</span>
-                        <strong className="chip-val">{absentCount}</strong>
-                      </div>
-                    )}
+              <div className="panel live-coach-detail-hero" style={{ marginBottom: '20px' }}>
+                <div className="live-coach-detail-header">
+                  <span className="eyebrow">SESI KELAS · {selected.category?.toUpperCase() || 'KELAS'}</span>
+                  <h2>{selected.title}</h2>
+                  <div className="live-coach-detail-meta">
+                    <span>
+                      <CalendarDays size={14} />
+                      {formatDate(selected.localDate, {
+                        weekday: 'long',
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                      })}
+                    </span>
+                    <span>
+                      <Clock size={14} />
+                      {localDateTime(selected.startsAt, timezone)}
+                    </span>
+                    <span>
+                      <UsersRound size={14} />
+                      Kapasitas: {selected.capacity} murid
+                    </span>
                   </div>
+                </div>
 
-                  {canMark && details.participants.length > 0 && (
-                    <div className="live-coach-quick-toolbar">
-                      <button
-                        type="button"
-                        className="button button-outline"
-                        disabled={busy || unrecordedCount === 0}
-                        onClick={() => void markAllPresent()}
-                      >
-                        <UserCheck size={15} /> Tandai Semua Hadir ({unrecordedCount})
-                      </button>
-                      <span className="live-coach-period-info">
-                        <ShieldCheck size={14} /> Absensi dibuka (s/d 24 jam setelah sesi selesai)
-                      </span>
+                <div className="live-coach-detail-stats">
+                  <div className="live-stat-chip">
+                    <span className="chip-label">Total Murid</span>
+                    <strong className="chip-val">
+                      {details ? details.participants.length : selected.participantCount}
+                    </strong>
+                  </div>
+                  <div className="live-stat-chip chip-success">
+                    <span className="chip-label">Hadir</span>
+                    <strong className="chip-val">{presentCount}</strong>
+                  </div>
+                  <div className="live-stat-chip chip-warning">
+                    <span className="chip-label">Belum Dicatat</span>
+                    <strong className="chip-val">{unrecordedCount}</strong>
+                  </div>
+                  {absentCount > 0 && (
+                    <div className="live-stat-chip chip-muted">
+                      <span className="chip-label">Tidak Hadir</span>
+                      <strong className="chip-val">{absentCount}</strong>
                     </div>
                   )}
+                </div>
 
-                  {healthAlertCount > 0 && (
-                    <div className="live-health-summary-banner">
-                      <AlertTriangle size={18} />
-                      <div>
-                        <strong>Perhatian: {healthAlertCount} Peserta Memiliki Catatan Medis</strong>
-                        <p>Harap perhatikan kondisi kesehatan khusus sebelum memulai latihan.</p>
-                      </div>
+                {canMark && details && details.participants.length > 0 && (
+                  <div className="live-coach-quick-toolbar">
+                    <button
+                      type="button"
+                      className="button button-primary"
+                      disabled={busy || unrecordedCount === 0}
+                      onClick={() => void markAllPresent()}
+                    >
+                      <UserCheck size={15} /> Tandai Semua Hadir ({unrecordedCount})
+                    </button>
+                    <span className="live-coach-period-info">
+                      <ShieldCheck size={14} /> Presensi dibuka sejak kelas dimulai s/d 24 jam setelah selesai
+                    </span>
+                  </div>
+                )}
+
+                {healthAlertCount > 0 && (
+                  <div className="live-health-summary-banner">
+                    <AlertTriangle size={18} />
+                    <div>
+                      <strong>Perhatian: {healthAlertCount} Peserta Memiliki Catatan Medis</strong>
+                      <p>Harap perhatikan kondisi kesehatan khusus sebelum memulai latihan.</p>
                     </div>
-                  )}
+                  </div>
+                )}
+              </div>
 
+              <div className="panel">
+                <h3 style={{ margin: '0 0 16px', fontSize: '1.1rem' }}>Daftar Murid Terdaftar</h3>
+                {!details ? (
+                  <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--muted)' }}>
+                    <p>Memuat daftar peserta...</p>
+                  </div>
+                ) : details.participants.length ? (
                   <div className="live-coach-participants-list">
-                    {details.participants.length ? (
-                      details.participants.map((person) => (
-                        <div className="live-coach-person" key={person.bookingId}>
-                          <div className="live-coach-person-info">
-                            <div className="live-coach-avatar">
-                              {person.fullName.trim().slice(0, 2).toUpperCase()}
-                            </div>
-                            <div className="live-coach-person-details">
+                    {details.participants.map((person) => (
+                      <div className="live-coach-person" key={person.bookingId}>
+                        <div className="live-coach-person-info">
+                          <div className="live-coach-avatar">
+                            {person.fullName.trim().slice(0, 2).toUpperCase()}
+                          </div>
+                          <div className="live-coach-person-details">
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                               <strong className="live-coach-person-name">{person.fullName}</strong>
-                              {person.healthNote && (
-                                <div className="live-health-note">
-                                  <div className="live-health-note-header">
-                                    <AlertTriangle size={13} />
-                                    <span className="live-health-note-label">Catatan Kesehatan</span>
-                                    <span className="live-health-note-source">
-                                      {person.healthSource === 'snapshot'
-                                        ? 'saat kelas berlangsung'
-                                        : 'terkini'}
-                                    </span>
-                                  </div>
-                                  <p className="live-health-note-text">{person.healthNote}</p>
-                                </div>
+                              {person.lobbyCheckedIn && (
+                                <span
+                                  className="tag tag-green"
+                                  style={{
+                                    fontSize: '11px',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    padding: '2px 8px',
+                                  }}
+                                >
+                                  <CheckCircle2 size={12} /> Tiba di Lobi
+                                </span>
                               )}
                             </div>
-                          </div>
-
-                          <div className="live-attendance-actions">
-                            <span
-                              className={`live-attendance-status ${
-                                person.present === null
-                                  ? 'pending'
-                                  : person.present
-                                    ? 'present'
-                                    : 'absent'
-                              }`}
-                            >
-                              {person.present === null
-                                ? 'Belum dicatat'
-                                : person.present
-                                  ? 'Hadir'
-                                  : 'Tidak hadir'}
-                            </span>
-                            <button
-                              className={`button ${person.present === true ? 'button-primary' : 'button-outline'}`}
-                              disabled={!canMark || busy}
-                              onClick={() => void mark(person.customerId, true)}
-                            >
-                              Hadir
-                            </button>
-                            <button
-                              className={`button ${person.present === false ? 'button-danger' : 'button-text'}`}
-                              disabled={!canMark || busy}
-                              onClick={() => void mark(person.customerId, false)}
-                            >
-                              Tidak hadir
-                            </button>
+                            {person.healthNote && (
+                              <div className="live-health-note">
+                                <div className="live-health-note-header">
+                                  <AlertTriangle size={13} />
+                                  <span className="live-health-note-label">Catatan Kesehatan</span>
+                                  <span className="live-health-note-source">
+                                    {person.healthSource === 'snapshot'
+                                      ? 'saat kelas berlangsung'
+                                      : 'terkini'}
+                                  </span>
+                                </div>
+                                <p className="live-health-note-text">{person.healthNote}</p>
+                              </div>
+                            )}
                           </div>
                         </div>
-                      ))
-                    ) : (
-                      <div
-                        className="panel"
-                        style={{ background: '#f8fafc', textAlign: 'center', padding: '24px' }}
-                      >
-                        <p style={{ margin: 0, color: 'var(--muted)' }}>
-                          Belum ada peserta terkonfirmasi untuk sesi ini.
-                        </p>
-                      </div>
-                    )}
-                  </div>
 
-                  {!canMark && (
-                    <p className="live-note" style={{ marginTop: '16px' }}>
-                      <ShieldCheck size={15} /> Absensi dapat diubah sejak kelas dimulai sampai 24 jam
-                      setelah selesai.
+                        <div className="live-attendance-actions">
+                          <span
+                            className={`live-attendance-status ${
+                              person.present === null
+                                ? 'pending'
+                                : person.present
+                                  ? 'present'
+                                  : 'absent'
+                            }`}
+                          >
+                            {person.present === null
+                              ? 'Belum dicatat'
+                              : person.present
+                                ? 'Hadir'
+                                : 'Tidak hadir'}
+                          </span>
+                          <button
+                            className={`button ${person.present === true ? 'button-primary' : 'button-outline'}`}
+                            disabled={!canMark || busy}
+                            onClick={() => void mark(person.customerId, true)}
+                          >
+                            Hadir
+                          </button>
+                          <button
+                            className={`button ${person.present === false ? 'button-danger' : 'button-text'}`}
+                            disabled={!canMark || busy}
+                            onClick={() => void mark(person.customerId, false)}
+                          >
+                            Tidak hadir
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div
+                    className="panel"
+                    style={{ background: '#f8fafc', textAlign: 'center', padding: '28px', border: '1px dashed var(--line)' }}
+                  >
+                    <p style={{ margin: 0, color: 'var(--muted)' }}>
+                      Belum ada peserta terkonfirmasi untuk sesi ini.
                     </p>
-                  )}
-                </>
-              )}
+                  </div>
+                )}
+
+                {!canMark && (
+                  <p className="live-note" style={{ marginTop: '18px' }}>
+                    <ShieldCheck size={15} /> Presensi dapat diubah sejak kelas dimulai sampai 24 jam setelah selesai.
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </>
       )}
     </section>

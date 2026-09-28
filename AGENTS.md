@@ -1,4 +1,4 @@
-# Panduan Agen — Platform Wellness
+# Panduan Agen - Platform Wellness
 
 Panduan ini menetapkan cara mengubah repository. [PRD.md](PRD.md) adalah sumber kebutuhan, aturan bisnis, kriteria penerimaan, serta matriks status implementasi. [README.md](README.md) adalah panduan clone dan penggunaan lokal. Jangan menyimpulkan bahwa semua kebutuhan PRD sudah diuji hanya karena ada implementasinya.
 
@@ -68,10 +68,10 @@ Jalankan perintah dari folder aplikasi terkait:
 | Build | `npm run build` | `npm run build` |
 | Lint | `npm run lint` | `npm run lint` |
 | Unit/integration test | `npm test` | Belum ada perintah unit test di package scripts |
-| Migrasi lokal | `npm run migrate` | — |
-| Test smoke umum | `npm run smoke` | — |
+| Migrasi lokal | `npm run migrate` | - |
+| Test smoke umum | `npm run smoke` | - |
 | Smoke terarah | `npm run smoke:payments`, `smoke:cancellations`, `smoke:packages`, `smoke:health`, `smoke:content-lockers`, `smoke:admin-finance`, `smoke:site` | `npm run smoke:live`, `smoke:health`, `smoke:admin`, `smoke:content-lockers`, `smoke:admin-finance`, `smoke:site`, `smoke:dashboard` |
-| Format | — | `npm run format` / `npm run format:check` |
+| Format | - | `npm run format` / `npm run format:check` |
 
 Smoke test live dapat memerlukan backend, frontend, Edge, atau fixture database. Baca script target sebelum menjalankan; pastikan ia memakai database lokal dan pahami apakah fixture akan dipulihkan. Jangan jalankan `demo:setup` hanya untuk memeriksa build atau dokumentasi.
 

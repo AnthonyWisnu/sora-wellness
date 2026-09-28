@@ -17,7 +17,7 @@ export class AttendanceService {
   constructor(private readonly db: Db) {}
 
   async coachSessions(coachId: string, date?: string) {
-    return (await this.db.query(`SELECT s.id,s.local_date::text AS "localDate",s.starts_at AS "startsAt",s.ends_at AS "endsAt",s.status,s.capacity,t.title,t.level,t.category,(SELECT count(*)::int FROM bookings b WHERE b.session_id=s.id AND b.status='confirmed') AS "participantCount" FROM class_sessions s JOIN class_types t ON t.id=s.class_type_id WHERE s.coach_id=$1 AND ($2::date IS NOT NULL OR s.ends_at >= now()-interval '1 year') AND ($2::date IS NULL OR s.local_date=$2::date) ORDER BY abs(extract(epoch FROM (s.starts_at-now()))) ASC LIMIT 100`, [coachId,date ?? null])).rows;
+    return (await this.db.query(`SELECT s.id,s.local_date::text AS "localDate",s.starts_at AS "startsAt",s.ends_at AS "endsAt",s.status,s.capacity,t.title,t.level,t.category,(SELECT count(*)::int FROM bookings b WHERE b.session_id=s.id AND b.status='confirmed') AS "participantCount",(SELECT count(*)::int FROM attendance a WHERE a.session_id=s.id AND a.present=true) AS "attendedCount" FROM class_sessions s JOIN class_types t ON t.id=s.class_type_id WHERE s.coach_id=$1 AND ($2::date IS NOT NULL OR s.ends_at >= now()-interval '1 year') AND ($2::date IS NULL OR s.local_date=$2::date) ORDER BY abs(extract(epoch FROM (s.starts_at-now()))) ASC LIMIT 100`, [coachId,date ?? null])).rows;
   }
 
   async coachSummary(coachId: string) {
@@ -50,7 +50,7 @@ export class AttendanceService {
         JOIN LATERAL (SELECT r.note FROM health_profile_revisions r WHERE r.customer_id=b.customer_id AND r.recorded_at<=s.starts_at ORDER BY r.recorded_at DESC,r.id DESC LIMIT 1) revision ON true
         WHERE b.session_id=$1 AND b.status='confirmed' AND s.starts_at<=now() AND s.ends_at+interval '1 year'>now()
         ON CONFLICT (booking_id) DO NOTHING`, [sessionId]);
-      const found = await client.query(`SELECT b.id AS "bookingId",u.id AS "customerId",u.full_name AS "fullName",a.present,a.recorded_at AS "recordedAt",CASE WHEN s.starts_at>now() THEN hp.note WHEN hs.delete_after>now() THEN hs.note ELSE NULL END AS "healthNote",CASE WHEN s.starts_at>now() THEN 'current' WHEN hs.delete_after>now() AND hs.id IS NOT NULL THEN 'snapshot' ELSE NULL END AS "healthSource" FROM bookings b JOIN app_users u ON u.id=b.customer_id JOIN class_sessions s ON s.id=b.session_id LEFT JOIN attendance a ON a.booking_id=b.id LEFT JOIN health_profiles hp ON hp.customer_id=u.id LEFT JOIN health_snapshots hs ON hs.booking_id=b.id WHERE b.session_id=$1 AND b.status='confirmed' ORDER BY u.full_name,u.id`, [sessionId]);
+      const found = await client.query(`SELECT b.id AS "bookingId",u.id AS "customerId",u.full_name AS "fullName",a.present,a.recorded_at AS "recordedAt",CASE WHEN a.recorded_by IS NOT NULL AND (SELECT role FROM app_users WHERE id=a.recorded_by) = 'admin' THEN true ELSE false END AS "lobbyCheckedIn",CASE WHEN s.starts_at>now() THEN hp.note WHEN hs.delete_after>now() THEN hs.note ELSE NULL END AS "healthNote",CASE WHEN s.starts_at>now() THEN 'current' WHEN hs.delete_after>now() AND hs.id IS NOT NULL THEN 'snapshot' ELSE NULL END AS "healthSource" FROM bookings b JOIN app_users u ON u.id=b.customer_id JOIN class_sessions s ON s.id=b.session_id LEFT JOIN attendance a ON a.booking_id=b.id LEFT JOIN health_profiles hp ON hp.customer_id=u.id LEFT JOIN health_snapshots hs ON hs.booking_id=b.id WHERE b.session_id=$1 AND b.status='confirmed' ORDER BY u.full_name,u.id`, [sessionId]);
       return { sessionId, startsAt: session.rows[0].starts_at, endsAt: session.rows[0].ends_at, participants: found.rows };
     });
   }
@@ -139,6 +139,15 @@ export class AttendanceService {
       [row.sessionId, row.customerId, row.id, adminId],
     );
 
+    const locker = await this.db.query<{ lockerCode: string }>(
+      `SELECT l.code AS "lockerCode"
+       FROM locker_assignments la
+       JOIN lockers l ON l.id = la.locker_id
+       WHERE la.customer_id = $1 AND la.released_at IS NULL
+       LIMIT 1`,
+      [row.customerId],
+    );
+
     return {
       success: true,
       alreadyCheckedIn: alreadyPresent,
@@ -150,6 +159,7 @@ export class AttendanceService {
       startsAt: row.startsAt,
       endsAt: row.endsAt,
       recordedAt: new Date(),
+      lockerCode: locker.rows[0]?.lockerCode ?? null,
     };
   }
 }

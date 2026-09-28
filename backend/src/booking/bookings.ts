@@ -45,10 +45,10 @@ export class BookingController {
 
   @Post('bookings')
   @ApiCreatedResponse({ description: 'Gratis, jatah, atau saldo penuh langsung confirmed. Bila masih ada tagihan, respons berisi token dan URL Snap Sandbox.', schema: { example: { id: 'd6d920d7-a0c1-46ac-8793-e5f84b004e2d', status: 'pending_payment', source: 'single', priceIdr: 75000, walletReservedIdr: 0, gatewayDueIdr: 75000, holdExpiresAt: '2026-09-25T07:00:00.000Z', payment: { orderId: 'CLS-d6d920d7-a0c1-46ac-8793-e5f84b004e2d', snapToken: 'token-dari-Midtrans', redirectUrl: 'https://app.sandbox.midtrans.com/snap/v2/vtweb/token-dari-Midtrans' } } } })
-  @ApiHeader({ name: 'Idempotency-Key', required: true, description: 'Kunci unik 8–128 karakter untuk satu upaya booking.' })
+  @ApiHeader({ name: 'Idempotency-Key', required: true, description: 'Kunci unik 8-128 karakter untuk satu upaya booking.' })
   async create(@Req() req: AuthRequest, @Body() body: BookingDto, @Headers('idempotency-key') key: string | undefined) {
     const actor = assertRole(req, 'customer');
-    if (!key || key.length < 8 || key.length > 128) throw new BadRequestException('Header Idempotency-Key wajib 8–128 karakter');
+    if (!key || key.length < 8 || key.length > 128) throw new BadRequestException('Header Idempotency-Key wajib 8-128 karakter');
     if (body.paymentChoice === 'quota' && body.useBalance) throw new BadRequestException('Saldo tidak dipakai bersama jatah member');
     await this.payments.expirePending(actor.id);
     return this.db.transaction(async (client) => {
