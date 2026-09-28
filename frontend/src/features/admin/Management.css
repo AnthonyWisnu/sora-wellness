@@ -1018,11 +1018,22 @@
   border: 1px solid var(--line, #e2e8f0);
   border-radius: 12px;
   padding: 20px;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: space-between !important;
+  gap: 16px;
+  width: 100%;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
+}
+
+.admin-class-card-body {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 16px;
-  transition: all 0.15s ease;
+  align-items: stretch;
+  width: 100%;
+  flex: 1;
 }
 
 .admin-class-card:hover {
@@ -1084,6 +1095,7 @@
   padding: 10px 12px;
   background: #f8fafc;
   border-radius: 8px;
+  margin-top: auto;
 }
 
 .admin-class-card-specs span {
@@ -1093,17 +1105,58 @@
 }
 
 .admin-class-card-bottom {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: flex !important;
+  align-items: flex-end !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  box-sizing: border-box;
   border-top: 1px solid var(--line, #e2e8f0);
-  padding-top: 14px;
-  margin-top: 4px;
+  padding-top: 16px;
+  margin-top: 14px;
+}
+
+.admin-class-price-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 2px;
+}
+
+.admin-class-price-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted, #64748b);
+  line-height: 1;
 }
 
 .admin-class-price {
-  font-size: 16px;
+  font-size: 1.25rem;
   font-weight: 800;
   color: var(--green, #17392e);
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+
+.admin-class-edit-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 8px 16px !important;
+  border-radius: 8px !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  color: var(--green, #17392e) !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #fff !important;
+  flex-shrink: 0 !important;
+  transition: all 0.15s ease;
+}
+
+.admin-class-edit-btn:hover {
+  background: #f8fafc !important;
+  border-color: var(--green, #17392e) !important;
 }
 

@@ -204,7 +204,7 @@ export function AdminClassTypesPanel({ show, onChanged }: PanelProps & { onChang
       <div className="admin-entity-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}>
         {rows.map((row) => (
           <article className="panel admin-record admin-class-card" key={row.id}>
-            <div>
+            <div className="admin-class-card-body">
               <div className="admin-class-card-top">
                 <span className="eyebrow" style={{ margin: 0 }}>{row.category}</span>
                 <span className={`admin-class-level-badge ${row.level}`}>
@@ -228,11 +228,11 @@ export function AdminClassTypesPanel({ show, onChanged }: PanelProps & { onChang
               </div>
             </div>
             <div className="admin-class-card-bottom">
-              <div>
-                <span style={{ fontSize: '11px', color: 'var(--muted)', display: 'block' }}>Tarif Bawaan</span>
+              <div className="admin-class-price-block">
+                <span className="admin-class-price-label">Tarif Bawaan</span>
                 <span className="admin-class-price">{money(row.default_price_idr)}</span>
               </div>
-              <button className="button button-outline" onClick={() => edit(row)}>
+              <button className="button button-outline admin-class-edit-btn" onClick={() => edit(row)}>
                 <Pencil size={14} /> Ubah
               </button>
             </div>

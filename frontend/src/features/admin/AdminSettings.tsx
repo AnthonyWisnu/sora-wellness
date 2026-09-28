@@ -31,6 +31,9 @@ export function AdminPolicy({ adminTab, policy, setPolicy, busy, savePolicy }: P
                   setPolicy({ ...policy, guestScheduleDays: Number(event.target.value) })
                 }
               />
+              <small style={{ color: '#64748b', fontSize: '11px', marginTop: '2px', display: 'block' }}>
+                Rentang kalender yang dapat dilihat publik/tamu (misal: 7 hari).
+              </small>
             </label>
             <label>
               Jadwal member (hari)
@@ -43,30 +46,43 @@ export function AdminPolicy({ adminTab, policy, setPolicy, busy, savePolicy }: P
                   setPolicy({ ...policy, memberScheduleDays: Number(event.target.value) })
                 }
               />
+              <small style={{ color: '#64748b', fontSize: '11px', marginTop: '2px', display: 'block' }}>
+                Rentang kalender yang dapat dilihat member aktif (misal: 30 hari).
+              </small>
             </label>
             <label>
-              Batas booking (menit)
+              Batas booking (jam)
               <input
                 type="number"
                 min={0}
-                max={10080}
-                value={policy.bookingCutoffMinutes}
-                onChange={(event) =>
-                  setPolicy({ ...policy, bookingCutoffMinutes: Number(event.target.value) })
-                }
+                max={168}
+                step={1}
+                value={policy.bookingCutoffMinutes !== undefined ? policy.bookingCutoffMinutes / 60 : ''}
+                onChange={(event) => {
+                  const val = event.target.value === '' ? 0 : Number(event.target.value)
+                  setPolicy({ ...policy, bookingCutoffMinutes: Math.max(0, Math.round(val * 60)) })
+                }}
               />
+              <small style={{ color: '#64748b', fontSize: '11px', marginTop: '2px', display: 'block' }}>
+                Waktu pemesanan ditutup sebelum sesi kelas dimulai (misal: 2 jam).
+              </small>
             </label>
             <label>
-              Batas pembatalan (menit)
+              Batas pembatalan (jam)
               <input
                 type="number"
                 min={0}
-                max={10080}
-                value={policy.cancellationCutoffMinutes}
-                onChange={(event) =>
-                  setPolicy({ ...policy, cancellationCutoffMinutes: Number(event.target.value) })
-                }
+                max={168}
+                step={1}
+                value={policy.cancellationCutoffMinutes !== undefined ? policy.cancellationCutoffMinutes / 60 : ''}
+                onChange={(event) => {
+                  const val = event.target.value === '' ? 0 : Number(event.target.value)
+                  setPolicy({ ...policy, cancellationCutoffMinutes: Math.max(0, Math.round(val * 60)) })
+                }}
               />
+              <small style={{ color: '#64748b', fontSize: '11px', marginTop: '2px', display: 'block' }}>
+                Batas pembatalan tepat waktu untuk pengembalian hak/saldo (misal: 24 jam).
+              </small>
             </label>
             <label>
               Jatah kelas per bulan
@@ -79,6 +95,9 @@ export function AdminPolicy({ adminTab, policy, setPolicy, busy, savePolicy }: P
                   setPolicy({ ...policy, monthlyClassQuota: Number(event.target.value) })
                 }
               />
+              <small style={{ color: '#64748b', fontSize: '11px', marginTop: '2px', display: 'block' }}>
+                Kuota kelas bulanan bawaan untuk paket member (misal: 8 sesi).
+              </small>
             </label>
             <label>
               Tahan kursi (menit)
@@ -91,6 +110,9 @@ export function AdminPolicy({ adminTab, policy, setPolicy, busy, savePolicy }: P
                   setPolicy({ ...policy, seatHoldMinutes: Number(event.target.value) })
                 }
               />
+              <small style={{ color: '#64748b', fontSize: '11px', marginTop: '2px', display: 'block' }}>
+                Durasi penahanan kursi saat proses checkout Midtrans (misal: 15 menit).
+              </small>
             </label>
           </div>
           <label className="live-checkbox">
