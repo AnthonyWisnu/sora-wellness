@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
-import { Check, Pencil, Plus } from 'lucide-react'
+import { Calendar, Check, ChevronLeft, ChevronRight, Pencil, Plus } from 'lucide-react'
 import { api, type AdminClassType, type AdminSession } from '../../shared/api'
 import { formatDate, money } from '../../shared/format'
 import {
@@ -15,13 +15,22 @@ import { SessionFields } from './SessionFields'
 import { AdminDialog } from './AdminDialog'
 import { useConfirm } from '../../shared/confirm-context'
 
+function shiftDay(current: string, offset: number): string {
+  const d = new Date(`${current}T00:00:00Z`)
+  d.setUTCDate(d.getUTCDate() + offset)
+  return d.toISOString().slice(0, 10)
+}
+
 export function AdminSessionsPanel({
   timezone,
   show,
   onChanged,
 }: PanelProps & { timezone: string; onChanged: () => void }) {
   const confirm = useConfirm()
-  const [date, setDate] = useState(() => studioToday(timezone))
+  const today = studioToday(timezone)
+  const tomorrow = shiftDay(today, 1)
+  const dayAfter = shiftDay(today, 2)
+  const [date, setDate] = useState(() => today)
   const [rows, setRows] = useState<AdminSession[]>([])
   const [classes, setClasses] = useState<AdminClassType[]>([])
   const [coaches, setCoaches] = useState<Coach[]>([])
@@ -112,7 +121,7 @@ export function AdminSessionsPanel({
   }
   return (
     <section className="admin-workspace">
-      <div className="admin-workspace-head">
+      <div className="admin-workspace-head sessions-head-responsive">
         <div>
           <span className="eyebrow">JADWAL</span>
           <h2>Sesi kelas</h2>
@@ -121,10 +130,6 @@ export function AdminSessionsPanel({
             kapasitas, atau harganya berubah.
           </p>
         </div>
-        <label className="admin-date-filter">
-          Lihat tanggal
-          <input type="date" value={date} onChange={(event) => setDate(event.target.value)} />
-        </label>
         <button
           className="button button-primary"
           onClick={() => {
@@ -142,6 +147,71 @@ export function AdminSessionsPanel({
         >
           <Plus size={15} /> Buat sesi
         </button>
+      </div>
+
+      <div className="sessions-date-nav-bar panel">
+        <div className="date-pills">
+          <button
+            type="button"
+            className={`chip-button${date === today ? ' chip-primary' : ''}`}
+            onClick={() => setDate(today)}
+          >
+            Hari Ini
+          </button>
+          <button
+            type="button"
+            className={`chip-button${date === tomorrow ? ' chip-primary' : ''}`}
+            onClick={() => setDate(tomorrow)}
+          >
+            Besok
+          </button>
+          <button
+            type="button"
+            className={`chip-button${date === dayAfter ? ' chip-primary' : ''}`}
+            onClick={() => setDate(dayAfter)}
+          >
+            Lusa
+          </button>
+        </div>
+
+        <div className="date-stepper-wrap">
+          <button
+            type="button"
+            className="icon-button"
+            title="Hari sebelumnya"
+            aria-label="Hari sebelumnya"
+            onClick={() => setDate((prev) => shiftDay(prev, -1))}
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <div className="date-display-badge">
+            <Calendar size={15} />
+            <span>
+              {formatDate(date, {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+              })}
+            </span>
+            <input
+              type="date"
+              className="date-stepper-hidden-input"
+              value={date}
+              onChange={(event) => setDate(event.target.value)}
+              aria-label="Pilih tanggal kalender"
+            />
+          </div>
+          <button
+            type="button"
+            className="icon-button"
+            title="Hari berikutnya"
+            aria-label="Hari berikutnya"
+            onClick={() => setDate((prev) => shiftDay(prev, 1))}
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
       </div>
       <AdminDialog
         open={dialogOpen}

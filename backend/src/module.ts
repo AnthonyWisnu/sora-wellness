@@ -10,9 +10,10 @@ import { HealthModule } from './health/health.module';
 import { LockersModule } from './lockers/lockers.module';
 import { MembershipModule } from './membership/membership.module';
 import { PaymentsModule } from './payments/payments.module';
+import { EventsModule } from './events/events.module';
 
 @Module({
   imports: [SharedModule, AuthModule, CatalogModule, BookingModule, FinanceModule,
-    AttendanceModule, ContentModule, HealthModule, LockersModule, MembershipModule, PaymentsModule],
+    AttendanceModule, ContentModule, HealthModule, LockersModule, MembershipModule, PaymentsModule, EventsModule],
 })
 export class AppModule {}

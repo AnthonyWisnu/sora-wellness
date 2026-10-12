@@ -22,6 +22,24 @@ export class BookingListFilter {
   @ApiPropertyOptional({ example: 20 }) @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(100) limit?: number;
 }
 
+const NON_AMBIGUOUS_CHARS = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+async function generateBookingCode(client: PoolClient, localDateStr: string): Promise<string> {
+  const prefixRow = await client.query<{ prefix: string }>('SELECT coalesce(booking_code_prefix, \'SORA\') AS prefix FROM studio WHERE id=1');
+  const prefix = prefixRow.rows[0]?.prefix || 'SORA';
+  const cleanDate = (localDateStr || '').replace(/-/g, '').slice(2);
+  for (let attempt = 0; attempt < 5; attempt++) {
+    let rand = '';
+    for (let i = 0; i < 4; i++) {
+      rand += NON_AMBIGUOUS_CHARS[Math.floor(Math.random() * NON_AMBIGUOUS_CHARS.length)];
+    }
+    const candidate = `${prefix}-${cleanDate}-${rand}`;
+    const exists = await client.query('SELECT 1 FROM bookings WHERE booking_code=$1', [candidate]);
+    if (!exists.rowCount) return candidate;
+  }
+  return `${prefix}-${cleanDate}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+}
+
 type SessionRow = { id: string; local_date: string; starts_at: Date; status: string; capacity: number; price_idr: number; level: string; booking_cutoff_minutes: number; seat_hold_minutes: number; monthly_class_quota: number; guest_schedule_days: number; member_schedule_days: number; timezone: string };
 
 @ApiTags('bookings') @ApiCookieAuth('wellness.sid')
@@ -44,7 +62,7 @@ export class BookingController {
   }
 
   @Post('bookings')
-  @ApiCreatedResponse({ description: 'Gratis, jatah, atau saldo penuh langsung confirmed. Bila masih ada tagihan, respons berisi token dan URL Snap Sandbox.', schema: { example: { id: 'd6d920d7-a0c1-46ac-8793-e5f84b004e2d', status: 'pending_payment', source: 'single', priceIdr: 75000, walletReservedIdr: 0, gatewayDueIdr: 75000, holdExpiresAt: '2026-09-25T07:00:00.000Z', payment: { orderId: 'CLS-d6d920d7-a0c1-46ac-8793-e5f84b004e2d', snapToken: 'token-dari-Midtrans', redirectUrl: 'https://app.sandbox.midtrans.com/snap/v2/vtweb/token-dari-Midtrans' } } } })
+  @ApiCreatedResponse({ description: 'Gratis, jatah, atau saldo penuh langsung confirmed. Bila masih ada tagihan, respons berisi token dan URL Snap Sandbox.', schema: { example: { id: 'd6d920d7-a0c1-46ac-8793-e5f84b004e2d', bookingCode: 'SORA-261011-8K9P', status: 'pending_payment', source: 'single', priceIdr: 75000, walletReservedIdr: 0, gatewayDueIdr: 75000, holdExpiresAt: '2026-09-25T07:00:00.000Z', payment: { orderId: 'CLS-d6d920d7-a0c1-46ac-8793-e5f84b004e2d', snapToken: 'token-dari-Midtrans', redirectUrl: 'https://app.sandbox.midtrans.com/snap/v2/vtweb/token-dari-Midtrans' } } } })
   @ApiHeader({ name: 'Idempotency-Key', required: true, description: 'Kunci unik 8-128 karakter untuk satu upaya booking.' })
   async create(@Req() req: AuthRequest, @Body() body: BookingDto, @Headers('idempotency-key') key: string | undefined) {
     const actor = assertRole(req, 'customer');
@@ -53,12 +71,12 @@ export class BookingController {
     await this.payments.expirePending(actor.id);
     return this.db.transaction(async (client) => {
       await client.query('SELECT id FROM app_users WHERE id=$1 FOR UPDATE', [actor.id]);
-      const prior = await client.query<{ id: string; session_id: string; status: string; source: string; price_idr: number; wallet_reserved_idr: number; gateway_due_idr: number; hold_expires_at: Date | null; order_id: string | null; snap_token: string | null; redirect_url: string | null }>('SELECT b.id,b.session_id,b.status,b.source,b.price_idr,b.wallet_reserved_idr,b.gateway_due_idr,b.hold_expires_at,p.order_id,p.snap_token,p.redirect_url FROM bookings b LEFT JOIN payment_transactions p ON p.booking_id=b.id WHERE b.customer_id=$1 AND b.idempotency_key=$2', [actor.id, key]);
+      const prior = await client.query<{ id: string; booking_code: string | null; session_id: string; status: string; source: string; price_idr: number; wallet_reserved_idr: number; gateway_due_idr: number; hold_expires_at: Date | null; order_id: string | null; snap_token: string | null; redirect_url: string | null }>('SELECT b.id,b.booking_code,b.session_id,b.status,b.source,b.price_idr,b.wallet_reserved_idr,b.gateway_due_idr,b.hold_expires_at,p.order_id,p.snap_token,p.redirect_url FROM bookings b LEFT JOIN payment_transactions p ON p.booking_id=b.id WHERE b.customer_id=$1 AND b.idempotency_key=$2', [actor.id, key]);
       if (prior.rows[0]) {
         if (prior.rows[0].session_id !== body.sessionId) throw new ConflictException('Idempotency-Key sudah dipakai untuk sesi lain');
         if (prior.rows[0].source !== 'free' && prior.rows[0].source !== body.paymentChoice) throw new ConflictException('Idempotency-Key sudah dipakai untuk pilihan pembayaran lain');
         const b = prior.rows[0];
-        return { id: b.id, status: b.status, source: b.source, priceIdr: b.price_idr, walletReservedIdr: b.wallet_reserved_idr, gatewayDueIdr: b.gateway_due_idr, holdExpiresAt: b.hold_expires_at, payment: b.order_id && b.status === 'pending_payment' ? { orderId: b.order_id, snapToken: b.snap_token, redirectUrl: b.redirect_url } : null };
+        return { id: b.id, bookingCode: b.booking_code, status: b.status, source: b.source, priceIdr: b.price_idr, walletReservedIdr: b.wallet_reserved_idr, gatewayDueIdr: b.gateway_due_idr, holdExpiresAt: b.hold_expires_at, payment: b.order_id && b.status === 'pending_payment' ? { orderId: b.order_id, snapToken: b.snap_token, redirectUrl: b.redirect_url } : null };
       }
       const session = await this.getSession(client, body.sessionId, true);
       await client.query(`UPDATE bookings SET status='expired' WHERE session_id=$1 AND status='pending_payment' AND hold_expires_at <= now()`, [session.id]);
@@ -84,25 +102,26 @@ export class BookingController {
         gatewayDueIdr = session.price_idr - walletReservedIdr;
         status = gatewayDueIdr > 0 ? 'pending_payment' : 'confirmed';
       }
-      const result = await client.query<{ id: string; holdExpiresAt: Date | null }>(`INSERT INTO bookings (customer_id,session_id,status,source,price_idr,wallet_reserved_idr,gateway_due_idr,hold_expires_at,idempotency_key,confirmed_at) VALUES ($1,$2,$3,$4,$5,$6,$7,CASE WHEN $3='pending_payment' THEN now()+($8::int * interval '1 minute') ELSE NULL END,$9,CASE WHEN $3='confirmed' THEN now() ELSE NULL END) RETURNING id,hold_expires_at AS "holdExpiresAt"`, [actor.id,session.id,status,source,session.price_idr,walletReservedIdr,gatewayDueIdr,session.seat_hold_minutes,key]);
+      const bookingCode = await generateBookingCode(client, session.local_date);
+      const result = await client.query<{ id: string; holdExpiresAt: Date | null }>(`INSERT INTO bookings (customer_id,session_id,status,source,price_idr,wallet_reserved_idr,gateway_due_idr,hold_expires_at,idempotency_key,confirmed_at,booking_code) VALUES ($1,$2,$3,$4,$5,$6,$7,CASE WHEN $3='pending_payment' THEN now()+($8::int * interval '1 minute') ELSE NULL END,$9,CASE WHEN $3='confirmed' THEN now() ELSE NULL END,$10) RETURNING id,hold_expires_at AS "holdExpiresAt"`, [actor.id,session.id,status,source,session.price_idr,walletReservedIdr,gatewayDueIdr,session.seat_hold_minutes,key,bookingCode]);
       const bookingId = result.rows[0].id;
       if (walletReservedIdr > 0) await this.payments.walletEntry(client,actor.id,bookingId,-walletReservedIdr,'class_purchase',`booking:${bookingId}:initial-debit`);
       const payment = gatewayDueIdr > 0 ? await this.payments.createSnapForBooking(client,bookingId,gatewayDueIdr,session.seat_hold_minutes) : null;
-      return { id: bookingId, status, source, priceIdr: session.price_idr, walletReservedIdr, gatewayDueIdr, holdExpiresAt: result.rows[0].holdExpiresAt, payment };
+      return { id: bookingId, bookingCode, status, source, priceIdr: session.price_idr, walletReservedIdr, gatewayDueIdr, holdExpiresAt: result.rows[0].holdExpiresAt, payment };
     });
   }
 
   @Get('bookings')
   async list(@Req() req: AuthRequest, @Query() filter: BookingListFilter) {
     const actor = assertRole(req, 'customer');
-    const found = await this.db.query(`SELECT b.id,b.status,b.source,b.price_idr AS "priceIdr",b.wallet_reserved_idr AS "walletReservedIdr",b.gateway_due_idr AS "gatewayDueIdr",b.hold_expires_at AS "holdExpiresAt",b.created_at AS "createdAt",b.cancelled_at AS "cancelledAt",b.cancellation_origin AS "cancellationOrigin",b.quota_retained AS "quotaRetained",s.local_date::text AS "localDate",s.starts_at AS "startsAt",t.title FROM bookings b JOIN class_sessions s ON s.id=b.session_id JOIN class_types t ON t.id=s.class_type_id WHERE b.customer_id=$1 ORDER BY b.created_at DESC LIMIT $2 OFFSET $3`, [actor.id, filter.limit ?? 20, ((filter.page ?? 1) - 1) * (filter.limit ?? 20)]);
+    const found = await this.db.query(`SELECT b.id,b.booking_code AS "bookingCode",b.status,b.source,b.price_idr AS "priceIdr",b.wallet_reserved_idr AS "walletReservedIdr",b.gateway_due_idr AS "gatewayDueIdr",b.hold_expires_at AS "holdExpiresAt",b.created_at AS "createdAt",b.cancelled_at AS "cancelledAt",b.cancellation_origin AS "cancellationOrigin",b.quota_retained AS "quotaRetained",s.local_date::text AS "localDate",s.starts_at AS "startsAt",t.title FROM bookings b JOIN class_sessions s ON s.id=b.session_id JOIN class_types t ON t.id=s.class_type_id WHERE b.customer_id=$1 ORDER BY b.created_at DESC LIMIT $2 OFFSET $3`, [actor.id, filter.limit ?? 20, ((filter.page ?? 1) - 1) * (filter.limit ?? 20)]);
     return found.rows;
   }
 
   @Get('bookings/:id')
   async detail(@Req() req: AuthRequest, @Param('id') id: string) {
     const actor = assertRole(req, 'customer');
-    const found = await this.db.query(`SELECT b.id,b.session_id AS "sessionId",b.status,b.source,b.price_idr AS "priceIdr",b.wallet_reserved_idr AS "walletReservedIdr",b.gateway_due_idr AS "gatewayDueIdr",b.hold_expires_at AS "holdExpiresAt",b.created_at AS "createdAt",b.cancelled_at AS "cancelledAt",b.cancellation_origin AS "cancellationOrigin",b.quota_retained AS "quotaRetained",COALESCE((SELECT sum(w.amount_idr) FROM wallet_entries w WHERE w.booking_id=b.id AND w.kind IN ('class_refund','reservation_release')),0)::int AS "creditedBalanceIdr",p.status AS "paymentStatus",CASE WHEN b.status='pending_payment' THEN p.snap_token ELSE NULL END AS "snapToken",CASE WHEN b.status='pending_payment' THEN p.redirect_url ELSE NULL END AS "redirectUrl" FROM bookings b LEFT JOIN payment_transactions p ON p.booking_id=b.id WHERE b.id=$1 AND b.customer_id=$2`, [id, actor.id]);
+    const found = await this.db.query(`SELECT b.id,b.booking_code AS "bookingCode",b.session_id AS "sessionId",b.status,b.source,b.price_idr AS "priceIdr",b.wallet_reserved_idr AS "walletReservedIdr",b.gateway_due_idr AS "gatewayDueIdr",b.hold_expires_at AS "holdExpiresAt",b.created_at AS "createdAt",b.cancelled_at AS "cancelledAt",b.cancellation_origin AS "cancellationOrigin",b.quota_retained AS "quotaRetained",COALESCE((SELECT sum(w.amount_idr) FROM wallet_entries w WHERE w.booking_id=b.id AND w.kind IN ('class_refund','reservation_release')),0)::int AS "creditedBalanceIdr",p.status AS "paymentStatus",CASE WHEN b.status='pending_payment' THEN p.snap_token ELSE NULL END AS "snapToken",CASE WHEN b.status='pending_payment' THEN p.redirect_url ELSE NULL END AS "redirectUrl" FROM bookings b LEFT JOIN payment_transactions p ON p.booking_id=b.id WHERE b.id=$1 AND b.customer_id=$2`, [id, actor.id]);
     if (!found.rows[0]) throw new NotFoundException();
     return found.rows[0];
   }

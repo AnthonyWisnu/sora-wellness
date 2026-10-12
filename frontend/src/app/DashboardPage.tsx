@@ -69,7 +69,7 @@ export function DashboardPage({
   setStudio,
   setSite,
 }: Props) {
-  const section = actor ? resolveDashboardSection(actor.role, path) : 'overview'
+  const section = actor ? resolveDashboardSection(actor, path) : 'overview'
   useEffect(() => {
     if (actor && path !== `/dashboard/${section}`) go(`/dashboard/${section}`)
   }, [actor, path, section, go])
@@ -81,15 +81,17 @@ export function DashboardPage({
           <div>
             <span className="eyebrow">
               RUANG{' '}
-              {actor.role === 'admin'
-                ? 'ADMIN'
-                : actor.role === 'coach'
-                  ? 'PELATIH'
-                  : member
-                    ? 'MEMBER'
-                    : 'PELANGGAN'}
+              {actor.role === 'superadmin'
+                ? 'SUPERADMIN'
+                : actor.role === 'finance' || actor.role === 'admin'
+                  ? 'STAF ADMIN'
+                    : actor.role === 'coach'
+                      ? 'PELATIH'
+                      : member
+                        ? 'MEMBER'
+                        : 'PELANGGAN'}
             </span>
-            <h1>{dashboardTitle(actor.role, section)}</h1>
+            <h1>{dashboardTitle(actor, section)}</h1>
             <p>Selamat datang, {actor.fullName.split(' ')[0]}.</p>
           </div>
         </div>
@@ -114,10 +116,14 @@ export function DashboardPage({
             onNameChanged={(fullName) =>
               setActor((current) => (current ? { ...current, fullName } : current))
             }
+            onAvatarChanged={(avatarUrl) =>
+              setActor((current) => (current ? { ...current, avatarUrl } : current))
+            }
           />
         )}
-        {actor.role === 'admin' && (
+        {(actor.role === 'admin' || actor.role === 'superadmin' || actor.role === 'finance') && (
           <AdminDashboard
+            actor={actor}
             adminTab={section as AdminTab}
             timezone={timezone}
             show={show}

@@ -34,8 +34,7 @@ export class AttendanceService {
       `, [coachId]),
     ]);
     const perf = performance.rows[0] ?? { completedCount: 0, attendedCount: 0 };
-    const estimatedEarnings = (perf.completedCount * 150000) + (perf.attendedCount * 15000);
-    return { ...counts.rows[0], ...perf, estimatedEarnings, sessions: sessions.rows };
+    return { ...counts.rows[0], ...perf, sessions: sessions.rows };
   }
 
   async participants(coachId: string, sessionId: string) {
@@ -50,7 +49,7 @@ export class AttendanceService {
         JOIN LATERAL (SELECT r.note FROM health_profile_revisions r WHERE r.customer_id=b.customer_id AND r.recorded_at<=s.starts_at ORDER BY r.recorded_at DESC,r.id DESC LIMIT 1) revision ON true
         WHERE b.session_id=$1 AND b.status='confirmed' AND s.starts_at<=now() AND s.ends_at+interval '1 year'>now()
         ON CONFLICT (booking_id) DO NOTHING`, [sessionId]);
-      const found = await client.query(`SELECT b.id AS "bookingId",u.id AS "customerId",u.full_name AS "fullName",a.present,a.recorded_at AS "recordedAt",CASE WHEN a.recorded_by IS NOT NULL AND (SELECT role FROM app_users WHERE id=a.recorded_by) = 'admin' THEN true ELSE false END AS "lobbyCheckedIn",CASE WHEN s.starts_at>now() THEN hp.note WHEN hs.delete_after>now() THEN hs.note ELSE NULL END AS "healthNote",CASE WHEN s.starts_at>now() THEN 'current' WHEN hs.delete_after>now() AND hs.id IS NOT NULL THEN 'snapshot' ELSE NULL END AS "healthSource" FROM bookings b JOIN app_users u ON u.id=b.customer_id JOIN class_sessions s ON s.id=b.session_id LEFT JOIN attendance a ON a.booking_id=b.id LEFT JOIN health_profiles hp ON hp.customer_id=u.id LEFT JOIN health_snapshots hs ON hs.booking_id=b.id WHERE b.session_id=$1 AND b.status='confirmed' ORDER BY u.full_name,u.id`, [sessionId]);
+      const found = await client.query(`SELECT b.id AS "bookingId",u.id AS "customerId",u.full_name AS "fullName",CASE WHEN u.avatar_media_id IS NOT NULL THEN '/api/v1/public/media/' || u.avatar_media_id ELSE NULL END AS "avatarUrl",a.present,a.recorded_at AS "recordedAt",CASE WHEN a.recorded_by IS NOT NULL AND (SELECT role FROM app_users WHERE id=a.recorded_by) = 'admin' THEN true ELSE false END AS "lobbyCheckedIn",CASE WHEN s.starts_at>now() THEN hp.note WHEN hs.delete_after>now() THEN hs.note ELSE NULL END AS "healthNote",CASE WHEN s.starts_at>now() THEN 'current' WHEN hs.delete_after>now() AND hs.id IS NOT NULL THEN 'snapshot' ELSE NULL END AS "healthSource" FROM bookings b JOIN app_users u ON u.id=b.customer_id JOIN class_sessions s ON s.id=b.session_id LEFT JOIN attendance a ON a.booking_id=b.id LEFT JOIN health_profiles hp ON hp.customer_id=u.id LEFT JOIN health_snapshots hs ON hs.booking_id=b.id WHERE b.session_id=$1 AND b.status='confirmed' ORDER BY u.full_name,u.id`, [sessionId]);
       return { sessionId, startsAt: session.rows[0].starts_at, endsAt: session.rows[0].ends_at, participants: found.rows };
     });
   }
@@ -99,22 +98,26 @@ export class AttendanceService {
   async checkInByBooking(adminId: string, bookingId: string) {
     const booking = await this.db.query<{
       id: string;
+      bookingCode: string | null;
       sessionId: string;
       customerId: string;
       status: string;
       customerName: string;
+      avatarUrl: string | null;
       classTitle: string;
       startsAt: Date;
       endsAt: Date;
     }>(
-      `SELECT b.id, b.session_id AS "sessionId", b.customer_id AS "customerId", b.status,
-              u.full_name AS "customerName", t.title AS "classTitle",
+      `SELECT b.id, b.booking_code AS "bookingCode", b.session_id AS "sessionId", b.customer_id AS "customerId", b.status,
+              u.full_name AS "customerName",
+              CASE WHEN u.avatar_media_id IS NOT NULL THEN '/api/v1/public/media/' || u.avatar_media_id ELSE NULL END AS "avatarUrl",
+              t.title AS "classTitle",
               s.starts_at AS "startsAt", s.ends_at AS "endsAt"
        FROM bookings b
        JOIN class_sessions s ON s.id = b.session_id
        JOIN class_types t ON t.id = s.class_type_id
        JOIN app_users u ON u.id = b.customer_id
-       WHERE b.id = $1`,
+       WHERE (b.id::text = $1 OR upper(b.booking_code) = upper($1))`,
       [bookingId],
     );
 
@@ -126,7 +129,7 @@ export class AttendanceService {
 
     const prev = await this.db.query<{ present: boolean }>(
       'SELECT present FROM attendance WHERE booking_id = $1',
-      [bookingId],
+      [row.id],
     );
 
     const alreadyPresent = prev.rows[0]?.present === true;
@@ -152,9 +155,11 @@ export class AttendanceService {
       success: true,
       alreadyCheckedIn: alreadyPresent,
       bookingId: row.id,
+      bookingCode: row.bookingCode,
       sessionId: row.sessionId,
       customerId: row.customerId,
       customerName: row.customerName,
+      avatarUrl: row.avatarUrl,
       classTitle: row.classTitle,
       startsAt: row.startsAt,
       endsAt: row.endsAt,

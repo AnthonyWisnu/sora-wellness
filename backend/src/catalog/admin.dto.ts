@@ -32,6 +32,8 @@ export class PolicyDto {
   @IsInt() @Min(0) @Max(100) monthlyClassQuota!: number;
   @ApiProperty({ example: true })
   @IsBoolean() lockerEnabled!: boolean;
+  @ApiPropertyOptional({ example: 'SORA' })
+  @IsOptional() @IsString() @Length(2, 6) bookingCodePrefix?: string;
 }
 export class SessionDto {
   @ApiProperty({ format: 'uuid' })
@@ -77,4 +79,19 @@ export class ScheduleRuleDto {
   @IsDateString() startsOn!: string;
   @ApiProperty({ format: 'date', example: '2026-12-27' })
   @IsDateString() endsOn!: string;
+}
+
+export class UpdateScheduleRuleDto {
+  @ApiPropertyOptional({ format: 'uuid' })
+  @IsOptional() @IsUUID() coachId?: string;
+  @ApiPropertyOptional({ example: '09:00' })
+  @IsOptional() @IsString() localStartTime?: string;
+  @ApiPropertyOptional({ example: 12 })
+  @IsOptional() @IsInt() @Min(1) @Max(500) capacity?: number;
+  @ApiPropertyOptional({ example: 75000 })
+  @IsOptional() @IsInt() @Min(0) priceIdr?: number;
+  @ApiPropertyOptional({ minimum: 1, maximum: 7, description: 'Senin=1, Minggu=7' })
+  @IsOptional() @IsInt() @Min(1) @Max(7) isoWeekday?: number;
+  @ApiPropertyOptional({ example: true })
+  @IsOptional() @IsBoolean() active?: boolean;
 }

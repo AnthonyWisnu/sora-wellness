@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
-import { Body, ConflictException, Controller, ForbiddenException, Get, HttpCode, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, ConflictException, Controller, ForbiddenException, Get, HttpCode, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiCookieAuth, ApiCreatedResponse, ApiOkResponse, ApiProperty, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
-import { IsEmail, IsIn, IsInt, IsOptional, IsString, Length, Max, MaxLength, Min } from 'class-validator';
+import { IsArray, IsEmail, IsIn, IsInt, IsOptional, IsString, Length, Max, MaxLength, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 import { Db } from '../shared/db';
 import { csrf } from '../shared/csrf';
@@ -32,12 +32,14 @@ export class ResetPasswordDto {
   @IsString() @Length(8, 500) verificationNote!: string;
 }
 export class StaffDto extends RegisterDto {
-  @ApiProperty({ enum: ['coach', 'admin'] })
-  @IsString() @MaxLength(20) role!: 'coach' | 'admin';
+  @ApiProperty({ enum: ['coach', 'admin', 'finance', 'superadmin'] })
+  @IsString() @MaxLength(20) role!: 'coach' | 'admin' | 'finance' | 'superadmin';
+  @ApiPropertyOptional({ type: [String] })
+  @IsOptional() @IsArray() @IsString({ each: true }) permissions?: string[];
 }
 export class AccountFilter {
   @ApiPropertyOptional({ example: 'ayu' }) @IsOptional() @IsString() @MaxLength(100) q?: string;
-  @ApiPropertyOptional({ enum: ['customer', 'coach', 'admin'] }) @IsOptional() @IsIn(['customer', 'coach', 'admin']) role?: string;
+  @ApiPropertyOptional({ enum: ['customer', 'coach', 'admin', 'finance', 'superadmin'] }) @IsOptional() @IsIn(['customer', 'coach', 'admin', 'finance', 'superadmin']) role?: string;
   @ApiPropertyOptional({ example: 1 }) @IsOptional() @Type(() => Number) @IsInt() @Min(1) page?: number;
   @ApiPropertyOptional({ example: 20 }) @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(100) limit?: number;
 }
@@ -81,12 +83,12 @@ export class AuthController {
   @Post('login') @HttpCode(200)
   @ApiOkResponse({ schema: { example: { id: '562a9064-bdd6-4f74-a903-91661ba23e75', role: 'customer', passwordChangeRequired: false } } })
   async login(@Body() body: LoginDto, @Req() req: AuthRequest) {
-    const result = await this.db.query<{ id: string; role: string; password_hash: string; password_change_required: boolean }>('SELECT id, role, password_hash, password_change_required FROM app_users WHERE email = $1', [body.email.trim().toLowerCase()]);
+    const result = await this.db.query<{ id: string; role: string; password_hash: string; password_change_required: boolean; permissions?: string[] }>('SELECT id, role, password_hash, password_change_required, COALESCE(permissions, \'{}\') AS permissions FROM app_users WHERE email = $1', [body.email.trim().toLowerCase()]);
     const user = result.rows[0];
     if (!user || !(await verifyPassword(body.password, user.password_hash))) throw new ForbiddenException('Email atau kata sandi salah');
     await regenerate(req);
     req.session.userId = user.id;
-    return { id: user.id, role: user.role, passwordChangeRequired: user.password_change_required };
+    return { id: user.id, role: user.role, permissions: user.permissions || [], passwordChangeRequired: user.password_change_required };
   }
 
   @Post('logout') @HttpCode(204)
@@ -112,25 +114,40 @@ export class AdminAccountController {
   @Get('accounts') @UseGuards(SessionGuard) @ApiCookieAuth('wellness.sid')
   async accounts(@Req() req: AuthRequest, @Query() filter: AccountFilter) {
     assertRole(req, 'admin');
-    const found = await this.db.query(`SELECT id,email,full_name AS "fullName",role,password_change_required AS "passwordChangeRequired",created_at AS "createdAt" FROM app_users WHERE ($1::text IS NULL OR email::text ILIKE '%'||$1||'%' OR full_name ILIKE '%'||$1||'%') AND ($2::text IS NULL OR role=$2) ORDER BY created_at DESC LIMIT $3 OFFSET $4`, [filter.q?.trim() || null, filter.role ?? null, filter.limit ?? 20, ((filter.page ?? 1) - 1) * (filter.limit ?? 20)]);
+    const found = await this.db.query(`SELECT id,email,full_name AS "fullName",role,COALESCE(permissions, '{}') AS permissions,password_change_required AS "passwordChangeRequired",created_at AS "createdAt" FROM app_users WHERE ($1::text IS NULL OR email::text ILIKE '%'||$1||'%' OR full_name ILIKE '%'||$1||'%') AND ($2::text IS NULL OR role=$2) ORDER BY created_at DESC LIMIT $3 OFFSET $4`, [filter.q?.trim() || null, filter.role ?? null, filter.limit ?? 20, ((filter.page ?? 1) - 1) * (filter.limit ?? 20)]);
     return found.rows;
   }
 
   @Post('staff') @UseGuards(SessionGuard) @ApiCookieAuth('wellness.sid')
   async createStaff(@Req() req: AuthRequest, @Body() body: StaffDto) {
-    const admin = assertRole(req, 'admin');
-    if (!['admin', 'coach'].includes(body.role)) throw new ForbiddenException('Peran tidak valid');
+    const admin = assertRole(req, 'admin', 'superadmin');
+    const allowedRoles = admin.role === 'superadmin' ? ['admin', 'coach', 'finance', 'superadmin'] : ['coach'];
+    if (!allowedRoles.includes(body.role)) throw new ForbiddenException('Peran staf tidak diizinkan untuk level akun Anda');
     const hash = await hashPassword(body.password);
+    const assignedRole = body.role === 'finance' ? 'admin' : body.role;
+    const assignedPermissions = Array.isArray(body.permissions)
+      ? body.permissions
+      : (body.role === 'finance' ? ['finance_reports', 'finance_payouts'] : []);
     try {
       return await this.db.transaction(async (client) => {
-        const found = await client.query<{ id: string }>('INSERT INTO app_users (email, full_name, role, password_hash, password_change_required) VALUES ($1,$2,$3,$4,true) RETURNING id', [body.email.trim().toLowerCase(), body.fullName.trim(), body.role, hash]);
+        const found = await client.query<{ id: string }>('INSERT INTO app_users (email, full_name, role, password_hash, password_change_required, permissions) VALUES ($1,$2,$3,$4,true,$5) RETURNING id', [body.email.trim().toLowerCase(), body.fullName.trim(), assignedRole, hash, assignedPermissions]);
         await client.query('INSERT INTO audit_logs (actor_id, target_user_id, action) VALUES ($1,$2,$3)', [admin.id, found.rows[0].id, 'create_staff']);
-        return { id: found.rows[0].id };
+        return { id: found.rows[0].id, role: assignedRole, permissions: assignedPermissions };
       });
     } catch (error) {
       if ((error as { code?: string }).code === '23505') throw new ConflictException('Email sudah terdaftar');
       throw error;
     }
+  }
+
+  @Patch('staff/:id/permissions') @UseGuards(SessionGuard) @ApiCookieAuth('wellness.sid')
+  async updateStaffPermissions(@Req() req: AuthRequest, @Body() body: { permissions: string[] }) {
+    const admin = assertRole(req, 'superadmin');
+    const id = req.params.id;
+    if (!Array.isArray(body.permissions)) throw new BadRequestException('Format permissions harus berupa array');
+    await this.db.query('UPDATE app_users SET permissions=$1, updated_at=now() WHERE id=$2', [body.permissions, id]);
+    await this.db.query('INSERT INTO audit_logs (actor_id, target_user_id, action, reason) VALUES ($1,$2,$3,$4)', [admin.id, id, 'update_permissions', body.permissions.join(',')]);
+    return { id, permissions: body.permissions };
   }
 
   @Post('accounts/:id/reset-password') @UseGuards(SessionGuard) @ApiCookieAuth('wellness.sid')

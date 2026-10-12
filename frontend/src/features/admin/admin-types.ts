@@ -11,4 +11,5 @@ export type AdminTab =
   | 'lockers'
   | 'content'
   | 'finance'
+  | 'events'
 export type GatewayForm = { merchantId: string; clientKey: string; serverKey: string }

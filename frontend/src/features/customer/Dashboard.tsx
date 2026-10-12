@@ -25,6 +25,7 @@ type Props = {
   refreshPackage: (id: string) => void
   show: (message: string) => void
   onNameChanged: (name: string) => void
+  onAvatarChanged?: (url: string | null) => void
 }
 
 export function CustomerDashboard({
@@ -45,6 +46,7 @@ export function CustomerDashboard({
   refreshPackage,
   show,
   onNameChanged,
+  onAvatarChanged,
 }: Props) {
   const [ticketBooking, setTicketBooking] = useState<Booking | null>(null)
   return (
@@ -335,6 +337,7 @@ export function CustomerDashboard({
           actor={actor}
           timezone={timezone}
           onNameChanged={onNameChanged}
+          onAvatarChanged={onAvatarChanged}
           show={show}
         />
       )}

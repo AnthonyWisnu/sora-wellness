@@ -1,5 +1,5 @@
 import type { Dispatch, FormEvent, SetStateAction } from 'react'
-import { Check } from 'lucide-react'
+import { Check, LockKeyhole } from 'lucide-react'
 import { api, type PaymentSettings, type Policy } from '../../shared/api'
 import type { AdminTab, GatewayForm } from './admin-types'
 
@@ -114,15 +114,63 @@ export function AdminPolicy({ adminTab, policy, setPolicy, busy, savePolicy }: P
                 Durasi penahanan kursi saat proses checkout Midtrans (misal: 15 menit).
               </small>
             </label>
+            <label>
+              Prefix Kode Pesanan Studio
+              <input
+                type="text"
+                minLength={2}
+                maxLength={6}
+                value={policy.bookingCodePrefix ?? 'SORA'}
+                onChange={(event) =>
+                  setPolicy({
+                    ...policy,
+                    bookingCodePrefix: event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''),
+                  })
+                }
+              />
+              <small style={{ color: '#64748b', fontSize: '11px', marginTop: '2px', display: 'block' }}>
+                Prefix identitas studio untuk tiket dan kartu pesanan (2-6 huruf/angka, contoh: SORA).
+              </small>
+            </label>
           </div>
-          <label className="live-checkbox">
-            <input
-              type="checkbox"
-              checked={policy.lockerEnabled}
-              onChange={(event) => setPolicy({ ...policy, lockerEnabled: event.target.checked })}
-            />{' '}
-            Fitur loker aktif
-          </label>
+
+          <div className="admin-feature-switch-card">
+            <div className="admin-feature-switch-header">
+              <div className="admin-feature-switch-icon">
+                <LockKeyhole size={20} />
+              </div>
+              <div className="admin-feature-switch-meta">
+                <div className="admin-feature-switch-title-row">
+                  <strong className="admin-feature-switch-title">Modul Fasilitas Loker Fisik</strong>
+                  <span
+                    className={`admin-feature-status-pill ${
+                      policy.lockerEnabled ? 'active' : 'inactive'
+                    }`}
+                  >
+                    {policy.lockerEnabled ? 'Aktif' : 'Nonaktif'}
+                  </span>
+                </div>
+                <p className="admin-feature-switch-desc">
+                  Mengatur ketersediaan sistem loker fisik studio. Jika dinonaktifkan, penetapan loker
+                  ditutup sementara dari meja depan dan nomor loker disembunyikan dari dashboard member.
+                </p>
+              </div>
+            </div>
+            <label className="admin-toggle-switch">
+              <input
+                type="checkbox"
+                checked={policy.lockerEnabled}
+                onChange={(event) =>
+                  setPolicy({ ...policy, lockerEnabled: event.target.checked })
+                }
+              />
+              <span className="admin-toggle-slider" />
+              <span className="admin-toggle-label">
+                {policy.lockerEnabled ? 'Fasilitas diaktifkan' : 'Fasilitas dinonaktifkan'}
+              </span>
+            </label>
+          </div>
+
           <button className="button button-primary" disabled={busy}>
             Simpan aturan <Check size={16} />
           </button>

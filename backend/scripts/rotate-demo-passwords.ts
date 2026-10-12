@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 import { Db } from '../src/shared/db';
 import { hashPassword } from '../src/shared/security';
 
-type Account = { name: string; email: string; role: 'admin' | 'coach' | 'customer'; password: string };
+type Account = { name: string; email: string; role: 'superadmin' | 'finance' | 'admin' | 'coach' | 'customer'; password: string };
 
 async function main() {
   const url = new URL(process.env.DATABASE_URL ?? '');
@@ -13,7 +13,7 @@ async function main() {
   }
   const file = resolve(process.cwd(), '.qa/demo-accounts.json');
   const current = JSON.parse(await readFile(file, 'utf8')) as { accounts: Account[] };
-  if (!Array.isArray(current.accounts) || current.accounts.length !== 9 || new Set(current.accounts.map((row) => row.email)).size !== 9) {
+  if (!Array.isArray(current.accounts) || current.accounts.length < 5 || new Set(current.accounts.map((row) => row.email)).size !== current.accounts.length) {
     throw new Error('Daftar akun demo tidak sesuai; tidak ada sandi yang diubah');
   }
   const rotated = current.accounts.map(({ name, email, role }) => ({ name, email, role, password: randomBytes(18).toString('base64url') }));

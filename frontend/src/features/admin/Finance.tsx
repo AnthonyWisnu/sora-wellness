@@ -10,6 +10,7 @@ import {
 import { money } from '../../shared/format'
 import { FinanceFilters } from './FinanceFilters'
 import { FinanceList } from './FinanceList'
+import { FinanceWithdrawals } from './FinanceWithdrawals'
 import { WalletLedger } from './WalletLedger'
 import type { Listing, Tab } from './finance-types'
 import './Finance.css'
@@ -57,6 +58,10 @@ export function AdminFinancePanel({
     setLedger(null)
   }
   useEffect(() => {
+    if (tab === 'withdrawals') {
+      setLoading(false)
+      return
+    }
     let active = true
     const params = new URLSearchParams({ page: String(page), limit: '20' })
     if (query) params.set('q', query)
@@ -114,6 +119,19 @@ export function AdminFinancePanel({
   const totalPages = data ? Math.max(1, Math.ceil(data.total / data.limit)) : 1
 
   const kpiStats = (() => {
+    if (tab === 'withdrawals') {
+      return {
+        metric1Label: 'PENARIKAN SALDO',
+        metric1Val: 'Payout Dompet',
+        metric1Desc: 'Pencairan saldo rekening & e-wallet',
+        metric2Label: 'VERIFIKASI MANUAL',
+        metric2Val: '1x24 Jam Kerja',
+        metric2Desc: 'Transfer oleh staf keuangan',
+        metric3Label: 'METODE DIDUKUNG',
+        metric3Val: 'Bank & E-Wallet',
+        metric3Desc: 'BCA, Mandiri, BRI, GoPay, DANA',
+      }
+    }
     if (!data || !data.items.length) {
       return {
         metric1Label: 'TOTAL DATA',
@@ -270,50 +288,62 @@ export function AdminFinancePanel({
         >
           Saldo pelanggan
         </button>
+        <button
+          className={tab === 'withdrawals' ? 'selected' : ''}
+          onClick={() => switchTab('withdrawals')}
+        >
+          Antrean Penarikan
+        </button>
       </div>
-      <FinanceFilters
-        tab={tab}
-        search={search}
-        setSearch={setSearch}
-        status={status}
-        setStatus={setStatus}
-        kind={kind}
-        setKind={setKind}
-        from={from}
-        setFrom={setFrom}
-        to={to}
-        setTo={setTo}
-        setPage={setPage}
-        searchNow={searchNow}
-      />
-      {error && (
-        <div className="panel live-error" role="alert">
-          {error}
-        </div>
+      {tab === 'withdrawals' ? (
+        <FinanceWithdrawals timezone={timezone} show={show} />
+      ) : (
+        <>
+          <FinanceFilters
+            tab={tab}
+            search={search}
+            setSearch={setSearch}
+            status={status}
+            setStatus={setStatus}
+            kind={kind}
+            setKind={setKind}
+            from={from}
+            setFrom={setFrom}
+            to={to}
+            setTo={setTo}
+            setPage={setPage}
+            searchNow={searchNow}
+          />
+          {error && (
+            <div className="panel live-error" role="alert">
+              {error}
+            </div>
+          )}
+          {loading && <p className="admin-finance-empty">Memuat catatan...</p>}
+          <FinanceList
+            tab={tab}
+            data={data}
+            loading={loading}
+            totalPages={totalPages}
+            timezone={timezone}
+            page={page}
+            setPage={setPage}
+            setSelectedWallet={setSelectedWallet}
+            setLedgerPage={setLedgerPage}
+          />
+          <WalletLedger
+            tab={tab}
+            selectedWallet={selectedWallet}
+            setSelectedWallet={setSelectedWallet}
+            ledger={ledger}
+            setLedger={setLedger}
+            ledgerLoading={ledgerLoading}
+            ledgerPage={ledgerPage}
+            setLedgerPage={setLedgerPage}
+            timezone={timezone}
+          />
+        </>
       )}
-      {loading && <p className="admin-finance-empty">Memuat catatan...</p>}
-      <FinanceList
-        tab={tab}
-        data={data}
-        loading={loading}
-        totalPages={totalPages}
-        timezone={timezone}
-        page={page}
-        setPage={setPage}
-        setSelectedWallet={setSelectedWallet}
-        setLedgerPage={setLedgerPage}
-      />
-      <WalletLedger
-        tab={tab}
-        selectedWallet={selectedWallet}
-        setSelectedWallet={setSelectedWallet}
-        ledger={ledger}
-        setLedger={setLedger}
-        ledgerLoading={ledgerLoading}
-        ledgerPage={ledgerPage}
-        setLedgerPage={setLedgerPage}
-        timezone={timezone}
-      />
     </section>
   )
 }

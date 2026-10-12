@@ -1,10 +1,16 @@
-import { BadRequestException, Body, ConflictException, Controller, Delete, Get, Injectable, Param, ParseUUIDPipe, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, ConflictException, Controller, Delete, Get, Injectable, Param, ParseUUIDPipe, Patch, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiCookieAuth, ApiProperty, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
-import { IsString, IsUUID, MaxLength } from 'class-validator';
+import { IsBoolean, IsInt, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
 import { Db } from '../shared/db';
 import { AuthRequest, assertRole, SessionGuard } from '../shared/security';
 
 class LockerDto { @ApiProperty({ example: 'A-01' }) @IsString() @MaxLength(32) code!: string; }
+class LockerStatusDto { @ApiProperty({ example: false }) @IsBoolean() active!: boolean; }
+class BatchLockerDto {
+  @ApiProperty({ example: 'A-' }) @IsString() @MaxLength(10) prefix!: string;
+  @ApiProperty({ example: 1 }) @IsInt() @Min(1) @Max(999) startNum!: number;
+  @ApiProperty({ example: 20 }) @IsInt() @Min(1) @Max(999) endNum!: number;
+}
 class AssignDto { @ApiProperty({ format: 'uuid' }) @IsUUID() customerId!: string; }
 class MemberSearch { @ApiPropertyOptional({ example: 'ayu' }) @IsString() @MaxLength(100) q = ''; }
 
@@ -74,6 +80,58 @@ export class AdminLockersController {
     if (!/^[A-Z0-9][A-Z0-9-]{0,31}$/.test(code)) throw new BadRequestException('Nomor loker hanya boleh huruf, angka, dan tanda hubung');
     try { return (await this.db.query('INSERT INTO lockers (code) VALUES ($1) RETURNING id,code,active', [code])).rows[0]; }
     catch (error) { if ((error as { code?: string }).code === '23505') throw new ConflictException('Nomor loker sudah ada'); throw error; }
+  }
+
+  @Post('batch')
+  async createBatch(@Req() req: AuthRequest, @Body() body: BatchLockerDto) {
+    assertRole(req, 'admin');
+    const prefix = body.prefix.trim().toUpperCase();
+    if (!/^[A-Z0-9-]{0,10}$/.test(prefix)) {
+      throw new BadRequestException('Prefix hanya boleh huruf kapital, angka, dan tanda hubung');
+    }
+    if (body.startNum > body.endNum) {
+      throw new BadRequestException('Nomor awal tidak boleh lebih besar dari nomor akhir');
+    }
+    const count = body.endNum - body.startNum + 1;
+    if (count > 100) {
+      throw new BadRequestException('Maksimal pembuatan sekaligus adalah 100 loker');
+    }
+
+    const padDigits = Math.max(2, String(body.endNum).length);
+    const codes: string[] = [];
+    for (let i = body.startNum; i <= body.endNum; i++) {
+      codes.push(`${prefix}${String(i).padStart(padDigits, '0')}`);
+    }
+
+    return await this.db.transaction(async (client) => {
+      const createdCodes: string[] = [];
+      const skippedCodes: string[] = [];
+      for (const code of codes) {
+        try {
+          const res = await client.query('INSERT INTO lockers (code) VALUES ($1) RETURNING code', [code]);
+          if (res.rows[0]) createdCodes.push(res.rows[0].code);
+        } catch (error) {
+          if ((error as { code?: string }).code === '23505') {
+            skippedCodes.push(code);
+          } else {
+            throw error;
+          }
+        }
+      }
+      return { totalRequested: codes.length, createdCount: createdCodes.length, createdCodes, skippedCodes };
+    });
+  }
+
+  @Patch(':id/status')
+  async updateStatus(@Req() req: AuthRequest, @Param('id', ParseUUIDPipe) lockerId: string, @Body() body: LockerStatusDto) {
+    assertRole(req, 'admin');
+    if (!body.active) {
+      const assigned = await this.db.query('SELECT 1 FROM locker_assignments WHERE locker_id=$1 AND released_at IS NULL LIMIT 1', [lockerId]);
+      if (assigned.rowCount) throw new ConflictException('Loker sedang digunakan oleh member. Lepas penetapan terlebih dahulu sebelum menandai perawatan.');
+    }
+    const updated = await this.db.query('UPDATE lockers SET active=$1 WHERE id=$2 RETURNING id,code,active', [body.active, lockerId]);
+    if (!updated.rows[0]) throw new BadRequestException('Loker tidak ditemukan');
+    return updated.rows[0];
   }
 
   @Put(':id/assignment')

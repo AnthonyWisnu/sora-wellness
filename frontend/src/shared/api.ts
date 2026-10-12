@@ -74,6 +74,7 @@ export type {
   AdminClassType,
   AdminPackageOption,
   AdminScheduleRule,
+  ExecutiveMetricsResponse,
 } from './types/catalog'
 export type { HealthProfile } from './types/health'
 export type {
@@ -84,7 +85,7 @@ export type {
   AttendanceCorrection,
   CheckInResult,
 } from './types/attendance'
-export type { LockerMine, AdminLocker, AdminLockers, EligibleMember } from './types/lockers'
+export type { LockerMine, AdminLocker, AdminLockers, EligibleMember, BatchLockerResult } from './types/lockers'
 export type { StudioContent, MediaAsset } from './types/content'
 export type {
   SiteDocument,

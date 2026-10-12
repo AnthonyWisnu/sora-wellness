@@ -24,3 +24,10 @@ export type EligibleMember = {
   email: string
   membershipEndsOn: string
 }
+
+export type BatchLockerResult = {
+  totalRequested: number
+  createdCount: number
+  createdCodes: string[]
+  skippedCodes: string[]
+}

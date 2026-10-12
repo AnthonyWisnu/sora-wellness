@@ -49,7 +49,7 @@ export class AdminFinanceController {
   @Get('bookings')
   @ApiOkResponse({ description: 'Daftar booking terfilter dan dipaginasi tanpa data kesehatan.', schema: { example: { items: [{ id: 'booking-uuid', customerName: 'Ayu', title: 'Gentle Flow', status: 'confirmed', priceIdr: 75000 }], page: 1, limit: 20, total: 1 } } })
   async bookings(@Req() req: AuthRequest, @Query() filter: BookingFilter) {
-    assertRole(req, 'admin');
+    assertRole(req, 'admin', 'finance', 'superadmin');
     await this.reconcileStalePayments();
     const { page,limit } = pageOf(filter);
     const [from,to] = datesOf(filter);
@@ -76,7 +76,7 @@ export class AdminFinanceController {
   @Get('payments')
   @ApiOkResponse({ description: 'Pembayaran kelas dan paket tanpa token Snap atau kredensial gateway.' })
   async payments(@Req() req: AuthRequest, @Query() filter: PaymentFilter) {
-    assertRole(req, 'admin');
+    assertRole(req, 'finance', 'superadmin');
     await this.reconcileStalePayments();
     const { page,limit } = pageOf(filter);
     const [from,to] = datesOf(filter);
@@ -112,7 +112,7 @@ export class AdminFinanceController {
     @Query() filter: PaymentFilter,
     @Res() res: Response,
   ) {
-    assertRole(req, 'admin');
+    assertRole(req, 'finance', 'superadmin');
     const [from, to] = datesOf(filter);
     const values = [filter.q?.trim() || null, filter.status ?? null, filter.kind ?? null, from, to];
     const where = `FROM payment_transactions p LEFT JOIN bookings b ON b.id=p.booking_id
@@ -194,7 +194,7 @@ export class AdminFinanceController {
   @Get('wallets')
   @ApiOkResponse({ description: 'Saldo kelas per pelanggan; nominal IDR dikirim sebagai angka.' })
   async wallets(@Req() req: AuthRequest, @Query() filter: PageFilter) {
-    assertRole(req, 'admin');
+    assertRole(req, 'finance', 'superadmin');
     const { page,limit } = pageOf(filter);
     const q = filter.q?.trim() || null;
     const where = `FROM wallet_accounts w JOIN app_users u ON u.id=w.customer_id
@@ -211,7 +211,7 @@ export class AdminFinanceController {
   @Get('wallets/:customerId/entries')
   @ApiOkResponse({ description: 'Buku saldo satu pelanggan, termasuk referensi dan saldo sesudah transaksi.' })
   async walletEntries(@Req() req: AuthRequest, @Param('customerId', ParseUUIDPipe) customerId: string, @Query() filter: LedgerFilter) {
-    assertRole(req, 'admin');
+    assertRole(req, 'finance', 'superadmin');
     const { page,limit } = pageOf(filter);
     const [from,to] = datesOf(filter);
     const account = await this.db.query<{ customerId: string; customerName: string; customerEmail: string; balanceIdr: string }>(`SELECT w.customer_id AS "customerId",u.full_name AS "customerName",u.email AS "customerEmail",w.balance_idr AS "balanceIdr"

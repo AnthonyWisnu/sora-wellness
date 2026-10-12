@@ -6,6 +6,7 @@ export type Policy = {
   seatHoldMinutes: number
   monthlyClassQuota: number
   lockerEnabled: boolean
+  bookingCodePrefix?: string
 }
 
 export type AdminSession = {
@@ -53,4 +54,32 @@ export type AdminScheduleRule = {
   price_idr: number
   title: string
   coach_name: string
+  active?: boolean
+}
+
+export type ExecutiveMetricsResponse = {
+  totalRevenueIdr: number
+  monthlyRevenueIdr: number
+  monthlyTransactionsCount: number
+  totalTransactionsCount: number
+  avgOccupancyPct: number
+  weeklyOccupancy: Array<{
+    date: string
+    label: string
+    pct: number
+    capacity: number
+    booked: number
+  }>
+  eventLeadsCount: number
+  totalEventRegistrations: number
+  activeCoaches: number
+  pendingPayoutCount: number
+  pendingPayoutAmountIdr: number
+  totalWalletLiabilityIdr: number
+  categories: Array<{
+    name: string
+    sessionCount: number
+    pct: number
+    color: string
+  }>
 }

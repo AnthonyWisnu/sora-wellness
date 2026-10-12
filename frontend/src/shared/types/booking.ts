@@ -12,6 +12,7 @@ export type BookingOptions = {
 
 export type Booking = {
   id: string
+  bookingCode?: string | null
   status: string
   source: string
   priceIdr: number
@@ -29,6 +30,7 @@ export type Booking = {
 
 export type BookingCreated = {
   id: string
+  bookingCode?: string | null
   status: string
   payment: { redirectUrl: string; orderId: string } | null
 }

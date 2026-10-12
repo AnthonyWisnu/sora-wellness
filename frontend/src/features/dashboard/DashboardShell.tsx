@@ -14,13 +14,14 @@ import {
   Settings2,
   ShieldCheck,
   Sparkles,
+  Tent,
   UsersRound,
   Wallet,
   X,
   type LucideIcon,
 } from 'lucide-react'
 import type { Actor } from '../../shared/api'
-import { dashboardNavigation, dashboardTitle } from './navigation'
+import { getDashboardNavigation, dashboardTitle } from './navigation'
 import './DashboardShell.css'
 
 const icons: Record<string, LucideIcon> = {
@@ -34,6 +35,7 @@ const icons: Record<string, LucideIcon> = {
   packages: Sparkles,
   lockers: LockKeyhole,
   finance: Wallet,
+  events: Tent,
   policy: ShieldCheck,
   content: Settings2,
   payment: CreditCard,
@@ -43,7 +45,13 @@ const icons: Record<string, LucideIcon> = {
   profile: HeartPulse,
 }
 
-const roleName = { admin: 'Admin studio', coach: 'Pelatih', customer: 'Pelanggan' }
+const roleName: Record<string, string> = {
+  superadmin: 'Superadmin Studio',
+  finance: 'Staf Admin',
+  admin: 'Staf Admin',
+  coach: 'Pelatih',
+  customer: 'Pelanggan',
+}
 
 type Props = {
   actor: Actor
@@ -59,7 +67,7 @@ export function DashboardShell({ actor, member, section, go, logout, children }:
   const closeButton = useRef<HTMLButtonElement>(null)
   const menuButton = useRef<HTMLButtonElement>(null)
   const sidebar = useRef<HTMLElement>(null)
-  const title = dashboardTitle(actor.role, section)
+  const title = dashboardTitle(actor, section)
 
   useEffect(() => {
     if (!menuOpen) return
@@ -128,7 +136,7 @@ export function DashboardShell({ actor, member, section, go, logout, children }:
             RUANG {roleName[actor.role].toUpperCase()}
           </div>
           <nav className="dashboard-nav" aria-label="Navigasi dashboard">
-            {dashboardNavigation[actor.role].map((group) => (
+            {getDashboardNavigation(actor).map((group) => (
               <div className="dashboard-nav-group" key={group.label}>
                 <span className="dashboard-nav-heading">{group.label}</span>
                 {group.items.map((item) => {

@@ -1160,3 +1160,911 @@
   border-color: var(--green, #17392e) !important;
 }
 
+/* ==========================================================================
+   Japandi Feature Switch Card (Aturan Studio)
+   ========================================================================== */
+.admin-feature-switch-card {
+  background: #ffffff;
+  border: 1px solid var(--line, #e2e8f0);
+  border-radius: 14px;
+  padding: 20px;
+  margin: 20px 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: border-color 0.15s ease;
+}
+
+.admin-feature-switch-card:hover {
+  border-color: #cbd5e1;
+}
+
+.admin-feature-switch-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.admin-feature-switch-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: #f1f5f9;
+  color: #17392e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.admin-feature-switch-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.admin-feature-switch-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-feature-switch-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink, #0f172a);
+}
+
+.admin-feature-status-pill {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.admin-feature-status-pill.active {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.admin-feature-status-pill.inactive {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.admin-feature-switch-desc {
+  font-size: 12.5px;
+  color: var(--muted, #64748b);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.admin-toggle-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+  width: fit-content;
+  padding: 6px 10px;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.admin-toggle-switch input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.admin-toggle-slider {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background-color: #cbd5e1;
+  border-radius: 999px;
+  transition: background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+.admin-toggle-slider::before {
+  content: '';
+  position: absolute;
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: #ffffff;
+  border-radius: 50%;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.admin-toggle-switch input:checked + .admin-toggle-slider {
+  background-color: #17392e;
+}
+
+.admin-toggle-switch input:checked + .admin-toggle-slider::before {
+  transform: translateX(20px);
+}
+
+.admin-toggle-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink, #0f172a);
+}
+
+/* ==========================================================================
+   Locker Maintenance State & Actions
+   ========================================================================== */
+.admin-locker-box.maintenance {
+  background: repeating-linear-gradient(
+    -45deg,
+    #fafafa,
+    #fafafa 8px,
+    #f4f4f5 8px,
+    #f4f4f5 16px
+  );
+  border: 1px dashed #cbd5e1;
+}
+
+.admin-locker-box.maintenance:hover {
+  border-color: #f59e0b;
+}
+
+.admin-locker-status-tag.maintenance {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.admin-locker-maintenance-state {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(254, 243, 199, 0.4);
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.admin-locker-maintenance-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #fef3c7;
+  color: #b45309;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.admin-locker-maintenance-text {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  gap: 2px;
+}
+
+.admin-locker-maintenance-text strong {
+  font-size: 13px;
+  font-weight: 700;
+  color: #92400e;
+}
+
+.admin-locker-maintenance-text span {
+  font-size: 11.5px;
+  color: #78350f;
+}
+
+.admin-locker-action-btn.reactivate {
+  border: 1px solid #d97706;
+  color: #b45309;
+  background: #fefce8;
+}
+
+.admin-locker-action-btn.reactivate:hover:not(:disabled) {
+  background: #fef3c7;
+  color: #78350f;
+  border-color: #b45309;
+}
+
+.admin-locker-available-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.admin-locker-toggle-status-link {
+  background: transparent;
+  border: none;
+  padding: 4px;
+  font-size: 11.5px;
+  color: var(--muted, #64748b);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: color 0.15s ease;
+}
+
+.admin-locker-toggle-status-link:hover:not(:disabled) {
+  color: #b45309;
+}
+
+/* ==========================================================================
+   Locker Dialog Tabs & Batch Preview
+   ========================================================================== */
+.admin-locker-dialog-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--line, #e2e8f0);
+  padding-bottom: 8px;
+}
+
+.admin-locker-dialog-tab {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted, #64748b);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.admin-locker-dialog-tab:hover {
+  background: #f8fafc;
+  color: var(--ink, #0f172a);
+}
+
+.admin-locker-dialog-tab.active {
+  background: #f0fdf4;
+  color: #15803d;
+  border-color: #bbf7d0;
+  font-weight: 700;
+}
+
+.admin-locker-batch-preview-pill {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  color: #0369a1;
+  font-size: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-top: 12px;
+}
+
+/* ==========================================================================
+   Live Search Member Selection Cards
+   ========================================================================== */
+.admin-locker-member-selection-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 4px;
+  margin: 8px 0;
+}
+
+.admin-locker-member-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: #ffffff;
+  border: 1px solid var(--line, #e2e8f0);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.admin-locker-member-card:hover {
+  border-color: #94a3b8;
+  background: #f8fafc;
+}
+
+.admin-locker-member-card.selected {
+  border-color: #15803d;
+  background: #f0fdf4;
+  box-shadow: 0 0 0 1px #15803d;
+}
+
+.admin-locker-member-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #17392e;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.admin-locker-member-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-locker-member-name {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink, #0f172a);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-locker-member-email {
+  font-size: 11.5px;
+  color: var(--muted, #64748b);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-locker-member-package {
+  font-size: 11px;
+  color: #0369a1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.admin-locker-member-radio {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  background: #ffffff;
+  flex-shrink: 0;
+}
+
+.admin-locker-member-card.selected .admin-locker-member-radio {
+  background: #15803d;
+  border-color: #15803d;
+}
+
+.admin-locker-empty-members {
+  padding: 32px 16px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-locker-empty-members p {
+  font-size: 12.5px;
+  color: var(--muted, #64748b);
+  margin: 0;
+}
+
+/* ============================================================
+   KOKPIT EKSEKUTIF SUPERADMIN & ADAPTIVE WIDGETS (JAPANDI)
+   ============================================================ */
+.superadmin-cockpit {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-top: 20px;
+}
+
+.cockpit-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.badge-primary {
+  background: #eaf1ec;
+  color: #2e5932;
+  border: 1px solid #c9decb;
+}
+
+.pulse-icon {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.analytics-dual-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr));
+  gap: 20px;
+}
+
+.analytics-card {
+  padding: 24px;
+}
+
+.chart-container {
+  width: 100%;
+  margin-top: 16px;
+}
+
+.chart-svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.category-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.cat-progress-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cat-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--ink, #1f2937);
+}
+
+.cat-track {
+  width: 100%;
+  height: 10px;
+  background: #eee8e2;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.cat-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.4s ease;
+}
+
+.cat-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.legend-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted, #64748b);
+}
+
+.legend-chip .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.cockpit-actions-card {
+  padding: 24px;
+}
+
+.quick-action-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.quick-action-grid .button {
+  justify-content: space-between;
+  padding: 12px 16px;
+  font-size: 13px;
+}
+
+/* ============================================================
+   STAFF PERMISSIONS DIALOG & SWITCHES
+   ============================================================ */
+.permissions-dialog-card {
+  width: min(720px, calc(100vw - 32px));
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+.modal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+
+.modal-title-wrap {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.modal-title-wrap h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.modal-subtitle {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--muted, #64748b);
+}
+
+.preset-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 14px;
+  background: #f7f5f0;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+.preset-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #554e45;
+  margin-right: 4px;
+}
+
+.chip-button {
+  border: 1px solid #d5cec5;
+  background: #ffffff;
+  color: #332d25;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.chip-button:hover {
+  background: #eee8e0;
+}
+
+.chip-primary {
+  background: #2e5932;
+  color: #ffffff;
+  border-color: #2e5932;
+}
+
+.chip-primary:hover {
+  background: #254829;
+}
+
+.permissions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.permission-toggle-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #e5dfd7;
+  border-radius: 10px;
+  background: #fffdf9;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.permission-toggle-item:hover {
+  border-color: #b8ccbb;
+}
+
+.permission-toggle-item.is-active {
+  background: #f1f6f2;
+  border-color: #3d5a45;
+}
+
+.switch-checkbox {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 2px solid #b4aca0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+  transition: all 0.2s ease;
+}
+
+.switch-checkbox.is-checked {
+  background: #3d5a45;
+  border-color: #3d5a45;
+  color: #ffffff;
+}
+
+.perm-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.perm-info strong {
+  font-size: 13px;
+  color: #2c251d;
+}
+
+.perm-info small {
+  font-size: 11.5px;
+  color: #73695d;
+  line-height: 1.4;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 16px;
+  border-top: 1px solid #ece7df;
+}
+
+/* ============================================================
+   BILAH NAVIGASI TANGGAL ERGONOMIS PADA SESI KELAS
+   ============================================================ */
+.sessions-head-responsive {
+  margin-bottom: 12px;
+}
+
+.sessions-date-nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 14px 18px;
+  background: #fffdf9;
+  border: 1px solid #e7e2d8;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.date-pills {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.date-stepper-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.date-display-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: #f4efe7;
+  border: 1px solid #ddd5c7;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #2e261d;
+  cursor: pointer;
+}
+
+.date-stepper-hidden-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* ============================================================
+   DYNAMIC ADAPTIVE WIDGETS ADMIN DASHBOARD
+   ============================================================ */
+.admin-adaptive-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-top: 20px;
+}
+
+.widget-card {
+  padding: 24px;
+  border: 1px solid #e7e2d8;
+  border-radius: 14px;
+  background: #fffdf9;
+}
+
+.widget-card .card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.widget-card .card-head h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.widget-card .card-head p {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  color: var(--muted, #64748b);
+}
+
+.widget-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.metric-card {
+  background: #ffffff;
+  border: 1px solid #ebe5da;
+  border-radius: 12px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(23, 57, 46, 0.06);
+}
+
+.metric-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #78716c;
+}
+
+.metric-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: #17392e;
+  line-height: 1.2;
+}
+
+.metric-hint {
+  font-size: 12px;
+  color: #a8a29e;
+  margin-top: 2px;
+}
+
+.metric-hint.positive {
+  color: #2e6930;
+  font-weight: 600;
+}
+
+/* ============================================================
+   SUB-KEGIATAN EVENT KOMUNITAS DROPDOWNS & TIMES
+   ============================================================ */
+.event-activities-form-block {
+  margin-top: 16px;
+}
+
+.activities-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.activities-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.activity-card-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #e7e2d8;
+  border-radius: 10px;
+  background: #faf7f2;
+}
+
+.activity-inputs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  flex: 1;
+}
+
+.time-split-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.activity-row-actions {
+  margin-top: 24px;
+}
+
+.input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon-lead {
+  position: absolute;
+  left: 10px;
+  color: var(--muted, #64748b);
+  pointer-events: none;
+}
+
+.input-with-icon input {
+  padding-left: 32px;
+}
+

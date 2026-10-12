@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
-import { Plus, RotateCcw } from 'lucide-react'
+import { Plus, RotateCcw, ShieldCheck } from 'lucide-react'
 import { api, type AdminAccount } from '../../shared/api'
 import { type PanelProps, errorMessage } from './management-common'
 import { AdminDialog } from './AdminDialog'
+import { StaffPermissionsDialog } from './StaffPermissionsDialog'
 
 function randomPassword() {
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%'
@@ -16,7 +17,11 @@ export function AdminAccountsPanel({ show }: PanelProps) {
   const [role, setRole] = useState('')
   const [page, setPage] = useState(1)
   const [rows, setRows] = useState<AdminAccount[]>([])
-  const [staff, setStaff] = useState<{ fullName: string; email: string; role: 'coach' | 'admin' }>({
+  const [staff, setStaff] = useState<{
+    fullName: string
+    email: string
+    role: 'coach' | 'admin' | 'superadmin'
+  }>({
     fullName: '',
     email: '',
     role: 'coach',
@@ -24,6 +29,7 @@ export function AdminAccountsPanel({ show }: PanelProps) {
   const [resetTarget, setResetTarget] = useState<AdminAccount | null>(null)
   const [verificationNote, setVerificationNote] = useState('')
   const [credential, setCredential] = useState<{ email: string; password: string } | null>(null)
+  const [permissionsTarget, setPermissionsTarget] = useState<AdminAccount | null>(null)
   const [staffOpen, setStaffOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const load = useCallback(
@@ -120,9 +126,10 @@ export function AdminAccountsPanel({ show }: PanelProps) {
               }}
             >
               <option value="">Semua peran</option>
-              <option value="customer">Pelanggan</option>
+              <option value="superadmin">Superadmin</option>
+              <option value="admin">Staf Admin</option>
               <option value="coach">Pelatih</option>
-              <option value="admin">Admin</option>
+              <option value="customer">Pelanggan</option>
             </select>
           </label>
           <button className="button button-outline">Cari akun</button>
@@ -168,15 +175,41 @@ export function AdminAccountsPanel({ show }: PanelProps) {
                 </td>
                 <td>
                   <span className="admin-role-tag">
-                    {row.role === 'customer'
-                      ? 'Pelanggan'
-                      : row.role === 'coach'
-                        ? 'Pelatih'
-                        : 'Admin'}
+                    {row.role === 'superadmin'
+                      ? 'Superadmin'
+                      : row.role === 'customer'
+                        ? 'Pelanggan'
+                        : row.role === 'coach'
+                          ? 'Pelatih'
+                          : 'Staf Admin'}
                   </span>
+                  {row.role === 'admin' && row.permissions && row.permissions.length > 0 && (
+                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '4px' }}>
+                      {row.permissions.includes('finance_reports') && (
+                        <span style={{ fontSize: '10px', padding: '1px 6px', background: '#eef2ff', color: '#3730a3', borderRadius: '4px', fontWeight: 600 }}>Keuangan</span>
+                      )}
+                      {row.permissions.includes('front_desk') && (
+                        <span style={{ fontSize: '10px', padding: '1px 6px', background: '#ecfdf5', color: '#065f46', borderRadius: '4px', fontWeight: 600 }}>Meja Depan</span>
+                      )}
+                      {row.permissions.includes('classes_schedule') && (
+                        <span style={{ fontSize: '10px', padding: '1px 6px', background: '#fef3c7', color: '#92400e', borderRadius: '4px', fontWeight: 600 }}>Jadwal Kelas</span>
+                      )}
+                      {row.permissions.includes('community_events') && (
+                        <span style={{ fontSize: '10px', padding: '1px 6px', background: '#f5f3ff', color: '#5b21b6', borderRadius: '4px', fontWeight: 600 }}>Event Komunitas</span>
+                      )}
+                    </div>
+                  )}
                 </td>
                 <td>{row.passwordChangeRequired ? 'Perlu ganti kata sandi' : 'Aktif'}</td>
-                <td>
+                <td style={{ display: 'flex', gap: '6px' }}>
+                  {(row.role === 'admin' || row.role === 'finance') && (
+                    <button
+                      className="button button-outline"
+                      onClick={() => setPermissionsTarget(row)}
+                    >
+                      <ShieldCheck size={14} /> Atur Izin
+                    </button>
+                  )}
                   <button
                     className="button button-outline"
                     onClick={() => {
@@ -244,11 +277,15 @@ export function AdminAccountsPanel({ show }: PanelProps) {
             <select
               value={staff.role}
               onChange={(event) =>
-                setStaff({ ...staff, role: event.target.value as 'coach' | 'admin' })
+                setStaff({
+                  ...staff,
+                  role: event.target.value as 'coach' | 'admin' | 'superadmin',
+                })
               }
             >
               <option value="coach">Pelatih</option>
-              <option value="admin">Admin</option>
+              <option value="admin">Staf Admin</option>
+              <option value="superadmin">Superadmin</option>
             </select>
           </label>
           <button className="button button-primary" disabled={busy}>
@@ -302,6 +339,14 @@ export function AdminAccountsPanel({ show }: PanelProps) {
           </form>
         )}
       </AdminDialog>
+      {permissionsTarget && (
+        <StaffPermissionsDialog
+          account={permissionsTarget}
+          onClose={() => setPermissionsTarget(null)}
+          onSaved={() => void load()}
+          show={show}
+        />
+      )}
     </section>
   )
 }

@@ -20,6 +20,7 @@ import { useBooking } from '../features/booking/useBooking'
 import { useMembershipPurchase } from '../features/customer/useMembershipPurchase'
 import { SiteHeader } from './SiteHeader'
 import { DashboardPage } from './DashboardPage'
+import { PublicEventPage } from '../features/events/PublicEventPage'
 import '../styles'
 import './LiveApp.css'
 import '../features/public/StitchPublic.css'
@@ -278,8 +279,9 @@ export default function LiveApp() {
         />
       )}
 
-      {path === '/ganti-sandi' && (
-        <ChangePasswordPage busy={busy} changePassword={changePassword} />
+      {path === '/ganti-sandi' && <ChangePasswordPage busy={busy} changePassword={changePassword} />}
+      {(path.startsWith('/events/') || path.startsWith('/event/')) && (
+        <PublicEventPage slug={path.replace(/^\/(events|event)\//, '').split('?')[0]} go={go} show={show} />
       )}
 
       {(path === '/dashboard' || path.startsWith('/dashboard/')) && (

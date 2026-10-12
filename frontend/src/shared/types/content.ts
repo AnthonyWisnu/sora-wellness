@@ -7,6 +7,7 @@ export type StudioContent = {
   logoMediaId: string | null
   heroMediaId: string | null
   galleryMediaIds: string[]
+  bookingCodePrefix?: string
 }
 
 export type MediaAsset = {

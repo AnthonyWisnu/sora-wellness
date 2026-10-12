@@ -17,6 +17,7 @@ import {
 } from '../../shared/api'
 import type { AdminTab } from './admin-types'
 import { AdminSummary } from './AdminSummary'
+import { SuperadminOverview } from './SuperadminOverview'
 import { AdminPaymentSettings, AdminPolicy } from './AdminSettings'
 import { AdminAttendancePanel } from './Attendance'
 import { AdminAccountsPanel } from './Accounts'
@@ -26,11 +27,14 @@ import { AdminRulesPanel } from './Rules'
 import { AdminSessionsPanel } from './Sessions'
 import { AdminContentPanel } from './Content'
 import { AdminLockersPanel } from './Lockers'
+import { EventsManagement } from './events/EventsManagement'
 import './Management.css'
 import { AdminFinancePanel } from './Finance'
 import { useConfirm } from '../../shared/confirm-context'
+import type { Actor } from '../../shared/api'
 
 type Props = {
+  actor?: Actor
   adminTab: AdminTab
   timezone: string
   show: (message: string) => void
@@ -51,6 +55,7 @@ function message(error: unknown) {
 }
 
 export function AdminDashboard({
+  actor,
   adminTab,
   timezone,
   show,
@@ -67,18 +72,25 @@ export function AdminDashboard({
   const [paymentSettings, setPaymentSettings] = useState<PaymentSettings | null>(null)
   const [gatewayForm, setGatewayForm] = useState({ merchantId: '', clientKey: '', serverKey: '' })
   const loadAdmin = useCallback(async () => {
-    const [nextPolicy, nextSummary, nextSettings] = await Promise.all([
-      api<Policy>('/admin/policies'),
-      api<AdminDashboardSummary>('/admin/dashboard-summary'),
-      api<PaymentSettings>('/admin/payment-settings'),
-    ])
-    setPolicy(nextPolicy)
-    setSummary(nextSummary)
-    setPaymentSettings(nextSettings)
-  }, [])
+    try {
+      const [nextPolicy, nextSummary] = await Promise.all([
+        api<Policy>('/admin/policies').catch(() => null),
+        api<AdminDashboardSummary>('/admin/dashboard-summary').catch(() => null),
+      ])
+      if (nextPolicy) setPolicy(nextPolicy)
+      if (nextSummary) setSummary(nextSummary)
+
+      if (actor?.role === 'superadmin') {
+        const nextSettings = await api<PaymentSettings>('/admin/payment-settings').catch(() => null)
+        if (nextSettings) setPaymentSettings(nextSettings)
+      }
+    } catch {
+      // Abaikan error latar belakang agar tidak memunculkan toast akses ditolak
+    }
+  }, [actor?.role])
   useEffect(() => {
-    void loadAdmin().catch((error) => show(message(error)))
-  }, [loadAdmin, show])
+    void loadAdmin()
+  }, [loadAdmin])
 
   async function cancelStudioSession(id: string) {
     if (
@@ -133,14 +145,19 @@ export function AdminDashboard({
 
   return (
     <>
-      <AdminSummary
-        adminTab={adminTab}
-        summary={summary}
-        timezone={timezone}
-        busy={busy}
-        go={go}
-        cancelStudioSession={cancelStudioSession}
-      />
+      {adminTab === 'sessions' && actor?.role === 'superadmin' ? (
+        <SuperadminOverview go={go} />
+      ) : (
+        <AdminSummary
+          actor={actor}
+          adminTab={adminTab}
+          summary={summary}
+          timezone={timezone}
+          busy={busy}
+          go={go}
+          cancelStudioSession={cancelStudioSession}
+        />
+      )}
       <AdminPolicy
         adminTab={adminTab}
         policy={policy}
@@ -202,6 +219,7 @@ export function AdminDashboard({
       )}
       {adminTab === 'accounts' && <AdminAccountsPanel show={show} />}
       {adminTab === 'finance' && <AdminFinancePanel timezone={timezone} show={show} />}
+      {adminTab === 'events' && <EventsManagement timezone={timezone} show={show} />}
       {adminTab === 'lockers' && <AdminLockersPanel show={show} />}
       {adminTab === 'content' && (
         <AdminContentPanel

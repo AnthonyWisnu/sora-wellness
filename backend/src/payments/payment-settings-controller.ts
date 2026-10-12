@@ -18,18 +18,18 @@ export class PaymentSettingsController {
   constructor(private readonly settings: PaymentSettings) {}
 
   @Get()
-  async read(@Req() req: AuthRequest) { assertRole(req, 'admin'); return this.settings.readPublic(); }
+  async read(@Req() req: AuthRequest) { assertRole(req, 'superadmin'); return this.settings.readPublic(); }
 
   @Put()
   async save(@Req() req: AuthRequest, @Body() body: PaymentSettingsDto) {
-    assertRole(req, 'admin');
+    assertRole(req, 'superadmin');
     await this.settings.save(body);
     return this.settings.readPublic();
   }
 
   @Post('test')
   async test(@Req() req: AuthRequest) {
-    assertRole(req, 'admin');
+    assertRole(req, 'superadmin');
     const { serverKey } = await this.settings.credentials();
     const orderId = `wellness-check-${randomUUID().slice(0, 8)}`;
     const result = await new MidtransClient(serverKey).createSnapTransaction(orderId, 10000);

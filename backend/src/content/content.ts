@@ -3,18 +3,18 @@ import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { BadRequestException, Body, ConflictException, Controller, Delete, Get, NotFoundException, Param, ParseUUIDPipe, Put, Post, Req, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBody, ApiConsumes, ApiCookieAuth, ApiProperty, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiCookieAuth, ApiProperty, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
 import { ArrayMaxSize, IsArray, IsOptional, IsString, IsUUID, Length } from 'class-validator';
 import type { Response } from 'express';
 import { Db } from '../shared/db';
 import { AuthRequest, assertRole, SessionGuard } from '../shared/security';
 import { SiteService } from './site.service';
 
-const maxBytes = 5 * 1024 * 1024;
-const mediaDirectory = resolve(process.env.MEDIA_STORAGE_DIR ?? 'uploads');
-type Upload = { originalname: string; mimetype: string; size: number; buffer: Buffer };
+export const maxBytes = 5 * 1024 * 1024;
+export const mediaDirectory = resolve(process.env.MEDIA_STORAGE_DIR ?? 'uploads');
+export type Upload = { originalname: string; mimetype: string; size: number; buffer: Buffer };
 
-function imageType(file: Upload): { mime: string; extension: string } | null {
+export function imageType(file: Upload): { mime: string; extension: string } | null {
   const b = file.buffer;
   if (file.mimetype === 'image/jpeg' && b.length >= 4 && b[0] === 0xff && b[1] === 0xd8 && b[b.length-2] === 0xff && b[b.length-1] === 0xd9) return { mime: 'image/jpeg', extension: 'jpg' };
   if (file.mimetype === 'image/png' && b.length >= 24 && b.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])) && b.subarray(12,16).toString() === 'IHDR') return { mime: 'image/png', extension: 'png' };
@@ -31,6 +31,7 @@ export class ContentDto {
   @ApiProperty({ nullable: true, format: 'uuid' }) @IsOptional() @IsUUID() logoMediaId!: string | null;
   @ApiProperty({ nullable: true, format: 'uuid' }) @IsOptional() @IsUUID() heroMediaId!: string | null;
   @ApiProperty({ type: [String], format: 'uuid' }) @IsArray() @ArrayMaxSize(12) @IsUUID('4', { each: true }) galleryMediaIds!: string[];
+  @ApiPropertyOptional({ example: 'SORA' }) @IsOptional() @IsString() @Length(2, 6) bookingCodePrefix?: string;
 }
 
 @ApiTags('public') @Controller('public/media')
@@ -60,7 +61,7 @@ export class AdminContentController {
   @Get('content')
   async content(@Req() req: AuthRequest) {
     assertRole(req, 'admin');
-    const studio = (await this.db.query(`SELECT name,description,address,hero_title AS "heroTitle",hero_subtitle AS "heroSubtitle",logo_media_id AS "logoMediaId",hero_media_id AS "heroMediaId" FROM studio WHERE id=1`)).rows[0];
+    const studio = (await this.db.query(`SELECT name,description,address,hero_title AS "heroTitle",hero_subtitle AS "heroSubtitle",logo_media_id AS "logoMediaId",hero_media_id AS "heroMediaId",coalesce(booking_code_prefix,'SORA') AS "bookingCodePrefix" FROM studio WHERE id=1`)).rows[0];
     const gallery = await this.db.query<{ media_id: string }>('SELECT media_id FROM studio_gallery WHERE studio_id=1 ORDER BY position');
     return { ...studio, galleryMediaIds: gallery.rows.map(row => row.media_id) };
   }
@@ -69,6 +70,11 @@ export class AdminContentController {
   async update(@Req() req: AuthRequest, @Body() body: ContentDto) {
     assertRole(req, 'admin');
     if (new Set(body.galleryMediaIds).size !== body.galleryMediaIds.length) throw new BadRequestException('Foto galeri tidak boleh diulang');
+    if (body.bookingCodePrefix) {
+      const cleanPrefix = body.bookingCodePrefix.trim().toUpperCase();
+      if (!/^[A-Z0-9]{2,6}$/.test(cleanPrefix)) throw new BadRequestException('Prefix kode pesanan hanya boleh 2-6 karakter huruf kapital atau angka');
+      await this.db.query('UPDATE studio SET booking_code_prefix=$1 WHERE id=1', [cleanPrefix]);
+    }
     const current = await this.site.draft();
     const document = current.document;
     document.profile = { name: body.name, description: body.description, address: body.address, logoMediaId: body.logoMediaId, heroMediaId: body.heroMediaId, galleryMediaIds: body.galleryMediaIds };

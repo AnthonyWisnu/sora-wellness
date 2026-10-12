@@ -19,11 +19,11 @@ export function TicketModal({
   const [qrUrl, setQrUrl] = useState<string>('')
 
   useEffect(() => {
-    // Generate QR Code with booking verification payload
     const payload = JSON.stringify({
       app: 'sora-wellness',
       type: 'pass',
       bookingId: booking.id,
+      bookingCode: booking.bookingCode || booking.id,
       customerId: actor.id,
       customerName: actor.fullName,
       classTitle: booking.title,
@@ -89,8 +89,8 @@ export function TicketModal({
             </div>
 
             <div className="sora-ticket-field">
-              <span>ID Order</span>
-              <strong>CLS-{booking.id.slice(0, 8).toUpperCase()}</strong>
+              <span>Kode Tiket</span>
+              <strong>{booking.bookingCode || `BK-${booking.id.slice(0, 8).toUpperCase()}`}</strong>
             </div>
           </div>
 
@@ -98,7 +98,7 @@ export function TicketModal({
             {qrUrl ? (
               <img
                 src={qrUrl}
-                alt={`QR Pass ${booking.id}`}
+                alt={`QR Pass ${booking.bookingCode || booking.id}`}
                 className="sora-ticket-qr-img"
               />
             ) : (
@@ -106,7 +106,7 @@ export function TicketModal({
                 <span style={{ fontSize: '0.8rem', color: '#777' }}>Menyiapkan QR Code...</span>
               </div>
             )}
-            <div className="sora-ticket-code">{booking.id}</div>
+            <div className="sora-ticket-code">{booking.bookingCode || booking.id}</div>
             <p className="sora-ticket-instruction">
               Tunjukkan QR Code ini kepada resepsionis saat tiba di studio untuk check-in kehadiran instan.
             </p>

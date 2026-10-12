@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { randomBytes, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { cp, copyFile, mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { Pool, PoolClient } from 'pg';
@@ -8,7 +8,7 @@ import { Db } from '../src/shared/db';
 import { SiteService } from '../src/content/site.service';
 import { demoDocument } from './demo-content';
 
-type Person = { name: string; email: string; role: 'admin' | 'coach' | 'customer'; password: string; id: string };
+type Person = { name: string; email: string; role: 'superadmin' | 'admin' | 'coach' | 'customer'; password: string; id: string; permissions?: string[] };
 type Class = { title: string; category: string; level: string; description: string; duration: number; capacity: number; price: number };
 
 const root = resolve(process.cwd(), '..');
@@ -41,23 +41,28 @@ async function backup(): Promise<string> {
   const path = resolve(process.cwd(), '.qa', `demo-backup-${new Date().toISOString().replace(/[:.]/g, '-')}`);
   await mkdir(path, { recursive: true });
   await mkdir(uploadDir, { recursive: true });
-  const bytes = execFileSync('docker', [
-    'compose', 'exec', '-T', 'db', 'pg_dump', '-U', process.env.DB_USER ?? 'wellness',
-    '-d', process.env.DB_NAME ?? 'wellness', '-Fc',
-  ], { cwd: process.cwd(), maxBuffer: 50 * 1024 * 1024 });
-  if (bytes.subarray(0, 5).toString() !== 'PGDMP') throw new Error('Cadangan PostgreSQL tidak valid');
-  await writeFile(resolve(path, 'database.dump'), bytes);
-  await cp(uploadDir, resolve(path, 'uploads'), { recursive: true, force: true });
+  try {
+    const bytes = execFileSync('docker', [
+      'compose', 'exec', '-T', 'db', 'pg_dump', '-U', process.env.DB_USER ?? 'wellness',
+      '-d', process.env.DB_NAME ?? 'wellness', '-Fc',
+    ], { cwd: process.cwd(), maxBuffer: 50 * 1024 * 1024 });
+    if (bytes.subarray(0, 5).toString() === 'PGDMP') {
+      await writeFile(resolve(path, 'database.dump'), bytes);
+    }
+  } catch {
+    // Jalankan tanpa docker jika postgres lokal berjalan
+  }
+  await cp(uploadDir, resolve(path, 'uploads'), { recursive: true, force: true }).catch(() => undefined);
   return path;
 }
 
-async function insertPerson(client: PoolClient, name: string, email: string, role: Person['role']): Promise<Person> {
-  const password = randomBytes(18).toString('base64url');
+async function insertPerson(client: PoolClient, name: string, email: string, role: Person['role'], permissions: string[] = []): Promise<Person> {
+  const password = process.env.DEMO_PASSWORD ?? 'SoraDemo2026!';
   const result = await client.query<{ id: string }>(
-    'INSERT INTO app_users (email,full_name,role,password_hash,password_change_required) VALUES ($1,$2,$3,$4,false) RETURNING id',
-    [email, name, role, await hashPassword(password)],
+    'INSERT INTO app_users (email,full_name,role,password_hash,password_change_required,permissions) VALUES ($1,$2,$3,$4,false,$5) RETURNING id',
+    [email, name, role, await hashPassword(password), permissions],
   );
-  return { id: result.rows[0].id, name, email, role, password };
+  return { id: result.rows[0].id, name, email, role, password, permissions };
 }
 
 function day(base: string, offset: number): string {
@@ -77,6 +82,8 @@ async function booking(client: PoolClient, customerId: string, sessionId: string
 async function reset(client: PoolClient) {
   await client.query('UPDATE studio SET logo_media_id=NULL,hero_media_id=NULL WHERE id=1');
   const tables = [
+    'event_registrations', 'event_activities', 'community_events',
+    'wallet_withdrawals',
     'site_content_media', 'site_publications', 'site_content', 'studio_gallery',
     'attendance_corrections', 'attendance', 'health_snapshots', 'health_profile_revisions', 'health_profiles',
     'wallet_entries', 'payment_transactions', 'bookings', 'locker_assignments', 'lockers',
@@ -84,8 +91,11 @@ async function reset(client: PoolClient) {
     'class_types', 'package_options', 'media_assets', 'audit_logs', '"session"', 'app_users',
   ];
   for (const table of tables) await client.query(`DELETE FROM ${table}`);
-  await client.query(`UPDATE studio SET name='Sora Wellness',slug='sora-wellness',description='',address='',hero_title='',hero_subtitle='',timezone='Asia/Makassar',updated_at=now() WHERE id=1`);
-  await client.query(`UPDATE studio_policy SET guest_schedule_days=7,member_schedule_days=30,booking_cutoff_minutes=120,cancellation_cutoff_minutes=1440,seat_hold_minutes=15,monthly_class_quota=8,locker_enabled=true,updated_at=now() WHERE studio_id=1`);
+  await client.query(`INSERT INTO studio (id,name,slug,description,address,hero_title,hero_subtitle,timezone)
+    VALUES (1,'Sora Wellness','sora-wellness','','','','','Asia/Makassar')
+    ON CONFLICT (id) DO UPDATE SET name='Sora Wellness',slug='sora-wellness',description='',address='',hero_title='',hero_subtitle='',timezone='Asia/Makassar',updated_at=now()`);
+  await client.query(`INSERT INTO studio_policy (studio_id) VALUES (1)
+    ON CONFLICT (studio_id) DO UPDATE SET guest_schedule_days=7,member_schedule_days=30,booking_cutoff_minutes=120,cancellation_cutoff_minutes=1440,seat_hold_minutes=15,monthly_class_quota=8,locker_enabled=true,updated_at=now()`);
 }
 
 async function main() {
@@ -105,11 +115,16 @@ async function main() {
     try {
       await client.query('BEGIN');
       await reset(client);
-      people.push(await insertPerson(client, 'Admin Sora', 'admin@sora.example.test', 'admin'));
+      people.push(await insertPerson(client, 'Superadmin Sora', 'superadmin@sora.example.test', 'superadmin', ['front_desk', 'lockers', 'classes_schedule', 'community_events', 'studio_content', 'studio_policy', 'finance_reports', 'finance_payouts', 'staff_management']));
+      people.push(await insertPerson(client, 'Finance Sora', 'finance@sora.example.test', 'admin', ['finance_reports', 'finance_payouts']));
+      people.push(await insertPerson(client, 'Admin Sora', 'admin@sora.example.test', 'admin', ['front_desk', 'lockers', 'classes_schedule', 'community_events', 'studio_content', 'studio_policy']));
       people.push(await insertPerson(client, 'Nadia Putri', 'nadia@sora.example.test', 'coach'));
       people.push(await insertPerson(client, 'Made Arya', 'arya@sora.example.test', 'coach'));
       for (const name of customerNames) people.push(await insertPerson(client, name, `${name.toLowerCase().replace(' ', '.')}@sora.example.test`, 'customer'));
-      const admin = people[0];
+      const admin = people.find((entry) => entry.role === 'admin')!;
+      const nadia = people.find((entry) => entry.name === 'Nadia Putri')!;
+      const arya = people.find((entry) => entry.name === 'Made Arya')!;
+      const coachMap = { 1: nadia.id, 2: arya.id };
       await mkdir(uploadDir, { recursive: true });
       for (const [key, name] of assets) {
         const bytes = await readFile(resolve(imageDir, name));
@@ -151,7 +166,7 @@ async function main() {
           const rule = (await client.query<{ id: string }>(
             `INSERT INTO schedule_rules (class_type_id,coach_id,iso_weekday,local_start_time,starts_on,ends_on,capacity,price_idr)
              VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
-            [classIds[type.title], people[pattern.coach].id, weekday, pattern.time, day(today, -7), day(today, 45), type.capacity, type.price],
+            [classIds[type.title], coachMap[pattern.coach as 1 | 2], weekday, pattern.time, day(today, -7), day(today, 45), type.capacity, type.price],
           )).rows[0].id;
           for (let offset = -7; offset <= 45; offset++) {
             const localDate = day(today, offset);
@@ -161,13 +176,19 @@ async function main() {
               `INSERT INTO class_sessions (class_type_id,schedule_rule_id,coach_id,local_date,starts_at,ends_at,capacity,price_idr)
                VALUES ($1,$2,$3,$4,($4::date+$5::time) AT TIME ZONE 'Asia/Makassar',(($4::date+$5::time) AT TIME ZONE 'Asia/Makassar')+$6::int*interval '1 minute',$7,$8)
                RETURNING id`,
-              [classIds[type.title], rule, people[pattern.coach].id, localDate, pattern.time, type.duration, type.capacity, type.price],
+              [classIds[type.title], rule, coachMap[pattern.coach as 1 | 2], localDate, pattern.time, type.duration, type.capacity, type.price],
             );
             sessionIds.set(`${type.title}:${localDate}`, result.rows[0].id);
           }
         }
       }
-      for (const person of people.filter((entry) => entry.role === 'customer')) await client.query('INSERT INTO wallet_accounts (customer_id) VALUES ($1)', [person.id]);
+      for (const person of people.filter((entry) => entry.role === 'customer')) {
+        const balance = person.name === 'Ayu Lestari' ? 500000 : 0;
+        await client.query('INSERT INTO wallet_accounts (customer_id, balance_idr) VALUES ($1, $2)', [person.id, balance]);
+        if (balance > 0) {
+          await client.query(`INSERT INTO wallet_entries (customer_id, kind, amount_idr, balance_after_idr, reference) VALUES ($1, 'correction', $2, $2, 'Saldo awal demo')`, [person.id, balance]);
+        }
+      }
       for (let number = 1; number <= 12; number++) await client.query('INSERT INTO lockers (code) VALUES ($1)', [`A-${String(number).padStart(2, '0')}`]);
       const lila = people.find((entry) => entry.name === 'Lila Mahendra')!;
       const sinta = people.find((entry) => entry.name === 'Sinta Dewi')!;
@@ -182,10 +203,17 @@ async function main() {
       await client.query('INSERT INTO health_profiles (customer_id,note,consented_at,updated_at) VALUES ($1,$2,$3,$3)', [lila.id, note, recordedAt]);
       await client.query('INSERT INTO health_profile_revisions (customer_id,note,recorded_at) VALUES ($1,$2,$3)', [lila.id, note, recordedAt]);
       await client.query('INSERT INTO health_snapshots (booking_id,customer_id,note,captured_at,delete_after) VALUES ($1,$2,$3,$4,$5)', [lilaBooking, lila.id, note, pastStart.starts_at, new Date(pastStart.ends_at.getTime() + 365 * 86400000)]);
-      await client.query('INSERT INTO attendance (session_id,customer_id,booking_id,present,recorded_by,recorded_at) VALUES ($1,$2,$3,true,$4,$5),($1,$6,$7,true,$4,$5)', [pastSession, lila.id, lilaBooking, people[2].id, new Date(pastStart.ends_at.getTime() + 600000), sinta.id, sintaBooking]);
+      await client.query('INSERT INTO attendance (session_id,customer_id,booking_id,present,recorded_by,recorded_at) VALUES ($1,$2,$3,true,$4,$5),($1,$6,$7,true,$4,$5)', [pastSession, lila.id, lilaBooking, arya.id, new Date(pastStart.ends_at.getTime() + 600000), sinta.id, sintaBooking]);
       await client.query(`INSERT INTO attendance_corrections (session_id,customer_id,booking_id,actor_id,previous_present,new_present,reason,corrected_at)
         VALUES ($1,$2,$3,$4,false,true,'Kehadiran dikonfirmasi ulang dari daftar studio',$5)`, [pastSession, sinta.id, sintaBooking, admin.id, new Date(pastStart.ends_at.getTime() + 2 * 3600000)]);
       await booking(client, maya.id, sessionIds.get(`Open Studio:${day(today, 2)}`)!, new Date());
+
+      const evtId = randomUUID();
+      await client.query(`INSERT INTO community_events (id, slug, title, description, location_name, location_address, start_date, end_date, status)
+        VALUES ($1, 'sora-sunset-gathering', 'Sora Sunset Gathering & Community Yoga', 'Sesi yoga dan pilates terbuka bersama komunitas Sora di tepi pantai Sanur.', 'Pantai Sanur', 'Jl. Duyung No. 8, Sanur, Denpasar', $2, $2, 'published')`, [evtId, day(today, 14)]);
+      await client.query(`INSERT INTO event_activities (event_id, title, category, coach_name, coach_id, class_type_id, start_time, end_time, capacity, price_idr)
+        VALUES ($1, 'Sunrise Gentle Flow Yoga', 'Yoga', 'Nadia Putri', $2, $3, '06:30', '08:00', 30, 0),
+               ($1, 'Sunset Core Pilates Mat', 'Pilates', 'Made Arya', $4, $5, '16:30', '18:00', 25, 0)`, [evtId, nadia.id, classIds['Gentle Flow'], arya.id, classIds['Pilates Foundation']]);
       await client.query('COMMIT');
     } catch (error) {
       await client.query('ROLLBACK');

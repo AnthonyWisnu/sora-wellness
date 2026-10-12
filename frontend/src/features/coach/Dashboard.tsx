@@ -6,14 +6,16 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock,
+  MapPin,
   Search,
   ShieldCheck,
+  Tent,
   UserCheck,
   UsersRound,
   X,
 } from 'lucide-react'
 import { api, type CoachParticipants, type CoachSession } from '../../shared/api'
-import { formatDate, localDateTime, money } from '../../shared/format'
+import { formatDate, localDateTime } from '../../shared/format'
 import { errorMessage } from '../../shared/errors'
 import '../dashboard/Panels.css'
 
@@ -23,8 +25,27 @@ type CoachSummary = {
   participantCount: number
   completedCount?: number
   attendedCount?: number
-  estimatedEarnings?: number
   sessions: CoachSession[]
+}
+
+type CoachCommunityEvent = {
+  id: string
+  slug: string
+  title: string
+  description: string
+  locationName: string
+  locationAddress: string
+  startDate: string
+  endDate: string
+  status: string
+  bannerUrl: string | null
+  activityId: string
+  activityTitle: string
+  activityCategory: string
+  startTime: string
+  endTime: string
+  capacity: number
+  registeredCount: number
 }
 
 export function CoachDashboard({
@@ -41,6 +62,7 @@ export function CoachDashboard({
   const [date, setDate] = useState('')
   const [sessions, setSessions] = useState<CoachSession[]>([])
   const [summary, setSummary] = useState<CoachSummary | null>(null)
+  const [coachEvents, setCoachEvents] = useState<CoachCommunityEvent[]>([])
   const [selected, setSelected] = useState<CoachSession | null>(null)
   const [details, setDetails] = useState<CoachParticipants | null>(null)
   const [busy, setBusy] = useState(false)
@@ -68,10 +90,16 @@ export function CoachDashboard({
   }, [section, loadSessions, show])
 
   useEffect(() => {
-    if (section !== 'overview') return
-    void api<CoachSummary>('/coach/sessions/summary')
-      .then(setSummary)
-      .catch((error) => show(errorMessage(error)))
+    if (section === 'overview' || section === 'events') {
+      void api<CoachCommunityEvent[]>('/coach/events')
+        .then(setCoachEvents)
+        .catch(() => setCoachEvents([]))
+    }
+    if (section === 'overview') {
+      void api<CoachSummary>('/coach/sessions/summary')
+        .then(setSummary)
+        .catch((error) => show(errorMessage(error)))
+    }
   }, [section, show])
 
   async function open(session: CoachSession) {
@@ -214,22 +242,27 @@ export function CoachDashboard({
             <div className="panel">
               <span className="eyebrow">KELAS SELESAI</span>
               <h2>{summary?.completedCount ?? 0}</h2>
-              <p>{summary?.attendedCount ?? 0} total murid hadir.</p>
+              <p>Sesi kelas yang telah tuntas.</p>
             </div>
             <div className="panel" style={{ borderLeft: '3px solid #2e5932' }}>
-              <span className="eyebrow" style={{ color: '#2e5932' }}>ESTIMASI HONOR</span>
-              <h2 style={{ color: '#1b261b' }}>{money(summary?.estimatedEarnings ?? 0)}</h2>
-              <p>Honor sesi mengajar dan kehadiran.</p>
+              <span className="eyebrow" style={{ color: '#2e5932' }}>TOTAL MURID HADIR</span>
+              <h2 style={{ color: '#1b261b' }}>{summary?.attendedCount ?? 0}</h2>
+              <p>Akumulasi presensi di atas matras.</p>
             </div>
           </div>
           <div className="live-section-head">
-            <h2>Kelas mendatang</h2>
+            <div>
+              <h2>Sesi mengajar terdekat</h2>
+              <p style={{ margin: '4px 0 0', color: 'var(--muted)', fontSize: '0.88rem' }}>
+                Fokus jadwal kelas studio yang perlu Anda ampu segera.
+              </p>
+            </div>
             <button className="button button-outline" onClick={() => go('/dashboard/attendance')}>
-              Buka kelas dan absensi
+              Buka Semua Jadwal & Absensi
             </button>
           </div>
           <div className="live-booking-list">
-            {summary?.sessions.map((session) => (
+            {summary?.sessions.slice(0, 2).map((session) => (
               <article className="panel live-booking" key={session.id}>
                 <div>
                   <span className="eyebrow">
@@ -261,7 +294,121 @@ export function CoachDashboard({
               </div>
             )}
           </div>
+
+          <div className="live-section-head" style={{ marginTop: '28px' }}>
+            <div>
+              <h2>Sorotan event luar studio</h2>
+              <p style={{ margin: '4px 0 0', color: 'var(--muted)', fontSize: '0.88rem' }}>
+                Agenda gathering komunitas SORA terdekat yang Anda pandu.
+              </p>
+            </div>
+            <button className="button button-outline" onClick={() => go('/dashboard/events')}>
+              Lihat di Menu Event Komunitas
+            </button>
+          </div>
+          {coachEvents.length > 0 ? (
+            <article className="panel live-booking" style={{ borderLeft: '4px solid #17392e' }}>
+              <div>
+                <span className="eyebrow">
+                  {formatDate(coachEvents[0].startDate, {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                  })} · {coachEvents[0].startTime} - {coachEvents[0].endTime} WITA
+                </span>
+                <h3 style={{ margin: '4px 0' }}>{coachEvents[0].title}</h3>
+                <p style={{ fontWeight: '500', color: '#17392e', margin: '4px 0' }}>
+                  Sesi: {coachEvents[0].activityTitle} ({coachEvents[0].activityCategory})
+                </p>
+                <p style={{ fontSize: '0.88rem', color: 'var(--muted)', margin: 0 }}>
+                  Lokasi: <strong>{coachEvents[0].locationName}</strong> · Terdaftar: {coachEvents[0].registeredCount}/{coachEvents[0].capacity} peserta
+                </p>
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${coachEvents[0].locationName} ${coachEvents[0].locationAddress}`)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="button button-outline"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                >
+                  <MapPin size={14} /> Peta
+                </a>
+                <button className="button button-primary" onClick={() => go('/dashboard/events')}>
+                  Buka Menu Event
+                </button>
+              </div>
+            </article>
+          ) : (
+            <div className="panel" style={{ textAlign: 'center', padding: '24px' }}>
+              <Tent size={28} style={{ color: 'var(--muted)', margin: '0 auto 8px' }} />
+              <p style={{ margin: 0, color: 'var(--muted)' }}>Belum ada penugasan event luar studio yang aktif.</p>
+            </div>
+          )}
         </>
+      ) : section === 'events' ? (
+        <div className="live-coach-events-view">
+          <div className="live-section-head">
+            <div>
+              <h2>Event Komunitas Luar Studio</h2>
+              <p style={{ margin: '4px 0 0', color: 'var(--muted)', fontSize: '0.88rem' }}>
+                Kegiatan luar ruangan dan gathering komunitas SORA yang Anda pandu sebagai instruktur.
+              </p>
+            </div>
+          </div>
+          <div className="live-booking-list" style={{ marginTop: '16px' }}>
+            {coachEvents.map((evt) => (
+              <article className="panel live-booking" key={evt.activityId} style={{ padding: '22px', borderRadius: '12px' }}>
+                <div>
+                  <span className="eyebrow">
+                    {formatDate(evt.startDate, {
+                      weekday: 'long',
+                      day: 'numeric',
+                      month: 'long',
+                    })} · {evt.startTime} - {evt.endTime} WITA
+                  </span>
+                  <h3 style={{ fontSize: '18px', margin: '6px 0' }}>{evt.title}</h3>
+                  <p style={{ fontWeight: '600', color: '#17392e', margin: '4px 0' }}>
+                    Sesi: {evt.activityTitle} ({evt.activityCategory})
+                  </p>
+                  <p style={{ fontSize: '0.88rem', color: 'var(--muted)', margin: '4px 0' }}>
+                    Lokasi: <strong>{evt.locationName}</strong> · {evt.locationAddress || 'Lokasi terlampir'}
+                  </p>
+                  <p style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '6px' }}>
+                    Terdaftar: <strong>{evt.registeredCount}</strong> / {evt.capacity} peserta
+                  </p>
+                </div>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${evt.locationName} ${evt.locationAddress}`)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="button button-outline"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <MapPin size={14} /> Peta Lokasi
+                  </a>
+                  <a
+                    href={`/events/${evt.slug}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="button button-primary"
+                  >
+                    Brosur Acara
+                  </a>
+                </div>
+              </article>
+            ))}
+            {!coachEvents.length && (
+              <div className="panel" style={{ textAlign: 'center', padding: '40px 20px', borderRadius: '12px' }}>
+                <Tent size={32} style={{ color: 'var(--muted)', margin: '0 auto 10px' }} />
+                <p style={{ margin: 0, color: 'var(--muted)', fontSize: '14px' }}>
+                  Belum ada penugasan event luar studio yang aktif.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
       ) : (
         <>
           {!selected ? (
@@ -548,7 +695,15 @@ export function CoachDashboard({
                       <div className="live-coach-person" key={person.bookingId}>
                         <div className="live-coach-person-info">
                           <div className="live-coach-avatar">
-                            {person.fullName.trim().slice(0, 2).toUpperCase()}
+                            {person.avatarUrl ? (
+                              <img
+                                src={person.avatarUrl}
+                                alt={person.fullName}
+                                style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+                              />
+                            ) : (
+                              person.fullName.trim().slice(0, 2).toUpperCase()
+                            )}
                           </div>
                           <div className="live-coach-person-details">
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>

@@ -1,22 +1,21 @@
+import { useEffect, useState } from 'react'
 import {
+  Armchair,
   CalendarDays,
-  Clock,
+  Coins,
   LockKeyhole,
   Plus,
   QrCode,
-  ShieldCheck,
+  Tent,
   User,
-  Users,
   Wallet,
-  Zap,
-  Coins,
-  Armchair,
 } from 'lucide-react'
-import type { AdminSession } from '../../shared/api'
+import { api, type Actor, type AdminSession, type ExecutiveMetricsResponse } from '../../shared/api'
 import { formatDate, localTime, money } from '../../shared/format'
 import type { AdminTab } from './admin-types'
 
 type Props = {
+  actor?: Actor
   adminTab: AdminTab
   summary: {
     upcomingCount: number
@@ -31,6 +30,7 @@ type Props = {
 }
 
 export function AdminSummary({
+  actor,
   adminTab,
   summary,
   timezone,
@@ -38,103 +38,165 @@ export function AdminSummary({
   go,
   cancelStudioSession,
 }: Props) {
+  const [finMetrics, setFinMetrics] = useState<ExecutiveMetricsResponse | null>(null)
+
+  const perms = actor?.permissions ?? []
+  const isSuper = actor?.role === 'superadmin'
+  const isLegacyFinance = actor?.role === 'finance'
+
+  const showFrontDesk =
+    isSuper || perms.includes('front_desk') || perms.includes('lockers') || (!isLegacyFinance && perms.length === 0)
+  const showClasses =
+    isSuper || perms.includes('classes_schedule') || (!isLegacyFinance && perms.length === 0)
+  const showEvents = isSuper || perms.includes('community_events')
+  const showFinance =
+    isSuper || isLegacyFinance || perms.includes('finance_reports') || perms.includes('finance_payouts')
+
+  useEffect(() => {
+    if (!showFinance || adminTab !== 'sessions') return
+    let active = true
+    void (async () => {
+      try {
+        const res = await api<ExecutiveMetricsResponse>('/admin/executive-metrics')
+        if (active) setFinMetrics(res)
+      } catch {
+        // Biarkan jika gagal
+      }
+    })()
+    return () => {
+      active = false
+    }
+  }, [showFinance, adminTab])
+
+  if (adminTab !== 'sessions') return null
+
   const upcoming = summary?.sessions ?? []
 
   return (
-    <>
-      {adminTab === 'sessions' && (
-        <div className="admin-control-tower">
-          <div className="admin-quick-actions-bar">
-            <div className="admin-quick-actions-title">
-              <Zap size={16} style={{ color: 'var(--green, #17392e)' }} />
-              <span>Pintasan Operasional Resepsionis:</span>
+    <div className="admin-adaptive-dashboard">
+      {/* 1. Widget Meja Depan & Loker */}
+      {showFrontDesk && (
+        <section className="card widget-card">
+          <div className="card-head">
+            <div>
+              <h3>Workstation Meja Depan & Loker</h3>
+              <p>Operasional penyambutan kedatangan tamu studio hari ini.</p>
             </div>
-            <div className="admin-quick-actions-buttons">
-              <button
-                type="button"
-                className="button button-primary"
-                onClick={() => go?.('/dashboard/manage')}
-              >
-                <Plus size={14} /> Buat Sesi Baru
+            <div className="widget-actions">
+              <button className="button button-primary" onClick={() => go?.('/dashboard/attendance')}>
+                <QrCode size={14} /> Scan Tiket Lobi
               </button>
-              <button
-                type="button"
-                className="button button-outline"
-                onClick={() => go?.('/dashboard/attendance')}
-              >
-                <QrCode size={14} /> Scan Presensi (QR)
-              </button>
-              <button
-                type="button"
-                className="button button-outline"
-                onClick={() => go?.('/dashboard/lockers')}
-              >
+              <button className="button button-outline" onClick={() => go?.('/dashboard/lockers')}>
                 <LockKeyhole size={14} /> Matriks Loker
               </button>
-              <button
-                type="button"
-                className="button button-outline"
-                onClick={() => go?.('/dashboard/finance')}
-              >
+            </div>
+          </div>
+          <div className="metrics-grid">
+            <div className="metric-card">
+              <span className="metric-label">Kelas Hari Ini</span>
+              <strong className="metric-value">{summary?.todayCount ?? 0}</strong>
+              <span className="metric-hint">Sesi aktif berjalan</span>
+            </div>
+            <div className="metric-card">
+              <span className="metric-label">Pelatih Bertugas</span>
+              <strong className="metric-value">{summary?.coachCount ?? 0}</strong>
+              <span className="metric-hint">Instruktur terdaftar</span>
+            </div>
+            <div className="metric-card">
+              <span className="metric-label">Status Terminal</span>
+              <strong className="metric-value" style={{ fontSize: '18px' }}>Siap Layani Tamu</strong>
+              <span className="metric-hint positive">Waktu Makassar (WITA)</span>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* 2. Widget Finansial & Payout */}
+      {showFinance && (
+        <section className="card widget-card">
+          <div className="card-head">
+            <div>
+              <h3>Ikhtisar Finansial & Kas Studio</h3>
+              <p>Pemantauan omzet penjualan, transaksi berhasil, dan permohonan penarikan saldo.</p>
+            </div>
+            <div className="widget-actions">
+              <button className="button button-primary" onClick={() => go?.('/dashboard/finance')}>
                 <Wallet size={14} /> Laporan Transaksi
               </button>
             </div>
           </div>
-
-          <div className="admin-kpi-grid">
-            <div className="admin-kpi-card">
-              <div className="admin-kpi-head">
-                <span>SESI MENDATANG</span>
-                <div className="admin-kpi-icon">
-                  <CalendarDays size={16} />
-                </div>
-              </div>
-              <div className="admin-kpi-val">{summary?.upcomingCount ?? '-'}</div>
-              <p className="admin-kpi-desc">Kelas terjadwal berikutnya.</p>
+          <div className="metrics-grid">
+            <div className="metric-card">
+              <span className="metric-label">Omzet Bulan Berjalan</span>
+              <strong className="metric-value">
+                {finMetrics ? money(finMetrics.monthlyRevenueIdr) : '...'}
+              </strong>
+              <span className="metric-hint positive">
+                {finMetrics ? `${finMetrics.monthlyTransactionsCount} transaksi sukses` : 'Memuat data...'}
+              </span>
             </div>
-
-            <div className="admin-kpi-card">
-              <div className="admin-kpi-head">
-                <span>KELAS HARI INI</span>
-                <div className="admin-kpi-icon" style={{ background: '#ecfdf5', color: '#059669' }}>
-                  <Clock size={16} />
-                </div>
-              </div>
-              <div className="admin-kpi-val" style={{ color: '#059669' }}>
-                {summary?.todayCount ?? '-'}
-              </div>
-              <p className="admin-kpi-desc">Sesi aktif hari ini di studio.</p>
+            <div className="metric-card">
+              <span className="metric-label">Antrean Tarik Saldo</span>
+              <strong className="metric-value">
+                {finMetrics ? `${finMetrics.pendingPayoutCount} pengajuan` : '...'}
+              </strong>
+              <span className="metric-hint">
+                {finMetrics ? `Total: ${money(finMetrics.pendingPayoutAmountIdr)}` : 'Memuat data...'}
+              </span>
             </div>
-
-            <div className="admin-kpi-card">
-              <div className="admin-kpi-head">
-                <span>PELATIH BERTUGAS</span>
-                <div className="admin-kpi-icon" style={{ background: '#eff6ff', color: '#2563eb' }}>
-                  <Users size={16} />
-                </div>
-              </div>
-              <div className="admin-kpi-val" style={{ color: '#1e40af' }}>
-                {summary?.coachCount ?? '-'}
-              </div>
-              <p className="admin-kpi-desc">Pelatih dengan sesi mendatang.</p>
+            <div className="metric-card">
+              <span className="metric-label">Total Saldo Dompet Member</span>
+              <strong className="metric-value">
+                {finMetrics ? money(finMetrics.totalWalletLiabilityIdr) : '...'}
+              </strong>
+              <span className="metric-hint">Kewajiban deposit member</span>
             </div>
-
-            <div className="admin-kpi-card" style={{ borderLeft: '3px solid #17392e' }}>
-              <div className="admin-kpi-head">
-                <span>STATUS STUDIO</span>
-                <div className="admin-kpi-icon" style={{ background: '#fef3c7', color: '#b45309' }}>
-                  <ShieldCheck size={16} />
-                </div>
-              </div>
-              <div className="admin-kpi-val" style={{ fontSize: '20px', marginTop: '8px' }}>
-                SIAP OPERASIONAL
-              </div>
-              <p className="admin-kpi-desc">Waktu Makassar (WITA) · Gateway Aktif</p>
+            <div className="metric-card">
+              <span className="metric-label">Gateway Pembayaran</span>
+              <strong className="metric-value" style={{ fontSize: '18px' }}>Midtrans Sandbox</strong>
+              <span className="metric-hint positive">Snap 15 menit & Webhook Aktif</span>
             </div>
           </div>
+        </section>
+      )}
 
-          <div className="live-section-head" style={{ marginTop: '8px' }}>
-            <h2>Sesi terdekat</h2>
+      {/* 3. Widget Event Komunitas Luar Studio */}
+      {showEvents && (
+        <section className="card widget-card">
+          <div className="card-head">
+            <div>
+              <h3>Event Komunitas & Outreach</h3>
+              <p>Pelaksanaan kegiatan luar studio untuk akuisisi calon member baru.</p>
+            </div>
+            <div className="widget-actions">
+              <button className="button button-outline" onClick={() => go?.('/dashboard/events')}>
+                <Tent size={14} /> Kelola Event Komunitas
+              </button>
+            </div>
+          </div>
+          <div className="metrics-grid">
+            <div className="metric-card">
+              <span className="metric-label">Agenda Outdoor</span>
+              <strong className="metric-value">Aktif</strong>
+              <span className="metric-hint positive">Brosur dan registrasi publik terbuka</span>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* 4. Widget Sesi & Kelas Studio */}
+      {showClasses && (
+        <section className="card widget-card">
+          <div className="card-head">
+            <div>
+              <h3>Jadwal & Sesi Kelas Studio</h3>
+              <p>Daftar sesi kelas studio terdekat yang terjadwal.</p>
+            </div>
+            <div className="widget-actions">
+              <button className="button button-primary" onClick={() => go?.('/dashboard/manage')}>
+                <Plus size={14} /> Buat Sesi Baru
+              </button>
+            </div>
           </div>
 
           <div className="admin-timeline-section">
@@ -164,18 +226,14 @@ export function AdminSummary({
                       </span>
                       <span>·</span>
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                        <Armchair size={13} /> {row.capacity} kursi kuota
+                        <Armchair size={13} /> {row.capacity} kursi
                       </span>
                     </div>
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <button
-                    type="button"
-                    className="button button-outline"
-                    onClick={() => go?.('/dashboard/attendance')}
-                  >
+                  <button type="button" className="button button-outline" onClick={() => go?.('/dashboard/attendance')}>
                     Presensi
                   </button>
                   <button
@@ -190,14 +248,14 @@ export function AdminSummary({
               </article>
             ))}
             {!upcoming.length && (
-              <div className="panel" style={{ textAlign: 'center', padding: '36px' }}>
-                <CalendarDays size={32} style={{ color: 'var(--muted)', margin: '0 auto 10px' }} />
+              <div className="panel" style={{ textAlign: 'center', padding: '32px' }}>
+                <CalendarDays size={28} style={{ color: 'var(--muted)', margin: '0 auto 8px' }} />
                 <p style={{ margin: 0, color: 'var(--muted)' }}>Belum ada sesi mendatang yang terjadwal.</p>
               </div>
             )}
           </div>
-        </div>
+        </section>
       )}
-    </>
+    </div>
   )
 }

@@ -22,6 +22,63 @@
 .live-profile-grid small {
   color: var(--muted);
 }
+.live-profile-left {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.avatar-upload-card {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 16px;
+  background: #f8faf8;
+  border: 1px solid #e2e8e0;
+  border-radius: 12px;
+}
+.avatar-preview-wrapper {
+  flex-shrink: 0;
+}
+.avatar-preview-img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #17392e;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+.avatar-placeholder {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #e5ece6;
+  color: #17392e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  font-weight: 700;
+  border: 2px dashed #93b59d;
+}
+.avatar-upload-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+.avatar-upload-hint {
+  font-size: 0.82rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.4;
+}
+.avatar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
 /* Coach Master-Detail Attendance Layout */
 .live-coach-layout {
   display: grid;
@@ -39,64 +96,67 @@
 .live-coach-filter-bar {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 14px;
 }
 
 .live-coach-tabs {
   display: flex;
-  background: #f1f5f2;
-  padding: 4px;
-  border-radius: 8px;
-  gap: 4px;
+  background: #f3f1ed;
+  padding: 6px;
+  border-radius: 12px;
+  gap: 6px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .live-coach-tab-btn {
   flex: 1;
-  padding: 7px 8px;
+  padding: 10px 14px;
   border: none;
   background: transparent;
-  color: var(--muted, #64748b);
-  font-size: 11.5px;
+  color: #78716c;
+  font-size: 13.5px;
   font-weight: 600;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.18s ease;
   white-space: nowrap;
   text-align: center;
 }
 
 .live-coach-tab-btn:hover {
-  color: var(--ink, #1e293b);
-  background: rgba(255, 255, 255, 0.6);
+  color: #17392e;
+  background: rgba(255, 255, 255, 0.7);
 }
 
 .live-coach-tab-btn.active {
-  background: #fff;
-  color: var(--green, #1e4534);
+  background: #ffffff;
+  color: #17392e;
   font-weight: 700;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 6px rgba(23, 57, 46, 0.1);
 }
 
 .live-coach-search-date-row {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: center;
 }
 
 .live-coach-search-box {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   border: 1px solid var(--line, #e2e8f0);
   background: #fff;
-  border-radius: 7px;
-  padding: 0 10px;
+  border-radius: 9px;
+  padding: 0 12px;
+  min-height: 44px;
 }
 
 .live-coach-search-box input {
   border: none;
-  padding: 8px 0;
-  font-size: 12.5px;
+  padding: 10px 0;
+  font-size: 13.5px;
   width: 100%;
   outline: none;
   background: transparent;
@@ -105,17 +165,22 @@
 .live-date-input-wrap {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  background: #fff;
+  border: 1px solid var(--line, #e2e8f0);
+  border-radius: 9px;
+  padding: 0 12px;
+  min-height: 44px;
 }
 
 .live-date-input-wrap input {
   flex: 1;
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  padding: 7px 10px;
-  font-size: 12.5px;
+  border: none;
+  background: transparent;
+  padding: 10px 0;
+  font-size: 13.5px;
+  outline: none;
   color: var(--ink);
-  background: #fff;
 }
 
 .live-clear-date-btn {

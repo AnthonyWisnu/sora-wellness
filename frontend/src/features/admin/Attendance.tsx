@@ -150,9 +150,40 @@ export function AdminAttendancePanel({
                   {scanResult.alreadyCheckedIn ? 'Tamu Sudah Masuk' : 'Check-in Lobi Sukses'}
                 </span>
               </div>
-              <div style={{ fontSize: '0.9rem', color: '#374151', marginTop: '8px', lineHeight: 1.6 }}>
-                <div>
-                  Nama Murid: <strong>{scanResult.customerName}</strong>
+              <div style={{ fontSize: '0.9rem', color: '#374151', marginTop: '10px', lineHeight: 1.6 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                  {scanResult.avatarUrl ? (
+                    <img
+                      src={scanResult.avatarUrl}
+                      alt={scanResult.customerName}
+                      style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover', border: '1px solid #cbd5e1' }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: '44px',
+                        height: '44px',
+                        borderRadius: '50%',
+                        background: '#e2e8f0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 700,
+                        fontSize: '1rem',
+                        color: '#475569',
+                      }}
+                    >
+                      {scanResult.customerName.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div>
+                    <div>
+                      Nama Murid: <strong>{scanResult.customerName}</strong>
+                    </div>
+                    <div>
+                      Kode Tiket: <strong>{scanResult.bookingCode || scanResult.bookingId}</strong>
+                    </div>
+                  </div>
                 </div>
                 <div>
                   Kelas: <strong>{scanResult.classTitle}</strong> · Jadwal: {localDateTime(scanResult.startsAt, timezone)}

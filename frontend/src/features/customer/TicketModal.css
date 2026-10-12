@@ -4,10 +4,10 @@
   background: rgba(18, 22, 16, 0.75);
   backdrop-filter: blur(8px);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   z-index: 9999;
-  padding: 1.5rem;
+  padding: 2.5rem 1rem;
   overflow-y: auto;
   animation: fadeIn 0.25s ease-out;
 }
@@ -17,6 +17,7 @@
   color: #1c1f1a;
   width: 100%;
   max-width: 440px;
+  margin: auto;
   border-radius: 20px;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
   overflow: hidden;

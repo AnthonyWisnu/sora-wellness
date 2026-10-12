@@ -16,6 +16,7 @@ export type CoachParticipant = {
   bookingId: string
   customerId: string
   fullName: string
+  avatarUrl?: string | null
   present: boolean | null
   recordedAt: string | null
   healthNote: string | null
@@ -53,9 +54,11 @@ export type CheckInResult = {
   success: boolean
   alreadyCheckedIn: boolean
   bookingId: string
+  bookingCode?: string | null
   sessionId: string
   customerId: string
   customerName: string
+  avatarUrl?: string | null
   classTitle: string
   startsAt: string
   endsAt: string
