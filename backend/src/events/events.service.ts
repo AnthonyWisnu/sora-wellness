@@ -41,7 +41,8 @@ export class EventsService {
   async listPublic() {
     const res = await this.db.query(
       `SELECT e.id, e.slug, e.title, e.description, e.location_name AS "locationName",
-              e.location_address AS "locationAddress", e.start_date::text AS "startDate",
+              e.location_address AS "locationAddress", e.location_maps_url AS "locationMapsUrl",
+              e.start_date::text AS "startDate",
               e.end_date::text AS "endDate", e.status, e.banner_media_id AS "bannerMediaId",
               CASE WHEN e.banner_media_id IS NOT NULL THEN '/api/v1/public/media/' || e.banner_media_id ELSE NULL END AS "bannerUrl",
               (SELECT count(*)::int FROM event_activities a WHERE a.event_id=e.id) AS "activityCount",
@@ -56,7 +57,8 @@ export class EventsService {
   async getPublic(slug: string) {
     const eventRes = await this.db.query(
       `SELECT e.id, e.slug, e.title, e.description, e.location_name AS "locationName",
-              e.location_address AS "locationAddress", e.start_date::text AS "startDate",
+              e.location_address AS "locationAddress", e.location_maps_url AS "locationMapsUrl",
+              e.start_date::text AS "startDate",
               e.end_date::text AS "endDate", e.status, e.banner_media_id AS "bannerMediaId",
               CASE WHEN e.banner_media_id IS NOT NULL THEN '/api/v1/public/media/' || e.banner_media_id ELSE NULL END AS "bannerUrl"
        FROM community_events e
@@ -155,7 +157,8 @@ export class EventsService {
       `SELECT r.id, r.ticket_code AS "ticketCode", r.guest_name AS "guestName",
               r.guest_email AS "guestEmail", r.status, r.created_at AS "createdAt",
               e.title AS "eventTitle", e.location_name AS "locationName",
-              e.location_address AS "locationAddress", e.start_date::text AS "startDate",
+              e.location_address AS "locationAddress", e.location_maps_url AS "locationMapsUrl",
+              e.start_date::text AS "startDate",
               a.title AS "activityTitle", a.start_time AS "startTime", a.end_time AS "endTime"
        FROM event_registrations r
        JOIN community_events e ON e.id = r.event_id
@@ -170,7 +173,8 @@ export class EventsService {
   async listAdmin() {
     const res = await this.db.query(
       `SELECT e.id, e.slug, e.title, e.description, e.location_name AS "locationName",
-              e.location_address AS "locationAddress", e.start_date::text AS "startDate",
+              e.location_address AS "locationAddress", e.location_maps_url AS "locationMapsUrl",
+              e.start_date::text AS "startDate",
               e.end_date::text AS "endDate", e.status, e.banner_media_id AS "bannerMediaId",
               e.created_at AS "createdAt",
               (SELECT count(*)::int FROM event_activities a WHERE a.event_id=e.id) AS "activityCount",
@@ -188,8 +192,8 @@ export class EventsService {
     return this.db.transaction(async (client) => {
       const inserted = await client.query<{ id: string }>(
         `INSERT INTO community_events
-         (slug, title, description, location_name, location_address, start_date, end_date, status, banner_media_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+         (slug, title, description, location_name, location_address, location_maps_url, start_date, end_date, status, banner_media_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
          RETURNING id`,
         [
           slug,
@@ -197,6 +201,7 @@ export class EventsService {
           dto.description?.trim() ?? '',
           dto.locationName.trim(),
           dto.locationAddress?.trim() ?? '',
+          dto.locationMapsUrl?.trim() ?? '',
           dto.startDate,
           dto.endDate,
           dto.status ?? 'published',
@@ -241,14 +246,15 @@ export class EventsService {
 
       await client.query(
         `UPDATE community_events
-         SET title=$1, description=$2, location_name=$3, location_address=$4,
-             start_date=$5, end_date=$6, status=$7, banner_media_id=$8, updated_at=now()
-         WHERE id=$9`,
+         SET title=$1, description=$2, location_name=$3, location_address=$4, location_maps_url=$5,
+             start_date=$6, end_date=$7, status=$8, banner_media_id=$9, updated_at=now()
+         WHERE id=$10`,
         [
           dto.title.trim(),
           dto.description?.trim() ?? '',
           dto.locationName.trim(),
           dto.locationAddress?.trim() ?? '',
+          dto.locationMapsUrl?.trim() ?? '',
           dto.startDate,
           dto.endDate,
           dto.status ?? 'published',
@@ -323,7 +329,8 @@ export class EventsService {
   async listCoach(coachId: string) {
     const res = await this.db.query(
       `SELECT e.id, e.slug, e.title, e.description, e.location_name AS "locationName",
-              e.location_address AS "locationAddress", e.start_date::text AS "startDate",
+              e.location_address AS "locationAddress", e.location_maps_url AS "locationMapsUrl",
+              e.start_date::text AS "startDate",
               e.end_date::text AS "endDate", e.status, e.banner_media_id AS "bannerMediaId",
               CASE WHEN e.banner_media_id IS NOT NULL THEN '/api/v1/public/media/' || e.banner_media_id ELSE NULL END AS "bannerUrl",
               a.id AS "activityId", a.title AS "activityTitle", a.category AS "activityCategory",

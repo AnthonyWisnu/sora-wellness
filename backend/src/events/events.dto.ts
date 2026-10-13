@@ -105,6 +105,11 @@ export class CreateEventDto {
   @IsString()
   locationAddress?: string
 
+  @ApiPropertyOptional({ example: 'https://maps.app.goo.gl/example' })
+  @IsOptional()
+  @IsString()
+  locationMapsUrl?: string
+
   @ApiProperty({ example: '2026-12-19' })
   @IsDateString()
   startDate!: string

@@ -36,6 +36,7 @@ export type CommunityEvent = {
   description: string
   locationName: string
   locationAddress?: string
+  locationMapsUrl?: string
   startDate: string
   endDate: string
   status: 'draft' | 'published' | 'completed' | 'cancelled'

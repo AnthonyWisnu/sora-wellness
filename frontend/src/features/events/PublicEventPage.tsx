@@ -122,8 +122,17 @@ export function PublicEventPage({
         <span className="eyebrow">EVENT LUAR STUDIO & KOMUNITAS</span>
         <h1 style={{ margin: '8px 0', fontSize: '1.75rem', color: '#17392e' }}>{event.title}</h1>
         <p style={{ color: '#475569', fontSize: '0.94rem', lineHeight: 1.6, marginBottom: '16px' }}>{event.description}</p>
-        <div style={{ display: 'flex', gap: '16px', padding: '12px', background: '#f1f5f2', borderRadius: '8px', fontSize: '0.88rem', color: '#17392e', marginBottom: '20px', flexWrap: 'wrap' }}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><MapPin size={15} /> {event.locationName}</span>
+        <div style={{ display: 'flex', gap: '16px', padding: '12px', background: '#f1f5f2', borderRadius: '8px', fontSize: '0.88rem', color: '#17392e', marginBottom: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
+          <a
+            href={event.locationMapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${event.locationName} ${event.locationAddress || ''}`)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#17392e', fontWeight: 600, textDecoration: 'none' }}
+            title="Buka titik lokasi di Google Maps"
+          >
+            <MapPin size={15} /> {event.locationName}
+            <span style={{ fontSize: '11px', textDecoration: 'underline', color: '#2d6a4f' }}>(Buka Peta)</span>
+          </a>
           <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Clock size={15} /> {formatDate(event.startDate, { day: 'numeric', month: 'long', year: 'numeric' })}</span>
         </div>
         <form onSubmit={(e) => void handleRegister(e)} className="live-form">

@@ -35,6 +35,7 @@ type CoachCommunityEvent = {
   description: string
   locationName: string
   locationAddress: string
+  locationMapsUrl?: string
   startDate: string
   endDate: string
   status: string
@@ -326,7 +327,7 @@ export function CoachDashboard({
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${coachEvents[0].locationName} ${coachEvents[0].locationAddress}`)}`}
+                  href={coachEvents[0].locationMapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${coachEvents[0].locationName} ${coachEvents[0].locationAddress}`)}`}
                   target="_blank"
                   rel="noreferrer"
                   className="button button-outline"
@@ -380,7 +381,7 @@ export function CoachDashboard({
                 </div>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                   <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${evt.locationName} ${evt.locationAddress}`)}`}
+                    href={evt.locationMapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${evt.locationName} ${evt.locationAddress}`)}`}
                     target="_blank"
                     rel="noreferrer"
                     className="button button-outline"

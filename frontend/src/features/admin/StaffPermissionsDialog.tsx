@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { Check, ShieldCheck, X } from 'lucide-react'
+import { Check } from 'lucide-react'
 import { api } from '../../shared/api'
 import type { AdminAccount } from '../../shared/types/auth'
+import { AdminDialog } from './AdminDialog'
 
 type Props = {
   account: AdminAccount | null
@@ -47,6 +48,22 @@ export function StaffPermissionsDialog({ account, onClose, onSaved, show }: Prop
     if (preset === 'manager') setSelected(ALL_PERMISSIONS.map((p) => p.key))
   }
 
+  function isPresetActive(preset: 'reception' | 'schedule' | 'finance' | 'manager'): boolean {
+    if (preset === 'reception') {
+      return selected.length === 2 && selected.includes('front_desk') && selected.includes('lockers')
+    }
+    if (preset === 'schedule') {
+      return selected.length === 2 && selected.includes('classes_schedule') && selected.includes('community_events')
+    }
+    if (preset === 'finance') {
+      return selected.length === 2 && selected.includes('finance_reports') && selected.includes('finance_payouts')
+    }
+    if (preset === 'manager') {
+      return selected.length === ALL_PERMISSIONS.length && ALL_PERMISSIONS.every((p) => selected.includes(p.key))
+    }
+    return false
+  }
+
   async function handleSave() {
     setSaving(true)
     try {
@@ -65,70 +82,77 @@ export function StaffPermissionsDialog({ account, onClose, onSaved, show }: Prop
   }
 
   return (
-    <div className="modal-backdrop" role="dialog" aria-modal="true">
-      <div className="modal-card permissions-dialog-card">
-        <div className="modal-head">
-          <div className="modal-title-wrap">
-            <ShieldCheck size={20} className="modal-icon" />
-            <div>
-              <h3>Hak Akses: {account.fullName}</h3>
-              <p className="modal-subtitle">{account.email} · Peran {account.role.toUpperCase()}</p>
-            </div>
-          </div>
-          <button className="icon-button" onClick={onClose} aria-label="Tutup dialog">
-            <X size={18} />
-          </button>
-        </div>
-
-        <div className="preset-bar">
-          <span className="preset-label">Preset Cepat:</span>
-          <button type="button" className="chip-button" onClick={() => applyPreset('reception')}>
-            Resepsionis Lobi
-          </button>
-          <button type="button" className="chip-button" onClick={() => applyPreset('schedule')}>
-            Koordinator Kelas
-          </button>
-          <button type="button" className="chip-button" onClick={() => applyPreset('finance')}>
-            Staf Keuangan
-          </button>
-          <button type="button" className="chip-button chip-primary" onClick={() => applyPreset('manager')}>
-            Manajer Umum
-          </button>
-        </div>
-
-        <div className="permissions-grid">
-          {ALL_PERMISSIONS.map((p) => {
-            const active = selected.includes(p.key)
-            return (
-              <label
-                key={p.key}
-                className={`permission-toggle-item${active ? ' is-active' : ''}`}
-                onClick={(e) => {
-                  e.preventDefault()
-                  toggle(p.key)
-                }}
-              >
-                <div className={`switch-checkbox${active ? ' is-checked' : ''}`}>
-                  {active && <Check size={14} />}
-                </div>
-                <div className="perm-info">
-                  <strong>{p.label}</strong>
-                  <small>{p.desc}</small>
-                </div>
-              </label>
-            )
-          })}
-        </div>
-
-        <div className="modal-footer">
-          <button type="button" className="button button-outline" onClick={onClose} disabled={saving}>
-            Batal
-          </button>
-          <button type="button" className="button button-primary" onClick={handleSave} disabled={saving}>
-            {saving ? 'Menyimpan...' : 'Simpan Hak Akses'}
-          </button>
-        </div>
+    <AdminDialog
+      open={Boolean(account)}
+      title={`Hak Akses: ${account.fullName}`}
+      description={`${account.email} · Peran ${account.role.toUpperCase()}`}
+      onClose={onClose}
+      wide
+    >
+      <div className="preset-bar">
+        <span className="preset-label">Preset Cepat:</span>
+        <button
+          type="button"
+          className={`chip-button ${isPresetActive('reception') ? 'chip-primary' : ''}`}
+          onClick={() => applyPreset('reception')}
+        >
+          Resepsionis Lobi
+        </button>
+        <button
+          type="button"
+          className={`chip-button ${isPresetActive('schedule') ? 'chip-primary' : ''}`}
+          onClick={() => applyPreset('schedule')}
+        >
+          Koordinator Kelas
+        </button>
+        <button
+          type="button"
+          className={`chip-button ${isPresetActive('finance') ? 'chip-primary' : ''}`}
+          onClick={() => applyPreset('finance')}
+        >
+          Staf Keuangan
+        </button>
+        <button
+          type="button"
+          className={`chip-button ${isPresetActive('manager') ? 'chip-primary' : ''}`}
+          onClick={() => applyPreset('manager')}
+        >
+          Manajer Umum
+        </button>
       </div>
-    </div>
+
+      <div className="permissions-grid">
+        {ALL_PERMISSIONS.map((p) => {
+          const active = selected.includes(p.key)
+          return (
+            <label
+              key={p.key}
+              className={`permission-toggle-item${active ? ' is-active' : ''}`}
+              onClick={(e) => {
+                e.preventDefault()
+                toggle(p.key)
+              }}
+            >
+              <div className={`switch-checkbox${active ? ' is-checked' : ''}`}>
+                {active && <Check size={14} />}
+              </div>
+              <div className="perm-info">
+                <strong>{p.label}</strong>
+                <small>{p.desc}</small>
+              </div>
+            </label>
+          )
+        })}
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', borderTop: '1px solid #e7e3da', paddingTop: '16px' }}>
+        <button type="button" className="button button-outline" onClick={onClose} disabled={saving}>
+          Batal
+        </button>
+        <button type="button" className="button button-primary" onClick={handleSave} disabled={saving}>
+          {saving ? 'Menyimpan...' : 'Simpan Hak Akses'}
+        </button>
+      </div>
+    </AdminDialog>
   )
 }

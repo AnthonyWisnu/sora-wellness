@@ -17,6 +17,7 @@ export function EventEditorDialog({ event, onClose, onSaved, show }: Props) {
   const [description, setDescription] = useState(event?.description ?? '')
   const [locationName, setLocationName] = useState(event?.locationName ?? '')
   const [locationAddress, setLocationAddress] = useState(event?.locationAddress ?? '')
+  const [locationMapsUrl, setLocationMapsUrl] = useState(event?.locationMapsUrl ?? '')
   const [startDate, setStartDate] = useState(event?.startDate ?? '')
   const [endDate, setEndDate] = useState(event?.endDate ?? '')
   const [status, setStatus] = useState<'draft' | 'published' | 'completed' | 'cancelled'>(
@@ -55,6 +56,7 @@ export function EventEditorDialog({ event, onClose, onSaved, show }: Props) {
       description: description.trim(),
       locationName: locationName.trim(),
       locationAddress: locationAddress.trim(),
+      locationMapsUrl: locationMapsUrl.trim(),
       startDate,
       endDate: endDate || startDate,
       status,
@@ -136,6 +138,16 @@ export function EventEditorDialog({ event, onClose, onSaved, show }: Props) {
               <input placeholder="Contoh: Jl. Cemara, Sanur" value={locationAddress} onChange={(e) => setLocationAddress(e.target.value)} />
             </label>
           </div>
+
+          <label>
+            Tautan Google Maps (URL Pin Lokasi Presisi)
+            <input
+              type="url"
+              placeholder="Contoh: https://maps.app.goo.gl/... atau https://maps.google.com/?q=..."
+              value={locationMapsUrl}
+              onChange={(e) => setLocationMapsUrl(e.target.value)}
+            />
+          </label>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
             <label>
