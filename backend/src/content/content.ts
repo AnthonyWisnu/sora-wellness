@@ -16,9 +16,17 @@ export type Upload = { originalname: string; mimetype: string; size: number; buf
 
 export function imageType(file: Upload): { mime: string; extension: string } | null {
   const b = file.buffer;
-  if (file.mimetype === 'image/jpeg' && b.length >= 4 && b[0] === 0xff && b[1] === 0xd8 && b[b.length-2] === 0xff && b[b.length-1] === 0xd9) return { mime: 'image/jpeg', extension: 'jpg' };
-  if (file.mimetype === 'image/png' && b.length >= 24 && b.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])) && b.subarray(12,16).toString() === 'IHDR') return { mime: 'image/png', extension: 'png' };
-  if (file.mimetype === 'image/webp' && b.length >= 16 && b.subarray(0,4).toString() === 'RIFF' && b.subarray(8,12).toString() === 'WEBP') return { mime: 'image/webp', extension: 'webp' };
+  if (!b || b.length < 4) return null;
+  const mime = file.mimetype.toLowerCase();
+  if ((mime === 'image/jpeg' || mime === 'image/jpg') && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) {
+    return { mime: 'image/jpeg', extension: 'jpg' };
+  }
+  if (mime === 'image/png' && b.length >= 24 && b.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])) && b.subarray(12, 16).toString() === 'IHDR') {
+    return { mime: 'image/png', extension: 'png' };
+  }
+  if (mime === 'image/webp' && b.length >= 16 && b.subarray(0, 4).toString() === 'RIFF' && b.subarray(8, 12).toString() === 'WEBP') {
+    return { mime: 'image/webp', extension: 'webp' };
+  }
   return null;
 }
 

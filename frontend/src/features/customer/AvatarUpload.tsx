@@ -1,4 +1,4 @@
-import { useRef, useState, type ChangeEvent } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { Camera, Trash2, User } from 'lucide-react'
 import { api } from '../../shared/api'
 import { errorMessage } from '../../shared/errors'
@@ -20,6 +20,11 @@ export function AvatarUpload({
   const confirm = useConfirm()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
+  const [avatarUrl, setAvatarUrl] = useState<string | null | undefined>(currentAvatarUrl)
+
+  useEffect(() => {
+    setAvatarUrl(currentAvatarUrl)
+  }, [currentAvatarUrl])
 
   async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
@@ -39,6 +44,7 @@ export function AvatarUpload({
         method: 'POST',
         body: formData,
       })
+      setAvatarUrl(res.avatarUrl)
       onAvatarChanged(res.avatarUrl)
       show('Foto profil berhasil diperbarui.')
     } catch (error) {
@@ -64,6 +70,7 @@ export function AvatarUpload({
     setBusy(true)
     try {
       await api('/me/avatar', { method: 'DELETE' })
+      setAvatarUrl(null)
       onAvatarChanged(null)
       show('Foto profil berhasil dihapus.')
     } catch (error) {
@@ -76,9 +83,9 @@ export function AvatarUpload({
   return (
     <div className="avatar-upload-card">
       <div className="avatar-preview-wrapper">
-        {currentAvatarUrl ? (
+        {avatarUrl ? (
           <img
-            src={currentAvatarUrl}
+            src={avatarUrl}
             alt={fullName}
             className="avatar-preview-img"
           />
@@ -107,9 +114,9 @@ export function AvatarUpload({
             disabled={busy}
             onClick={() => fileInputRef.current?.click()}
           >
-            <Camera size={15} /> {currentAvatarUrl ? 'Ganti foto' : 'Unggah foto'}
+            <Camera size={15} /> {avatarUrl ? 'Ganti foto' : 'Unggah foto'}
           </button>
-          {currentAvatarUrl && (
+          {avatarUrl && (
             <button
               type="button"
               className="button button-text live-danger"

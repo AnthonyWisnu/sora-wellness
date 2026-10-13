@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { BadRequestException, Body, Controller, Delete, Get, Patch, Post, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -50,12 +50,29 @@ export class MeController {
     if (!detected) throw new BadRequestException('Hanya gambar JPG, PNG, atau WebP yang didukung');
     const id = randomUUID();
     const storagePath = `avatar-${id}.${detected.extension}`;
+    const originalName = file.originalname.replace(/[\\/]/g, '_').slice(0, 255) || storagePath;
     await mkdir(mediaDirectory, { recursive: true });
     await writeFile(resolve(mediaDirectory, storagePath), file.buffer);
-    await this.db.transaction(async (client) => {
-      await client.query('INSERT INTO media_assets (id, filename, mime_type, byte_size, storage_path) VALUES ($1,$2,$3,$4,$5)', [id, file.originalname, detected.mime, file.size, storagePath]);
-      await client.query('UPDATE app_users SET avatar_media_id=$1, updated_at=now() WHERE id=$2', [id, actor.id]);
-    });
+    try {
+      await this.db.transaction(async (client) => {
+        await client.query(
+          'INSERT INTO media_assets (id, filename, mime_type, byte_size, storage_path, uploaded_by) VALUES ($1,$2,$3,$4,$5,$6)',
+          [id, originalName, detected.mime, file.size, storagePath, actor.id],
+        );
+        const oldAvatarId = actor.avatar_media_id;
+        await client.query('UPDATE app_users SET avatar_media_id=$1, updated_at=now() WHERE id=$2', [id, actor.id]);
+        if (oldAvatarId) {
+          const oldMedia = await client.query<{ storage_path: string }>('SELECT storage_path FROM media_assets WHERE id=$1', [oldAvatarId]);
+          await client.query('DELETE FROM media_assets WHERE id=$1', [oldAvatarId]);
+          if (oldMedia.rows[0]) {
+            await unlink(resolve(mediaDirectory, oldMedia.rows[0].storage_path)).catch(() => undefined);
+          }
+        }
+      });
+    } catch (error) {
+      await unlink(resolve(mediaDirectory, storagePath)).catch(() => undefined);
+      throw error;
+    }
     actor.avatar_media_id = id;
     const avatarUrl = `/api/v1/public/media/${id}`;
     return { avatarMediaId: id, avatarUrl };
@@ -64,7 +81,17 @@ export class MeController {
   @Delete('avatar')
   async deleteAvatar(@Req() req: AuthRequest) {
     const actor = req.actor!;
-    await this.db.query('UPDATE app_users SET avatar_media_id=NULL, updated_at=now() WHERE id=$1', [actor.id]);
+    const oldAvatarId = actor.avatar_media_id;
+    await this.db.transaction(async (client) => {
+      await client.query('UPDATE app_users SET avatar_media_id=NULL, updated_at=now() WHERE id=$1', [actor.id]);
+      if (oldAvatarId) {
+        const oldMedia = await client.query<{ storage_path: string }>('SELECT storage_path FROM media_assets WHERE id=$1', [oldAvatarId]);
+        await client.query('DELETE FROM media_assets WHERE id=$1', [oldAvatarId]);
+        if (oldMedia.rows[0]) {
+          await unlink(resolve(mediaDirectory, oldMedia.rows[0].storage_path)).catch(() => undefined);
+        }
+      }
+    });
     actor.avatar_media_id = null;
     return { deleted: true };
   }
