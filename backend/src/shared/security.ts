@@ -59,6 +59,12 @@ export function assertRole(req: AuthRequest, ...roles: UserRole[]): Actor {
 export function assertPermission(req: AuthRequest, permission: string): Actor {
   if (!req.actor) throw new ForbiddenException('Akses ditolak');
   if (req.actor.role === 'superadmin') return req.actor;
+  if (
+    req.actor.role === 'finance' &&
+    (permission === 'finance_payouts' || permission === 'finance_reports')
+  ) {
+    return req.actor;
+  }
   if (req.actor.role === 'admin' && (req.actor.permissions || []).includes(permission)) {
     return req.actor;
   }

@@ -15,18 +15,6 @@ type Options = {
   show: (message: string) => void
 }
 
-type BookingStatusResponse = {
-  id: string
-  status: 'pending_payment' | 'confirmed' | 'cancelled' | 'expired'
-  paymentStatus?: string | null
-}
-
-type PackageStatusResponse = {
-  id: string
-  status: 'pending_payment' | 'paid' | 'cancelled' | 'expired'
-  payment?: { status: string } | null
-}
-
 export function usePaymentWatcher({
   activePayment,
   setActivePayment,
@@ -42,32 +30,46 @@ export function usePaymentWatcher({
     isChecking.current = true
 
     try {
-      if (activePayment.kind === 'booking') {
-        const res = await api<BookingStatusResponse>(`/bookings/${activePayment.id}`)
-        if (res.status === 'confirmed') {
-          setActivePayment(null)
-          await onSuccess()
-          show('Pembayaran berhasil dikonfirmasi. Tiket dan sesi kelas Anda telah aktif.')
-          return
-        }
-        if (res.status === 'cancelled' || res.status === 'expired') {
-          setActivePayment(null)
-          show('Batas waktu pembayaran telah habis atau pesanan dibatalkan.')
-          return
-        }
-      } else if (activePayment.kind === 'package') {
-        const res = await api<PackageStatusResponse>(`/me/membership-purchases/${activePayment.id}`)
-        if (res.status === 'paid') {
-          setActivePayment(null)
-          await onSuccess()
-          show('Pembelian paket berhasil. Masa aktif dan jatah kelas telah diperbarui.')
-          return
-        }
-        if (res.status === 'cancelled' || res.status === 'expired') {
-          setActivePayment(null)
-          show('Batas waktu pembayaran paket telah habis atau pesanan dibatalkan.')
-          return
-        }
+      const endpoint =
+        activePayment.kind === 'booking'
+          ? `/bookings/${activePayment.id}/refresh-payment`
+          : `/me/membership-purchases/${activePayment.id}/refresh-payment`
+
+      const res = await api<{
+        bookingStatus?: string
+        purchaseStatus?: string
+        paymentStatus?: string
+      }>(endpoint, { method: 'POST' })
+
+      const isSuccess =
+        res.bookingStatus === 'confirmed' ||
+        res.purchaseStatus === 'paid' ||
+        res.paymentStatus === 'success'
+
+      if (isSuccess) {
+        setActivePayment(null)
+        await onSuccess()
+        show(
+          activePayment.kind === 'booking'
+            ? 'Pembayaran berhasil dikonfirmasi. Tiket dan sesi kelas Anda telah aktif.'
+            : 'Pembelian paket berhasil. Masa aktif dan jatah kelas telah diperbarui.',
+        )
+        return
+      }
+
+      const isFailed =
+        res.bookingStatus === 'cancelled' ||
+        res.bookingStatus === 'expired' ||
+        res.purchaseStatus === 'cancelled' ||
+        res.purchaseStatus === 'expired' ||
+        res.paymentStatus === 'expired' ||
+        res.paymentStatus === 'failed'
+
+      if (isFailed) {
+        setActivePayment(null)
+        await onSuccess()
+        show('Batas waktu pembayaran telah habis atau pesanan dibatalkan.')
+        return
       }
     } catch {
       // Abaikan kegagalan jaringan sementara saat polling latar belakang
@@ -111,7 +113,7 @@ export function usePaymentWatcher({
   const manualRefresh = useCallback(async () => {
     if (!activePayment || refreshing) return
     const now = Date.now()
-    if (now - lastRefreshAt.current < 15000) {
+    if (now - lastRefreshAt.current < 4000) {
       show('Status baru saja diperiksa. Tunggu beberapa detik sebelum memeriksa ulang.')
       return
     }
@@ -119,12 +121,6 @@ export function usePaymentWatcher({
     lastRefreshAt.current = now
     setRefreshing(true)
     try {
-      const endpoint =
-        activePayment.kind === 'booking'
-          ? `/bookings/${activePayment.id}/refresh-payment`
-          : `/me/membership-purchases/${activePayment.id}/refresh-payment`
-
-      await api(endpoint, { method: 'POST' })
       await checkStatus()
     } catch (err) {
       show(err instanceof Error ? err.message : 'Gagal memperbarui status dari penyedia pembayaran.')

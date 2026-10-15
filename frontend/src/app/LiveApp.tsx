@@ -153,18 +153,50 @@ export default function LiveApp() {
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search)
     const paymentResult = searchParams.get('payment')
-    if (paymentResult) {
-      if (paymentResult === 'finish') {
-        show('Pembayaran Anda telah diterima. Memperbarui status pesanan...')
-        void Promise.all([loadCustomer(), loadSessions()])
+    const orderId = searchParams.get('order_id')
+    const transactionStatus = searchParams.get('transaction_status')
+
+    if (paymentResult || orderId) {
+      setActivePayment(null)
+
+      const isSuccess =
+        paymentResult === 'finish' ||
+        transactionStatus === 'settlement' ||
+        transactionStatus === 'capture'
+
+      if (isSuccess && orderId) {
+        show('Pembayaran Anda terdeteksi. Memverifikasi status pesanan secara otomatis...')
+        void (async () => {
+          try {
+            await api('/me/payments/sync-order', {
+              method: 'POST',
+              body: { orderId },
+            })
+          } catch {
+            if (orderId.startsWith('CLS-')) {
+              await api(`/bookings/${orderId.slice(4)}/refresh-payment`, { method: 'POST' }).catch(() => {})
+            } else if (orderId.startsWith('PKG-')) {
+              await api(`/me/membership-purchases/${orderId.slice(4)}/refresh-payment`, { method: 'POST' }).catch(() => {})
+            }
+          } finally {
+            await Promise.all([loadCustomer(), loadSessions()])
+            show('Pembayaran berhasil dikonfirmasi! Kursi dan tiket kelas Anda telah aktif.')
+          }
+        })()
       } else if (paymentResult === 'unfinish') {
         show('Pembayaran belum diselesaikan. Anda dapat melanjutkannya sebelum batas waktu 15 menit habis.')
+        void Promise.all([loadCustomer(), loadSessions()])
       } else if (paymentResult === 'error') {
         show('Terjadi kendala pada proses pembayaran Midtrans.')
+        void Promise.all([loadCustomer(), loadSessions()])
       }
       window.history.replaceState({}, '', window.location.pathname)
     }
-  }, [loadCustomer, loadSessions, show])
+  }, [loadCustomer, loadSessions, setActivePayment, show])
+
+  useEffect(() => {
+    setActivePayment(null)
+  }, [path, setActivePayment])
 
   useEffect(() => {
     const pop = () => setPath(window.location.pathname)

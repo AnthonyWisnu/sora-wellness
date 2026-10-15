@@ -72,3 +72,37 @@ test('pembatalan provider hanya memakai endpoint Sandbox dan menolak respons gag
     globalThis.fetch = originalFetch;
   }
 });
+
+test('SyncOrderDto menerima format order_id yang valid', async () => {
+  const { SyncOrderDto } = await import('../src/payments/payments-controller');
+  const { plainToInstance } = await import('class-transformer');
+  const { validate } = await import('class-validator');
+  const dto = plainToInstance(SyncOrderDto, { orderId: 'CLS-cc6135a4-9915-4af8-8231-33cfbbf97d55' });
+  const errors = await validate(dto);
+  assert.equal(errors.length, 0);
+});
+
+test('SyncOrderDto menolak order_id kosong atau terlalu pendek', async () => {
+  const { SyncOrderDto } = await import('../src/payments/payments-controller');
+  const { plainToInstance } = await import('class-transformer');
+  const { validate } = await import('class-validator');
+  const dto = plainToInstance(SyncOrderDto, { orderId: 'ABC' });
+  const errors = await validate(dto);
+  assert.equal(errors.length > 0, true);
+});
+
+test('assertPermission mengizinkan peran finance untuk izin operasional finance_payouts', async () => {
+  const { assertPermission } = await import('../src/shared/security');
+  type AuthReq = Parameters<typeof assertPermission>[0];
+  const req = {
+    actor: {
+      id: 'finance-uuid-1',
+      email: 'finance@sora.example.test',
+      full_name: 'Finance Sora',
+      role: 'finance' as const,
+      password_change_required: false,
+    },
+  } as unknown as AuthReq;
+  const actor = assertPermission(req, 'finance_payouts');
+  assert.equal(actor.role, 'finance');
+});

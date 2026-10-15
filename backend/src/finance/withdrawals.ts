@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { readFile, unlink, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import {
   BadRequestException,
@@ -247,19 +247,21 @@ export class AdminWithdrawalController {
       mediaId = randomUUID()
       const storagePath = `${mediaId}.${detected.extension}`
       const fullPath = resolve(mediaDirectory, storagePath)
+      await mkdir(mediaDirectory, { recursive: true })
       await writeFile(fullPath, file.buffer)
       writtenFilePath = fullPath
 
       try {
         await this.db.query(
-          `INSERT INTO media_assets (id, filename, mime_type, byte_size, storage_path, purpose)
-           VALUES ($1, $2, $3, $4, $5, 'withdrawal_proof')`,
+          `INSERT INTO media_assets (id, filename, mime_type, byte_size, storage_path, purpose, uploaded_by)
+           VALUES ($1, $2, $3, $4, $5, 'withdrawal_proof', $6)`,
           [
             mediaId,
             file.originalname.replace(/[\\/]/g, '_').slice(0, 255) || storagePath,
             detected.mime,
             file.size,
             storagePath,
+            reviewer.id,
           ],
         )
       } catch (err) {

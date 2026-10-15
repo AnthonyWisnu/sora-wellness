@@ -1,11 +1,18 @@
-import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
-import { ApiCookieAuth, ApiTags } from '@nestjs/swagger';
-import { IsInt, IsOptional, Max, Min } from 'class-validator';
+import { Body, Controller, Get, NotFoundException, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { ApiCookieAuth, ApiProperty, ApiTags } from '@nestjs/swagger';
+import { IsInt, IsOptional, IsString, Length, Max, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 import { Db } from '../shared/db';
 import { MidtransNotification } from './midtrans';
 import { PaymentsService } from './payments';
 import { AuthRequest, assertRole, SessionGuard } from '../shared/security';
+
+export class SyncOrderDto {
+  @ApiProperty({ example: 'CLS-cc6135a4-9915-4af8-8231-33cfbbf97d55' })
+  @IsString()
+  @Length(6, 80)
+  orderId!: string;
+}
 
 class PageFilter {
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) page?: number;
@@ -27,6 +34,20 @@ export class PaymentsController {
   async refresh(@Req() req: AuthRequest, @Param('id') id: string) {
     const actor = assertRole(req, 'customer');
     return this.payments.refreshByBooking(id, actor.id);
+  }
+
+  @Post('me/payments/sync-order') @UseGuards(SessionGuard) @ApiCookieAuth('wellness.sid')
+  async syncOrder(@Req() req: AuthRequest, @Body() body: SyncOrderDto) {
+    const actor = assertRole(req, 'customer');
+    const order = await this.db.query<{ id: string }>(
+      `SELECT p.id FROM payment_transactions p
+       LEFT JOIN bookings b ON b.id = p.booking_id
+       LEFT JOIN package_purchases pp ON pp.id = p.package_purchase_id
+       WHERE p.order_id = $1 AND COALESCE(b.customer_id, pp.customer_id) = $2`,
+      [body.orderId, actor.id],
+    );
+    if (!order.rows[0]) throw new NotFoundException('Pesanan pembayaran tidak ditemukan atau bukan milik akun Anda');
+    return this.payments.refreshByOrder(body.orderId);
   }
 
   @Get('me/wallet') @UseGuards(SessionGuard) @ApiCookieAuth('wellness.sid')
