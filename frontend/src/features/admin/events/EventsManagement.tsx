@@ -54,7 +54,7 @@ export function EventsManagement({ timezone, show }: Props) {
 
   return (
     <section className="live-admin-section">
-      <div className="admin-page-header" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+      <div className="admin-page-header" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '12px' }}>
         <button
           type="button"
           className="button button-primary"

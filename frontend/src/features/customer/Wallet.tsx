@@ -67,9 +67,15 @@ export function CustomerWalletPanel({
             className="button button-outline"
             onClick={() => setWithdrawOpen(true)}
             disabled={balance < 10000}
+            title={balance < 10000 ? 'Batas minimum pencairan saldo adalah Rp 10.000' : undefined}
           >
             <ArrowUpRight size={15} /> Tarik Saldo ke Rekening / E-Wallet
           </button>
+          {balance < 10000 && (
+            <p style={{ margin: '8px 0 0', fontSize: '11px', color: '#748177', lineHeight: 1.5 }}>
+              * Batas minimum pencairan dana adalah <strong>Rp 10.000</strong>. Saldo aktif Anda sebesar <strong>{money(balance)}</strong> dapat digunakan langsung sebagai potongan saat memesan kelas berikutnya.
+            </p>
+          )}
         </div>
       </div>
 

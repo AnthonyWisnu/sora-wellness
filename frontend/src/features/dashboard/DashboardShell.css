@@ -242,7 +242,7 @@
 .dashboard-content {
   max-width: 1520px;
   margin: 0 auto;
-  padding: 34px clamp(22px, 3vw, 48px) 70px;
+  padding: 22px clamp(22px, 3vw, 48px) 70px;
   min-width: 0;
 }
 .dashboard-page-head {
@@ -250,7 +250,7 @@
   justify-content: space-between;
   align-items: end;
   gap: 16px;
-  margin-bottom: 26px;
+  margin-bottom: 14px;
 }
 .dashboard-page-head .eyebrow {
   color: #9b7950;

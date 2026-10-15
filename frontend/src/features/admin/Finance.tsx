@@ -205,7 +205,7 @@ export function AdminFinancePanel({
 
   return (
     <section className="admin-workspace admin-finance">
-      <div className="admin-workspace-head" style={{ justifyContent: 'flex-end', marginBottom: '16px' }}>
+      <div className="admin-workspace-head" style={{ justifyContent: 'flex-end', marginBottom: '10px' }}>
         <div style={{ display: 'flex', gap: '8px' }}>
           <button
             className="button button-primary"

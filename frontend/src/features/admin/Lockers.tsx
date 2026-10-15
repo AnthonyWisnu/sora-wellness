@@ -165,7 +165,7 @@ export function AdminLockersPanel({ show }: Notice) {
 
   return (
     <section className="admin-workspace">
-      <div className="admin-workspace-head" style={{ justifyContent: 'flex-end', marginBottom: '14px' }}>
+      <div className="admin-workspace-head" style={{ justifyContent: 'flex-end', marginBottom: '10px' }}>
         <button className="button button-primary" onClick={() => setCreateOpen(true)}>
           <Plus size={15} /> Tambah loker
         </button>

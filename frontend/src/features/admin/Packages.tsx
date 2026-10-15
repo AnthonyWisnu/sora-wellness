@@ -48,7 +48,7 @@ export function AdminPackagesPanel({ show, onChanged }: PanelProps & { onChanged
   }
   return (
     <section className="admin-workspace">
-      <div className="admin-workspace-head" style={{ justifyContent: 'flex-end', marginBottom: '14px' }}>
+      <div className="admin-workspace-head" style={{ justifyContent: 'flex-end', marginBottom: '10px' }}>
         <button
           className="button button-primary"
           onClick={() => {

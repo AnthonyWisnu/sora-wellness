@@ -121,7 +121,7 @@ export function AdminSessionsPanel({
   }
   return (
     <section className="admin-workspace">
-      <div className="admin-workspace-head sessions-head-responsive" style={{ justifyContent: 'flex-end', marginBottom: '14px' }}>
+      <div className="admin-workspace-head sessions-head-responsive" style={{ justifyContent: 'flex-end', marginBottom: '10px' }}>
         <button
           className="button button-primary"
           onClick={() => {

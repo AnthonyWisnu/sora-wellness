@@ -3,7 +3,7 @@
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 .site-editor-toolbar > span {
   margin-right: auto;
