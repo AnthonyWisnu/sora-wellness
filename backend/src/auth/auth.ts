@@ -1,11 +1,12 @@
 import { randomBytes } from 'node:crypto';
-import { BadRequestException, Body, ConflictException, Controller, ForbiddenException, Get, HttpCode, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, ConflictException, Controller, ForbiddenException, Get, HttpCode, NotFoundException, Param, ParseUUIDPipe, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiCookieAuth, ApiCreatedResponse, ApiOkResponse, ApiProperty, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
 import { IsArray, IsEmail, IsIn, IsInt, IsOptional, IsString, Length, Max, MaxLength, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 import { Db } from '../shared/db';
 import { csrf } from '../shared/csrf';
 import { AuthRequest, assertRole, hashPassword, SessionGuard, verifyPassword } from '../shared/security';
+import { ALLOWED_STAFF_PERMISSIONS, UpdateStaffPermissionsDto } from './dto/staff-permissions.dto';
 
 export class RegisterDto {
   @ApiProperty({ example: 'pelanggan@example.com' })
@@ -34,8 +35,8 @@ export class ResetPasswordDto {
 export class StaffDto extends RegisterDto {
   @ApiProperty({ enum: ['coach', 'admin', 'finance', 'superadmin'] })
   @IsString() @MaxLength(20) role!: 'coach' | 'admin' | 'finance' | 'superadmin';
-  @ApiPropertyOptional({ type: [String] })
-  @IsOptional() @IsArray() @IsString({ each: true }) permissions?: string[];
+  @ApiPropertyOptional({ type: [String], enum: ALLOWED_STAFF_PERMISSIONS, isArray: true })
+  @IsOptional() @IsArray() @IsString({ each: true }) @IsIn(ALLOWED_STAFF_PERMISSIONS, { each: true, message: 'Kunci hak akses tidak valid atau tidak dikenal' }) permissions?: string[];
 }
 export class AccountFilter {
   @ApiPropertyOptional({ example: 'ayu' }) @IsOptional() @IsString() @MaxLength(100) q?: string;
@@ -141,13 +142,21 @@ export class AdminAccountController {
   }
 
   @Patch('staff/:id/permissions') @UseGuards(SessionGuard) @ApiCookieAuth('wellness.sid')
-  async updateStaffPermissions(@Req() req: AuthRequest, @Body() body: { permissions: string[] }) {
+  async updateStaffPermissions(
+    @Req() req: AuthRequest,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: UpdateStaffPermissionsDto,
+  ) {
     const admin = assertRole(req, 'superadmin');
-    const id = req.params.id;
-    if (!Array.isArray(body.permissions)) throw new BadRequestException('Format permissions harus berupa array');
-    await this.db.query('UPDATE app_users SET permissions=$1, updated_at=now() WHERE id=$2', [body.permissions, id]);
-    await this.db.query('INSERT INTO audit_logs (actor_id, target_user_id, action, reason) VALUES ($1,$2,$3,$4)', [admin.id, id, 'update_permissions', body.permissions.join(',')]);
-    return { id, permissions: body.permissions };
+    const target = await this.db.query<{ id: string; role: string }>('SELECT id, role FROM app_users WHERE id = $1', [id]);
+    if (!target.rows[0]) throw new NotFoundException('Akun staf tidak ditemukan');
+    if (target.rows[0].role !== 'admin') {
+      throw new BadRequestException('Pengaturan hak akses modular hanya dapat diterapkan pada akun staf dengan peran Admin');
+    }
+    const cleanPermissions = Array.from(new Set(body.permissions));
+    await this.db.query('UPDATE app_users SET permissions=$1, updated_at=now() WHERE id=$2', [cleanPermissions, id]);
+    await this.db.query('INSERT INTO audit_logs (actor_id, target_user_id, action, reason) VALUES ($1,$2,$3,$4)', [admin.id, id, 'update_permissions', cleanPermissions.join(',')]);
+    return { id, permissions: cleanPermissions };
   }
 
   @Post('accounts/:id/reset-password') @UseGuards(SessionGuard) @ApiCookieAuth('wellness.sid')

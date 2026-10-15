@@ -1,5 +1,6 @@
 import { useRef, type Dispatch, type SetStateAction } from 'react'
 import { api, type Actor, type PackagePurchase } from '../../shared/api'
+import type { ActivePayment } from '../booking/usePaymentWatcher'
 
 type Options = {
   actor: Actor | null
@@ -8,7 +9,7 @@ type Options = {
   setBusy: Dispatch<SetStateAction<boolean>>
   loadCustomer: () => Promise<void>
   loadSessions: () => Promise<void>
-  setPaymentLink: (url: string) => void
+  setPaymentLink: (payment: ActivePayment | string | null) => void
 }
 function message(error: unknown) {
   return error instanceof Error ? error.message : 'Terjadi kesalahan. Coba lagi.'
@@ -47,7 +48,12 @@ export function useMembershipPurchase({
       await loadCustomer()
       go('/dashboard')
       if (purchase.payment?.redirectUrl) {
-        setPaymentLink(purchase.payment.redirectUrl)
+        setPaymentLink({
+          url: purchase.payment.redirectUrl,
+          kind: 'package',
+          id: purchase.id,
+          orderId: purchase.payment.orderId,
+        })
         show('Pembelian paket menunggu pembayaran Midtrans Sandbox.')
       } else show('Paket aktif. Tanggal dan jatah sudah diperbarui.')
     } catch (error) {

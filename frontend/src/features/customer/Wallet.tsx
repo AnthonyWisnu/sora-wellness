@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ArrowDownLeft, ArrowUpRight, Clock } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, Clock, FileText } from 'lucide-react'
 import { api } from '../../shared/api'
 import { localDateTime, money } from '../../shared/format'
 import { errorMessage } from '../../shared/errors'
@@ -23,6 +23,8 @@ type Withdrawal = {
   status: 'pending' | 'completed' | 'rejected'
   rejectedReason?: string | null
   transferRefNote?: string | null
+  hasProof?: boolean
+  proofUrl?: string | null
   createdAt: string
 }
 
@@ -105,6 +107,29 @@ export function CustomerWalletPanel({
                           ? `Ditolak: ${w.rejectedReason || 'Nama/rekening tidak sesuai'}`
                           : 'Menunggu Verifikasi Staf Keuangan'}
                     </span>
+                    {w.transferRefNote && (
+                      <span style={{ display: 'block', color: '#64748b', marginTop: '2px' }}>
+                        Nomor Referensi: {w.transferRefNote}
+                      </span>
+                    )}
+                    {w.hasProof && (
+                      <a
+                        href={`/api/v1/me/wallet/withdrawals/${w.id}/proof`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          color: '#15803d',
+                          fontWeight: 600,
+                          marginTop: '3px',
+                          textDecoration: 'underline',
+                        }}
+                      >
+                        <FileText size={12} /> Lihat bukti transfer
+                      </a>
+                    )}
                   </small>
                 </div>
                 <div className="dashboard-wallet-amount">

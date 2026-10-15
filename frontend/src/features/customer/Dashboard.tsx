@@ -6,6 +6,7 @@ import { CustomerProfilePanel } from './Profile'
 import { CustomerLockerPanel } from './Locker'
 import { CustomerWalletPanel } from './Wallet'
 import { TicketModal } from './TicketModal'
+import type { ActivePayment } from '../booking/usePaymentWatcher'
 
 type Props = {
   section: string
@@ -21,7 +22,7 @@ type Props = {
   go: (path: string) => void
   paymentAction: (id: string, refresh: boolean) => void
   cancelBooking: (id: string) => void
-  setPaymentLink: (url: string) => void
+  setPaymentLink: (payment: ActivePayment | string | null) => void
   refreshPackage: (id: string) => void
   show: (message: string) => void
   onNameChanged: (name: string) => void
@@ -205,7 +206,7 @@ export function CustomerDashboard({
                           disabled={busy}
                           onClick={() => void paymentAction(row.id, true)}
                         >
-                          Periksa status
+                          Perbarui status
                         </button>
                       </>
                     )}
@@ -302,7 +303,14 @@ export function CustomerDashboard({
                       {purchase.payment?.redirectUrl && (
                         <button
                           className="button button-primary"
-                          onClick={() => setPaymentLink(purchase.payment!.redirectUrl!)}
+                          onClick={() =>
+                            setPaymentLink({
+                              url: purchase.payment!.redirectUrl!,
+                              kind: 'package',
+                              id: purchase.id,
+                              orderId: purchase.payment!.orderId,
+                            })
+                          }
                         >
                           Lanjutkan bayar
                         </button>
@@ -312,7 +320,7 @@ export function CustomerDashboard({
                         disabled={busy}
                         onClick={() => void refreshPackage(purchase.id)}
                       >
-                        Periksa status
+                        Perbarui status
                       </button>
                     </div>
                   )}

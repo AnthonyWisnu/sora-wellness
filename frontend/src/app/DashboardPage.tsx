@@ -16,6 +16,7 @@ import { CoachDashboard } from '../features/coach/Dashboard'
 import { DashboardShell } from '../features/dashboard/DashboardShell'
 import { resolveDashboardSection, dashboardTitle } from '../features/dashboard/navigation'
 import type { AdminTab } from '../features/admin/admin-types'
+import type { ActivePayment } from '../features/booking/usePaymentWatcher'
 
 type Props = {
   authReady: boolean
@@ -34,7 +35,7 @@ type Props = {
   logout: () => void
   paymentAction: (id: string, refresh: boolean) => void
   cancelBooking: (id: string) => void
-  setPaymentLink: (url: string) => void
+  setPaymentLink: (payment: ActivePayment | string | null) => void
   refreshPackage: (id: string) => void
   show: (message: string) => void
   setActor: Dispatch<SetStateAction<Actor | null>>

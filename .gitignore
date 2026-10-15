@@ -18,6 +18,8 @@
 **/.env.*.local
 # Local QA data: screenshots, reports, backups, state, and generated demo passwords
 **/.qa/*
+**/.demo.local.json
+backend/uploads/
 **/cookies.txt
 
 # Log dan berkas editor

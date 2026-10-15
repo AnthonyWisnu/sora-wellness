@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Check, Filter, X } from 'lucide-react'
-import { api } from '../../shared/api'
-import { localDateTime, money } from '../../shared/format'
-import { errorMessage } from '../../shared/errors'
+import { Check, FileText, Filter, X } from 'lucide-react'
+import { api } from '../../../shared/api'
+import { localDateTime, money } from '../../../shared/format'
+import { errorMessage } from '../../../shared/errors'
 import { WithdrawalDialogs } from './WithdrawalDialogs'
-import type { WalletWithdrawal } from './finance-types'
+import type { WalletWithdrawal } from '../finance-types'
 
 type Props = {
   timezone: string
@@ -18,6 +18,7 @@ export function FinanceWithdrawals({ timezone, show }: Props) {
   const [completeTarget, setCompleteTarget] = useState<WalletWithdrawal | null>(null)
   const [rejectTarget, setRejectTarget] = useState<WalletWithdrawal | null>(null)
   const [refNote, setRefNote] = useState('')
+  const [proofFile, setProofFile] = useState<File | null>(null)
   const [rejectReason, setRejectReason] = useState('')
 
   const load = useCallback(() => {
@@ -39,13 +40,18 @@ export function FinanceWithdrawals({ timezone, show }: Props) {
     if (!completeTarget) return
     setBusy(true)
     try {
+      const formData = new FormData()
+      if (refNote.trim()) formData.append('transferRefNote', refNote.trim())
+      if (proofFile) formData.append('proof', proofFile)
+
       await api(`/admin/finance/withdrawals/${completeTarget.id}/complete`, {
         method: 'POST',
-        body: { transferRefNote: refNote.trim() || undefined },
+        body: formData,
       })
       show('Penarikan dana ditandai selesai. Saldo buku besar telah diperbarui.')
       setCompleteTarget(null)
       setRefNote('')
+      setProofFile(null)
       load()
     } catch (err) {
       show(errorMessage(err))
@@ -123,6 +129,16 @@ export function FinanceWithdrawals({ timezone, show }: Props) {
                   {w.status === 'completed' ? 'Selesai' : w.status === 'rejected' ? 'Ditolak' : 'Menunggu Transfer'}
                 </span>
                 {w.transferRefNote && <small style={{ display: 'block', marginTop: '2px' }}>Ref: {w.transferRefNote}</small>}
+                {w.proofUrl && (
+                  <a
+                    href={w.proofUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#166534', fontWeight: 600, marginTop: '3px', textDecoration: 'underline' }}
+                  >
+                    <FileText size={12} /> Bukti Transfer
+                  </a>
+                )}
                 {w.rejectedReason && <small style={{ display: 'block', marginTop: '2px', color: '#b91c1c' }}>Alasan: {w.rejectedReason}</small>}
               </td>
               <td>
@@ -135,7 +151,11 @@ export function FinanceWithdrawals({ timezone, show }: Props) {
                       type="button"
                       className="button button-primary"
                       style={{ padding: '4px 8px', fontSize: '12px' }}
-                      onClick={() => setCompleteTarget(w)}
+                      onClick={() => {
+                        setRefNote('')
+                        setProofFile(null)
+                        setCompleteTarget(w)
+                      }}
                     >
                       <Check size={13} /> Selesai
                     </button>
@@ -171,6 +191,8 @@ export function FinanceWithdrawals({ timezone, show }: Props) {
         setRejectTarget={setRejectTarget}
         refNote={refNote}
         setRefNote={setRefNote}
+        proofFile={proofFile}
+        setProofFile={setProofFile}
         rejectReason={rejectReason}
         setRejectReason={setRejectReason}
         busy={busy}

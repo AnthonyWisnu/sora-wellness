@@ -39,6 +39,7 @@ export class MidtransClient {
       if (url.protocol !== 'https:' || url.username || url.password || url.hash) throw new Error('URL notifikasi Midtrans harus HTTPS tanpa kredensial atau fragmen');
     }
     const jakartaNow = new Date(Date.now() + 7 * 60 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ') + ' +0700';
+    const appBaseUrl = (process.env.PUBLIC_APP_URL || process.env.FRONTEND_ORIGIN || 'https://wellness.anthonywj.my.id').replace(/\/+$/, '');
     const response = await fetch(snapUrl, {
       method: 'POST',
       headers: { Authorization: this.authorization(), Accept: 'application/json', 'Content-Type': 'application/json', ...(notificationUrl ? { 'X-Override-Notification': notificationUrl } : {}) },
@@ -52,6 +53,11 @@ export class MidtransClient {
           expiry: { start_time: jakartaNow, duration: Math.max(expiryMinutes, 15), unit: 'minutes' },
           page_expiry: { duration: Math.max(expiryMinutes, 15), unit: 'minutes' },
         }),
+        callbacks: {
+          finish: `${appBaseUrl}/dashboard?payment=finish&order_id=${encodeURIComponent(orderId)}`,
+          unfinish: `${appBaseUrl}/dashboard?payment=unfinish&order_id=${encodeURIComponent(orderId)}`,
+          error: `${appBaseUrl}/dashboard?payment=error&order_id=${encodeURIComponent(orderId)}`,
+        },
       }),
       signal: AbortSignal.timeout(15000),
     });

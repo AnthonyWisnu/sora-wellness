@@ -7,6 +7,7 @@ import {
   type Session,
 } from '../../shared/api'
 import { useConfirm } from '../../shared/confirm-context'
+import type { ActivePayment } from './usePaymentWatcher'
 
 type Options = {
   actor: Actor | null
@@ -27,7 +28,17 @@ export function useBooking({ actor, go, show, setBusy, loadSessions, loadCustome
   const [choice, setChoice] = useState<'quota' | 'single'>('single')
   const [useBalance, setUseBalance] = useState(false)
   const [bookingKey, setBookingKey] = useState('')
-  const [paymentLink, setPaymentLink] = useState('')
+  const [activePayment, setActivePayment] = useState<ActivePayment | null>(null)
+
+  function setPaymentLink(value: ActivePayment | string | null) {
+    if (!value) {
+      setActivePayment(null)
+    } else if (typeof value === 'string') {
+      setActivePayment({ url: value, kind: 'booking', id: '' })
+    } else {
+      setActivePayment(value)
+    }
+  }
 
   async function openBooking(session: Session) {
     if (!actor) {
@@ -69,7 +80,12 @@ export function useBooking({ actor, go, show, setBusy, loadSessions, loadCustome
       await Promise.all([loadSessions(), loadCustomer()])
       go('/dashboard')
       if (created.payment?.redirectUrl) {
-        setPaymentLink(created.payment.redirectUrl)
+        setActivePayment({
+          url: created.payment.redirectUrl,
+          kind: 'booking',
+          id: created.id,
+          orderId: created.payment.orderId,
+        })
         show('Kursi ditahan 15 menit. Buka pembayaran Midtrans Sandbox.')
       } else show('Booking berhasil dikonfirmasi.')
     } catch (error) {
@@ -109,10 +125,14 @@ export function useBooking({ actor, go, show, setBusy, loadSessions, loadCustome
         await loadSessions()
         show('Status pembayaran diperbarui dari Midtrans.')
       } else {
-        const detail = await api<{ redirectUrl: string | null }>(`/bookings/${id}`)
+        const detail = await api<{ id: string; redirectUrl: string | null; payment?: { orderId?: string } }>(`/bookings/${id}`)
         if (!detail.redirectUrl)
           throw new Error('Tautan pembayaran tidak tersedia untuk booking ini.')
-        setPaymentLink(detail.redirectUrl)
+        setActivePayment({
+          url: detail.redirectUrl,
+          kind: 'booking',
+          id,
+        })
       }
     } catch (error) {
       show(message(error))
@@ -129,7 +149,9 @@ export function useBooking({ actor, go, show, setBusy, loadSessions, loadCustome
     setChoice,
     useBalance,
     setUseBalance,
-    paymentLink,
+    activePayment,
+    setActivePayment,
+    paymentLink: activePayment?.url ?? '',
     setPaymentLink,
     openBooking,
     createBooking,

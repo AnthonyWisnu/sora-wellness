@@ -10,7 +10,7 @@ import {
 import { money } from '../../shared/format'
 import { FinanceFilters } from './FinanceFilters'
 import { FinanceList } from './FinanceList'
-import { FinanceWithdrawals } from './FinanceWithdrawals'
+import { FinanceWithdrawals } from './finance/FinanceWithdrawals'
 import { WalletLedger } from './WalletLedger'
 import type { Listing, Tab } from './finance-types'
 import './Finance.css'

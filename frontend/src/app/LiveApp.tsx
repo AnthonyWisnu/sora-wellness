@@ -17,6 +17,7 @@ import { PaymentModal } from '../features/booking/PaymentModal'
 import { useCustomerData } from '../features/customer/useCustomerData'
 import { useAuth } from '../features/auth/useAuth'
 import { useBooking } from '../features/booking/useBooking'
+import { usePaymentWatcher } from '../features/booking/usePaymentWatcher'
 import { useMembershipPurchase } from '../features/customer/useMembershipPurchase'
 import { SiteHeader } from './SiteHeader'
 import { DashboardPage } from './DashboardPage'
@@ -121,7 +122,8 @@ export default function LiveApp() {
     setChoice,
     useBalance,
     setUseBalance,
-    paymentLink,
+    activePayment,
+    setActivePayment,
     setPaymentLink,
     openBooking,
     createBooking,
@@ -137,6 +139,32 @@ export default function LiveApp() {
     loadSessions,
     setPaymentLink,
   })
+
+  const { refreshing: paymentRefreshing, manualRefresh: handleManualPaymentRefresh } =
+    usePaymentWatcher({
+      activePayment,
+      setActivePayment,
+      onSuccess: async () => {
+        await Promise.all([loadCustomer(), loadSessions()])
+      },
+      show,
+    })
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search)
+    const paymentResult = searchParams.get('payment')
+    if (paymentResult) {
+      if (paymentResult === 'finish') {
+        show('Pembayaran Anda telah diterima. Memperbarui status pesanan...')
+        void Promise.all([loadCustomer(), loadSessions()])
+      } else if (paymentResult === 'unfinish') {
+        show('Pembayaran belum diselesaikan. Anda dapat melanjutkannya sebelum batas waktu 15 menit habis.')
+      } else if (paymentResult === 'error') {
+        show('Terjadi kendala pada proses pembayaran Midtrans.')
+      }
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [loadCustomer, loadSessions, show])
 
   useEffect(() => {
     const pop = () => setPath(window.location.pathname)
@@ -313,7 +341,14 @@ export default function LiveApp() {
         />
       )}
 
-      {paymentLink && <PaymentModal paymentLink={paymentLink} setPaymentLink={setPaymentLink} />}
+      {activePayment && (
+        <PaymentModal
+          payment={activePayment}
+          onClose={() => setActivePayment(null)}
+          onManualRefresh={handleManualPaymentRefresh}
+          refreshing={paymentRefreshing}
+        />
+      )}
       {selected && (
         <BookingModal
           selected={selected}

@@ -47,8 +47,8 @@ export class PublicMediaController {
   constructor(private readonly db: Db) {}
   @Get(':id')
   async image(@Param('id', ParseUUIDPipe) id: string, @Res() response: Response) {
-    const found = await this.db.query<{ storage_path: string; mime_type: string }>('SELECT storage_path,mime_type FROM media_assets WHERE id=$1', [id]);
-    if (!found.rows[0]) throw new NotFoundException('Gambar tidak ditemukan');
+    const found = await this.db.query<{ storage_path: string; mime_type: string; purpose: string }>('SELECT storage_path,mime_type,purpose FROM media_assets WHERE id=$1', [id]);
+    if (!found.rows[0] || found.rows[0].purpose !== 'public') throw new NotFoundException('Gambar tidak ditemukan');
     try {
       const bytes = await readFile(resolve(mediaDirectory, found.rows[0].storage_path));
       response.setHeader('Content-Type', found.rows[0].mime_type);
@@ -99,7 +99,7 @@ export class AdminContentController {
     assertRole(req, 'admin');
     return (await this.db.query(`SELECT a.id,a.filename,a.mime_type AS "mimeType",a.byte_size AS "byteSize",a.created_at AS "createdAt",
       (s.logo_media_id=a.id OR s.hero_media_id=a.id OR EXISTS(SELECT 1 FROM studio_gallery g WHERE g.studio_id=1 AND g.media_id=a.id) OR EXISTS(SELECT 1 FROM site_content_media cm WHERE cm.media_id=a.id)) AS used
-      FROM media_assets a CROSS JOIN studio s WHERE s.id=1 ORDER BY a.created_at DESC`)).rows.map(row => ({ ...row, url: `/api/v1/public/media/${row.id}` }));
+      FROM media_assets a CROSS JOIN studio s WHERE s.id=1 AND a.purpose='public' ORDER BY a.created_at DESC`)).rows.map(row => ({ ...row, url: `/api/v1/public/media/${row.id}` }));
   }
 
   @Post('media') @ApiConsumes('multipart/form-data')

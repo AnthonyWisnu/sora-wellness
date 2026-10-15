@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Check } from 'lucide-react'
 import { api } from '../../shared/api'
 import type { AdminAccount } from '../../shared/types/auth'
@@ -31,37 +31,44 @@ const ALL_PERMISSIONS: PermissionItem[] = [
 
 export function StaffPermissionsDialog({ account, onClose, onSaved, show }: Props) {
   const [selected, setSelected] = useState<string[]>(account?.permissions ?? [])
+  const [activePreset, setActivePreset] = useState<'reception' | 'schedule' | 'finance' | 'manager' | null>(null)
   const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    const perms = account?.permissions ?? []
+    setSelected(perms)
+    if (perms.length === ALL_PERMISSIONS.length && ALL_PERMISSIONS.every((p) => perms.includes(p.key))) {
+      setActivePreset('manager')
+    } else {
+      setActivePreset(null)
+    }
+  }, [account?.id, account?.permissions])
 
   if (!account) return null
 
+  const PRESET_MAP: Record<'reception' | 'schedule' | 'finance' | 'manager', string[]> = {
+    reception: ['front_desk', 'lockers'],
+    schedule: ['classes_schedule', 'community_events'],
+    finance: ['finance_reports', 'finance_payouts'],
+    manager: ALL_PERMISSIONS.map((p) => p.key),
+  }
+
   function toggle(key: string) {
+    setActivePreset(null)
     setSelected((prev) =>
       prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
     )
   }
 
   function applyPreset(preset: 'reception' | 'schedule' | 'finance' | 'manager') {
-    if (preset === 'reception') setSelected(['front_desk', 'lockers'])
-    if (preset === 'schedule') setSelected(['classes_schedule', 'community_events'])
-    if (preset === 'finance') setSelected(['finance_reports', 'finance_payouts'])
-    if (preset === 'manager') setSelected(ALL_PERMISSIONS.map((p) => p.key))
+    setActivePreset(preset)
+    setSelected(PRESET_MAP[preset])
   }
 
   function isPresetActive(preset: 'reception' | 'schedule' | 'finance' | 'manager'): boolean {
-    if (preset === 'reception') {
-      return selected.length === 2 && selected.includes('front_desk') && selected.includes('lockers')
-    }
-    if (preset === 'schedule') {
-      return selected.length === 2 && selected.includes('classes_schedule') && selected.includes('community_events')
-    }
-    if (preset === 'finance') {
-      return selected.length === 2 && selected.includes('finance_reports') && selected.includes('finance_payouts')
-    }
-    if (preset === 'manager') {
-      return selected.length === ALL_PERMISSIONS.length && ALL_PERMISSIONS.every((p) => selected.includes(p.key))
-    }
-    return false
+    if (activePreset === preset) return true
+    const target = PRESET_MAP[preset]
+    return selected.length === target.length && target.every((k) => selected.includes(k))
   }
 
   async function handleSave() {
@@ -69,7 +76,7 @@ export function StaffPermissionsDialog({ account, onClose, onSaved, show }: Prop
     try {
       await api(`/admin/staff/${account!.id}/permissions`, {
         method: 'PATCH',
-        body: JSON.stringify({ permissions: selected }),
+        body: { permissions: selected },
       })
       show('Hak akses staf berhasil diperbarui.')
       onSaved()
