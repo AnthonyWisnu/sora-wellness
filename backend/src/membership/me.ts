@@ -56,7 +56,7 @@ export class MeController {
     try {
       await this.db.transaction(async (client) => {
         await client.query(
-          'INSERT INTO media_assets (id, filename, mime_type, byte_size, storage_path, uploaded_by) VALUES ($1,$2,$3,$4,$5,$6)',
+          'INSERT INTO media_assets (id, filename, mime_type, byte_size, storage_path, uploaded_by, purpose) VALUES ($1,$2,$3,$4,$5,$6,\'avatar\')',
           [id, originalName, detected.mime, file.size, storagePath, actor.id],
         );
         const oldAvatarId = actor.avatar_media_id;

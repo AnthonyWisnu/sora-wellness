@@ -142,13 +142,6 @@ export function SiteEditor({ show, onChanged }: Props) {
   )
   return (
     <section className="admin-workspace site-editor">
-      <div className="admin-workspace-head">
-        <div>
-          <span className="eyebrow">SITUS PUBLIK</span>
-          <h2>Kelola konten situs</h2>
-          <p>Atur konten dalam draf, periksa pratinjau, lalu terbitkan seluruh perubahan.</p>
-        </div>
-      </div>
       <div className="site-editor-toolbar">
         <span
           className={

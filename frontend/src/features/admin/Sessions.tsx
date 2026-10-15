@@ -121,15 +121,7 @@ export function AdminSessionsPanel({
   }
   return (
     <section className="admin-workspace">
-      <div className="admin-workspace-head sessions-head-responsive">
-        <div>
-          <span className="eyebrow">JADWAL</span>
-          <h2>Sesi kelas</h2>
-          <p>
-            Sesi yang sudah punya booking harus dibatalkan lalu dibuat ulang jika jadwal, pelatih,
-            kapasitas, atau harganya berubah.
-          </p>
-        </div>
+      <div className="admin-workspace-head sessions-head-responsive" style={{ justifyContent: 'flex-end', marginBottom: '14px' }}>
         <button
           className="button button-primary"
           onClick={() => {

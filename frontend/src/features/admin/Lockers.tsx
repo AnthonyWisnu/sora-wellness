@@ -165,15 +165,7 @@ export function AdminLockersPanel({ show }: Notice) {
 
   return (
     <section className="admin-workspace">
-      <div className="admin-workspace-head">
-        <div>
-          <span className="eyebrow">FASILITAS STUDIO</span>
-          <h2>Kelola loker</h2>
-          <p>
-            Nomor hanya dapat ditetapkan kepada pelanggan dengan paket aktif. Penetapan berakhir
-            saat masa paket terkait berakhir.
-          </p>
-        </div>
+      <div className="admin-workspace-head" style={{ justifyContent: 'flex-end', marginBottom: '14px' }}>
         <button className="button button-primary" onClick={() => setCreateOpen(true)}>
           <Plus size={15} /> Tambah loker
         </button>

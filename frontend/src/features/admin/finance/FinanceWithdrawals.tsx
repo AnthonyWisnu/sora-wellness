@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Check, FileText, Filter, X } from 'lucide-react'
+import { Check, FileText, X } from 'lucide-react'
 import { api } from '../../../shared/api'
 import { localDateTime, money } from '../../../shared/format'
 import { errorMessage } from '../../../shared/errors'
@@ -81,22 +81,26 @@ export function FinanceWithdrawals({ timezone, show }: Props) {
 
   return (
     <div className="panel admin-account-table-wrap" style={{ marginTop: '16px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Filter size={15} style={{ color: '#64748b' }} />
-          <span style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>Filter Status:</span>
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px' }}
-          >
-            <option value="">Semua Status</option>
-            <option value="pending">Menunggu Transfer</option>
-            <option value="completed">Selesai Ditransfer</option>
-            <option value="rejected">Ditolak</option>
-          </select>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+          {[
+            { value: '', label: 'Semua Status' },
+            { value: 'pending', label: 'Menunggu Transfer' },
+            { value: 'completed', label: 'Selesai Ditransfer' },
+            { value: 'rejected', label: 'Ditolak' },
+          ].map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              className={`button ${filterStatus === opt.value ? 'button-primary' : 'button-outline'}`}
+              style={{ padding: '6px 14px', fontSize: '0.85rem', borderRadius: '20px' }}
+              onClick={() => setFilterStatus(opt.value)}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
-        <span className="admin-results-count">{items.length} permohonan penarikan</span>
+        <span className="admin-results-count">{items.length} permohonan</span>
       </div>
 
       <table className="admin-account-table">

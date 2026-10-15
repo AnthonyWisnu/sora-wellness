@@ -43,6 +43,7 @@ type Props = {
   setPackages: Dispatch<SetStateAction<Packages | null>>
   setStudio: Dispatch<SetStateAction<Studio | null>>
   setSite: Dispatch<SetStateAction<SiteDocument | null>>
+  studioName?: string
 }
 export function DashboardPage({
   authReady,
@@ -69,6 +70,7 @@ export function DashboardPage({
   setPackages,
   setStudio,
   setSite,
+  studioName,
 }: Props) {
   const section = actor ? resolveDashboardSection(actor, path) : 'overview'
   useEffect(() => {
@@ -77,7 +79,7 @@ export function DashboardPage({
 
   if (actor && authReady && !mustChangePassword) {
     return (
-      <DashboardShell actor={actor} member={member} section={section} go={go} logout={logout}>
+      <DashboardShell actor={actor} member={member} section={section} go={go} logout={logout} studioName={studioName}>
         <div className="dashboard-page-head">
           <div>
             <span className="eyebrow">

@@ -82,11 +82,22 @@ export function SuperadminOverview({ go }: Props) {
               <h3>Tren Okupansi Matras Mingguan</h3>
               <p>Persentase keterisian kapasitas matras per hari operasional studio.</p>
             </div>
-            <Activity size={18} className="muted-icon" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span className="tag tag-green" style={{ fontSize: '11px', fontWeight: 700 }}>
+                Rata-rata: {data?.avgOccupancyPct ?? 0}%
+              </span>
+              <Activity size={18} className="muted-icon" />
+            </div>
           </div>
           <div className="chart-container">
             {weekly.length > 0 ? (
               <svg viewBox="0 0 420 180" className="chart-svg" aria-label="Grafik okupansi mingguan">
+                <defs>
+                  <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#244534" />
+                    <stop offset="100%" stopColor="#3d6b52" />
+                  </linearGradient>
+                </defs>
                 <line x1="40" y1="30" x2="400" y2="30" stroke="#eee8e2" strokeDasharray="3 3" />
                 <line x1="40" y1="80" x2="400" y2="80" stroke="#eee8e2" strokeDasharray="3 3" />
                 <line x1="40" y1="130" x2="400" y2="130" stroke="#eee8e2" strokeDasharray="3 3" />
@@ -99,19 +110,37 @@ export function SuperadminOverview({ go }: Props) {
                   const y = 130 - barHeight
                   return (
                     <g key={item.date || item.label}>
+                      {/* Track background pillar */}
                       <rect
                         x={x - 14}
-                        y={y}
+                        y={30}
                         width="28"
-                        height={barHeight}
-                        rx="4"
-                        fill="#3d5a45"
-                        opacity="0.85"
+                        height={100}
+                        rx="6"
+                        fill="#f4efe9"
                       />
-                      <text x={x} y={y - 6} fontSize="10" fill="#3d5a45" textAnchor="middle" fontWeight="600">
+                      {/* Active bar */}
+                      {item.pct > 0 && (
+                        <rect
+                          x={x - 14}
+                          y={y}
+                          width="28"
+                          height={barHeight}
+                          rx="6"
+                          fill="url(#barGradient)"
+                        />
+                      )}
+                      <text
+                        x={x}
+                        y={item.pct > 0 ? Math.max(22, y - 6) : 124}
+                        fontSize={item.pct > 0 ? '10' : '9'}
+                        fill={item.pct > 0 ? '#244534' : '#a89f91'}
+                        textAnchor="middle"
+                        fontWeight={item.pct > 0 ? '700' : '500'}
+                      >
                         {item.pct}%
                       </text>
-                      <text x={x} y="152" fontSize="11" fill="#665c52" textAnchor="middle">
+                      <text x={x} y="152" fontSize="11" fill="#665c52" textAnchor="middle" fontWeight="500">
                         {item.label}
                       </text>
                     </g>
@@ -136,29 +165,25 @@ export function SuperadminOverview({ go }: Props) {
           </div>
           <div className="category-bars">
             {categories.length > 0 ? (
-              <>
-                {categories.map((cat) => (
-                  <div key={cat.name} className="cat-progress-item">
-                    <div className="cat-meta">
-                      <span>{cat.name} ({cat.sessionCount} sesi)</span>
-                      <strong>{cat.pct}%</strong>
-                    </div>
-                    <div className="cat-track">
-                      <div
-                        className="cat-fill"
-                        style={{ width: `${cat.pct}%`, backgroundColor: cat.color }}
-                      />
-                    </div>
+              categories.map((cat) => (
+                <div key={cat.name} className="cat-progress-item">
+                  <div className="cat-meta">
+                    <span style={{ fontWeight: 600 }}>{cat.name} ({cat.sessionCount} sesi)</span>
+                    <strong style={{ color: cat.color }}>{cat.pct}%</strong>
                   </div>
-                ))}
-                <div className="cat-legend">
-                  {categories.map((cat) => (
-                    <div className="legend-chip" key={cat.name}>
-                      <span className="dot" style={{ backgroundColor: cat.color }} /> {cat.name} {cat.pct}%
-                    </div>
-                  ))}
+                  <div className="cat-track" style={{ background: '#f4efe9', height: '10px', borderRadius: '9999px' }}>
+                    <div
+                      className="cat-fill"
+                      style={{
+                        width: `${cat.pct}%`,
+                        backgroundColor: cat.color,
+                        borderRadius: '9999px',
+                        height: '100%',
+                      }}
+                    />
+                  </div>
                 </div>
-              </>
+              ))
             ) : (
               <p style={{ textAlign: 'center', color: 'var(--muted)', padding: '40px 0' }}>
                 Belum ada data kategori sesi aktif.

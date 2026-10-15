@@ -338,6 +338,7 @@ export default function LiveApp() {
           setPackages={setPackages}
           setStudio={setStudio}
           setSite={setSite}
+          studioName={site?.profile.name || studio?.name}
         />
       )}
 

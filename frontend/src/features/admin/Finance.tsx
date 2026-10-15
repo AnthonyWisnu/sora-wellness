@@ -205,15 +205,7 @@ export function AdminFinancePanel({
 
   return (
     <section className="admin-workspace admin-finance">
-      <div className="admin-workspace-head">
-        <div>
-          <span className="eyebrow">OPERASIONAL</span>
-          <h2>Booking & transaksi</h2>
-          <p>
-            Data diambil dari catatan backend. Status pembayaran menunjukkan hasil yang sudah
-            diterima atau diverifikasi oleh backend.
-          </p>
-        </div>
+      <div className="admin-workspace-head" style={{ justifyContent: 'flex-end', marginBottom: '16px' }}>
         <div style={{ display: 'flex', gap: '8px' }}>
           <button
             className="button button-primary"
@@ -299,49 +291,54 @@ export function AdminFinancePanel({
         <FinanceWithdrawals timezone={timezone} show={show} />
       ) : (
         <>
-          <FinanceFilters
-            tab={tab}
-            search={search}
-            setSearch={setSearch}
-            status={status}
-            setStatus={setStatus}
-            kind={kind}
-            setKind={setKind}
-            from={from}
-            setFrom={setFrom}
-            to={to}
-            setTo={setTo}
-            setPage={setPage}
-            searchNow={searchNow}
-          />
-          {error && (
-            <div className="panel live-error" role="alert">
-              {error}
-            </div>
+          {tab === 'wallets' && selectedWallet ? (
+            <WalletLedger
+              tab={tab}
+              selectedWallet={selectedWallet}
+              setSelectedWallet={setSelectedWallet}
+              ledger={ledger}
+              setLedger={setLedger}
+              ledgerLoading={ledgerLoading}
+              ledgerPage={ledgerPage}
+              setLedgerPage={setLedgerPage}
+              timezone={timezone}
+            />
+          ) : (
+            <>
+              <FinanceFilters
+                tab={tab}
+                search={search}
+                setSearch={setSearch}
+                status={status}
+                setStatus={setStatus}
+                kind={kind}
+                setKind={setKind}
+                from={from}
+                setFrom={setFrom}
+                to={to}
+                setTo={setTo}
+                setPage={setPage}
+                searchNow={searchNow}
+              />
+              {error && (
+                <div className="panel live-error" role="alert">
+                  {error}
+                </div>
+              )}
+              {loading && <p className="admin-finance-empty">Memuat catatan...</p>}
+              <FinanceList
+                tab={tab}
+                data={data}
+                loading={loading}
+                totalPages={totalPages}
+                timezone={timezone}
+                page={page}
+                setPage={setPage}
+                setSelectedWallet={setSelectedWallet}
+                setLedgerPage={setLedgerPage}
+              />
+            </>
           )}
-          {loading && <p className="admin-finance-empty">Memuat catatan...</p>}
-          <FinanceList
-            tab={tab}
-            data={data}
-            loading={loading}
-            totalPages={totalPages}
-            timezone={timezone}
-            page={page}
-            setPage={setPage}
-            setSelectedWallet={setSelectedWallet}
-            setLedgerPage={setLedgerPage}
-          />
-          <WalletLedger
-            tab={tab}
-            selectedWallet={selectedWallet}
-            setSelectedWallet={setSelectedWallet}
-            ledger={ledger}
-            setLedger={setLedger}
-            ledgerLoading={ledgerLoading}
-            ledgerPage={ledgerPage}
-            setLedgerPage={setLedgerPage}
-            timezone={timezone}
-          />
         </>
       )}
     </section>

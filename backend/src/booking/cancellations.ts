@@ -49,12 +49,13 @@ export class CancellationsService {
       await client.query('SELECT id FROM app_users WHERE id=$1 FOR UPDATE', [customerId]);
       const probe = await client.query<{ session_id: string }>('SELECT session_id FROM bookings WHERE id=$1 AND customer_id=$2', [bookingId,customerId]);
       if (!probe.rows[0]) throw new NotFoundException('Booking tidak ditemukan');
-      const session = await client.query<{ status: string; starts_at: Date; cancellation_cutoff_minutes: number }>(`SELECT s.status,s.starts_at,p.cancellation_cutoff_minutes FROM class_sessions s JOIN studio_policy p ON p.studio_id=1 WHERE s.id=$1 FOR UPDATE OF s`, [probe.rows[0].session_id]);
+      const session = await client.query<{ status: string; starts_at: Date; ends_at: Date; cancellation_cutoff_minutes: number }>(`SELECT s.status,s.starts_at,s.ends_at,p.cancellation_cutoff_minutes FROM class_sessions s JOIN studio_policy p ON p.studio_id=1 WHERE s.id=$1 FOR UPDATE OF s`, [probe.rows[0].session_id]);
       const result = await client.query<Booking>('SELECT * FROM bookings WHERE id=$1 AND customer_id=$2 FOR UPDATE', [bookingId,customerId]);
       const booking = result.rows[0];
       if (booking.status === 'cancelled') return this.cancelLocked(client,booking,'customer',true);
-      if (session.rows[0].status !== 'scheduled') throw new ConflictException('Sesi tidak aktif');
       const now = Date.now();
+      if (session.rows[0].status === 'finished' || now >= session.rows[0].ends_at.getTime()) throw new ConflictException('Sesi kelas sudah selesai');
+      if (session.rows[0].status !== 'scheduled') throw new ConflictException('Sesi tidak aktif');
       if (now >= session.rows[0].starts_at.getTime()) throw new ConflictException('Kelas sudah dimulai');
       const timely = isCancellationTimely(now,session.rows[0].starts_at.getTime(),session.rows[0].cancellation_cutoff_minutes);
       return this.cancelLocked(client,booking,'customer',timely);

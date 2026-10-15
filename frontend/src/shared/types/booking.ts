@@ -25,6 +25,8 @@ export type Booking = {
   quotaRetained: boolean
   localDate: string
   startsAt: string
+  endsAt?: string | null
+  sessionStatus?: string | null
   title: string
 }
 

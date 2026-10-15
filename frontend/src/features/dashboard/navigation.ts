@@ -7,7 +7,7 @@ export type DashboardGroup = { label: string; items: DashboardItem[] }
 export function getDashboardNavigation(actor: Actor): DashboardGroup[] {
   if (actor.role === 'superadmin') {
     return [
-      { label: 'Ikhtisar', items: [{ id: 'sessions', label: 'Ringkasan' }] },
+      { label: 'Menu Utama', items: [{ id: 'sessions', label: 'Ringkasan' }] },
       {
         label: 'Kelas & jadwal',
         items: [
@@ -48,7 +48,7 @@ export function getDashboardNavigation(actor: Actor): DashboardGroup[] {
           : ['front_desk', 'lockers', 'classes_schedule', 'community_events']
 
     const groups: DashboardGroup[] = [
-      { label: 'Ikhtisar', items: [{ id: 'sessions', label: 'Ringkasan' }] },
+      { label: 'Menu Utama', items: [{ id: 'sessions', label: 'Ringkasan' }] },
     ]
 
     const frontDeskItems: DashboardItem[] = []

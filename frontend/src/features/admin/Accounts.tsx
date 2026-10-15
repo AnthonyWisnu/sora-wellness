@@ -89,12 +89,7 @@ export function AdminAccountsPanel({ show }: PanelProps) {
   }
   return (
     <section className="admin-workspace">
-      <div className="admin-workspace-head">
-        <div>
-          <span className="eyebrow">AKUN</span>
-          <h2>Pelanggan & staf</h2>
-          <p>Cari akun, buat pelatih/admin, dan tangani lupa sandi secara langsung di studio.</p>
-        </div>
+      <div className="admin-workspace-head" style={{ justifyContent: 'flex-end', marginBottom: '14px' }}>
         <button className="button button-primary" onClick={() => setStaffOpen(true)}>
           <Plus size={15} /> Buat akun staf
         </button>

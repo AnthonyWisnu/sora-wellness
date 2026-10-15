@@ -48,15 +48,7 @@ export function AdminPackagesPanel({ show, onChanged }: PanelProps & { onChanged
   }
   return (
     <section className="admin-workspace">
-      <div className="admin-workspace-head">
-        <div>
-          <span className="eyebrow">MEMBERSHIP</span>
-          <h2>Durasi & harga paket</h2>
-          <p>
-            Semua pilihan memakai manfaat dan jatah kelas yang sama. Harga tersimpan saat pelanggan
-            membeli.
-          </p>
-        </div>
+      <div className="admin-workspace-head" style={{ justifyContent: 'flex-end', marginBottom: '14px' }}>
         <button
           className="button button-primary"
           onClick={() => {

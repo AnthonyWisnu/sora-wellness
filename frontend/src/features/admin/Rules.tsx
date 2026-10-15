@@ -154,15 +154,7 @@ export function AdminRulesPanel({
 
   return (
     <section className="admin-workspace">
-      <div className="admin-workspace-head">
-        <div>
-          <span className="eyebrow">JADWAL BERULANG</span>
-          <h2>Aturan mingguan</h2>
-          <p>
-            Buat sesi otomatis untuk hari yang dipilih dalam rentang maksimal 180 hari. Pengecualian
-            satu sesi dikelola di tab Kelola sesi.
-          </p>
-        </div>
+      <div className="admin-workspace-head" style={{ justifyContent: 'flex-end', marginBottom: '14px' }}>
         <button className="button button-primary" onClick={openCreate}>
           <Plus size={15} /> Tambah aturan
         </button>

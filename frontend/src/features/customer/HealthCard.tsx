@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { HeartPulse, Trash2 } from 'lucide-react'
 import { api, type HealthProfile } from '../../shared/api'
 import { localDateTime } from '../../shared/format'
@@ -17,6 +17,12 @@ export function HealthCard({ health, setHealth, timezone, show }: HealthCardProp
   const [note, setNote] = useState(health?.note ?? '')
   const [consent, setConsent] = useState(false)
   const [busy, setBusy] = useState(false)
+
+  useEffect(() => {
+    if (health?.note !== undefined) {
+      setNote(health?.note ?? '')
+    }
+  }, [health?.note])
 
   async function saveHealth(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()

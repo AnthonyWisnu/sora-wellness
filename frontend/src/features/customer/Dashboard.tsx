@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowRight, CreditCard, QrCode, Sparkles } from 'lucide-react'
+import { ArrowRight, CalendarDays, CreditCard, QrCode, Sparkles } from 'lucide-react'
 import type { Actor, Booking, Membership, PackagePurchase, Payment } from '../../shared/api'
 import { formatDate, localDateTime, localTime, money, statusName } from '../../shared/format'
 import { CustomerProfilePanel } from './Profile'
@@ -74,9 +74,14 @@ export function CustomerDashboard({
             </div>
           </div>
 
-          {bookings.find((b) => b.status === 'confirmed') && (
-            (() => {
-              const nextBooking = bookings.find((b) => b.status === 'confirmed')!
+          {(() => {
+            const nowMs = Date.now()
+            const upcomingBookings = bookings
+              .filter((b) => b.status === 'confirmed' && new Date(b.startsAt).getTime() > nowMs)
+              .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime())
+            const nextBooking = upcomingBookings[0]
+
+            if (nextBooking) {
               return (
                 <div
                   className="panel"
@@ -143,8 +148,57 @@ export function CustomerDashboard({
                   </button>
                 </div>
               )
-            })()
-          )}
+            }
+
+            return (
+              <div
+                className="panel"
+                style={{
+                  margin: '18px 0',
+                  background: '#f9f6f0',
+                  border: '1px solid #e7ded5',
+                  borderRadius: '14px',
+                  padding: '20px 24px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '16px',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <div>
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      letterSpacing: '0.1em',
+                      textTransform: 'uppercase',
+                      color: '#786e64',
+                      marginBottom: '4px',
+                    }}
+                  >
+                    <CalendarDays size={13} style={{ color: '#2d5a3f' }} /> Sesi Terdekat Anda
+                  </span>
+                  <h3 style={{ margin: '0 0 4px', fontSize: '18px', fontWeight: 700, color: '#17392e' }}>
+                    Belum ada jadwal kelas mendatang
+                  </h3>
+                  <p style={{ margin: 0, fontSize: '13.5px', color: '#665c52' }}>
+                    Jelajahi jadwal studio dan pesan kelas yoga atau pilates favorit Anda hari ini.
+                  </p>
+                </div>
+                <button
+                  className="button button-primary"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                  onClick={() => go('/jadwal')}
+                >
+                  Jelajahi Jadwal Kelas <ArrowRight size={15} />
+                </button>
+              </div>
+            )
+          })()}
         </>
       )}
       {(section === 'overview' || section === 'bookings') && (
@@ -177,49 +231,69 @@ export function CustomerDashboard({
                           : money(row.priceIdr)}
                     </p>
                   </div>
-                  <div className="live-booking-actions">
-                    <span
-                      className={`tag ${row.status === 'confirmed' ? 'tag-green' : row.status === 'pending_payment' ? 'tag-gold' : 'tag-gray'}`}
-                    >
-                      {statusName(row.status)}
-                    </span>
-                    {row.status === 'confirmed' && (
-                      <button
-                        className="button button-outline"
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                        onClick={() => setTicketBooking(row)}
-                      >
-                        <QrCode size={14} /> E-Ticket QR
-                      </button>
-                    )}
-                    {row.status === 'pending_payment' && (
-                      <>
-                        <button
-                          className="button button-primary"
-                          disabled={busy}
-                          onClick={() => void paymentAction(row.id, false)}
-                        >
-                          Lanjutkan bayar
-                        </button>
-                        <button
-                          className="button button-text"
-                          disabled={busy}
-                          onClick={() => void paymentAction(row.id, true)}
-                        >
-                          Perbarui status
-                        </button>
-                      </>
-                    )}
-                    {['confirmed', 'pending_payment'].includes(row.status) && (
-                      <button
-                        className="button button-text live-danger"
-                        disabled={busy}
-                        onClick={() => void cancelBooking(row.id)}
-                      >
-                        Batalkan
-                      </button>
-                    )}
-                  </div>
+                  {(() => {
+                    const nowMs = Date.now()
+                    const isFinished =
+                      (row.endsAt
+                        ? new Date(row.endsAt).getTime() <= nowMs
+                        : new Date(row.startsAt).getTime() <= nowMs) ||
+                      row.sessionStatus === 'finished'
+                    const isStarted = new Date(row.startsAt).getTime() <= nowMs
+                    const canCancel =
+                      ['confirmed', 'pending_payment'].includes(row.status) &&
+                      !isStarted &&
+                      !isFinished
+
+                    return (
+                      <div className="live-booking-actions">
+                        {row.status === 'confirmed' && isFinished ? (
+                          <span className="tag tag-gray">Selesai</span>
+                        ) : (
+                          <span
+                            className={`tag ${row.status === 'confirmed' ? 'tag-green' : row.status === 'pending_payment' ? 'tag-gold' : 'tag-gray'}`}
+                          >
+                            {statusName(row.status)}
+                          </span>
+                        )}
+                        {row.status === 'confirmed' && (
+                          <button
+                            className="button button-outline"
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                            onClick={() => setTicketBooking(row)}
+                          >
+                            <QrCode size={14} /> E-Ticket QR
+                          </button>
+                        )}
+                        {row.status === 'pending_payment' && (
+                          <>
+                            <button
+                              className="button button-primary"
+                              disabled={busy}
+                              onClick={() => void paymentAction(row.id, false)}
+                            >
+                              Lanjutkan bayar
+                            </button>
+                            <button
+                              className="button button-text"
+                              disabled={busy}
+                              onClick={() => void paymentAction(row.id, true)}
+                            >
+                              Perbarui status
+                            </button>
+                          </>
+                        )}
+                        {canCancel && (
+                          <button
+                            className="button button-text live-danger"
+                            disabled={busy}
+                            onClick={() => void cancelBooking(row.id)}
+                          >
+                            Batalkan
+                          </button>
+                        )}
+                      </div>
+                    )
+                  })()}
                 </article>
               ))
             ) : (

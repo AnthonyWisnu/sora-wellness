@@ -64,15 +64,7 @@ export function AdminClassTypesPanel({ show, onChanged }: PanelProps & { onChang
   }
   return (
     <section className="admin-workspace">
-      <div className="admin-workspace-head">
-        <div>
-          <span className="eyebrow">KATALOG</span>
-          <h2>Jenis kelas</h2>
-          <p>
-            Nilai bawaan digunakan saat membuat sesi. Perubahan katalog tidak mengubah transaksi
-            lama.
-          </p>
-        </div>
+      <div className="admin-workspace-head" style={{ justifyContent: 'flex-end', marginBottom: '14px' }}>
         <button
           className="button button-primary"
           onClick={() => {

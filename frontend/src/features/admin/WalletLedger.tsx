@@ -1,4 +1,5 @@
 import type { Dispatch, SetStateAction } from 'react'
+import { ArrowLeft } from 'lucide-react'
 import type { AdminWalletLedger, AdminWalletRecord } from '../../shared/api'
 import { money } from '../../shared/format'
 import { dateTime, kindLabel } from './finance-format'
@@ -30,12 +31,25 @@ export function WalletLedger({
     <>
       {tab === 'wallets' && selectedWallet && (
         <div className="panel admin-finance-ledger">
+          <div style={{ marginBottom: '14px' }}>
+            <button
+              className="button button-outline"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+              onClick={() => {
+                setSelectedWallet(null)
+                setLedger(null)
+              }}
+            >
+              <ArrowLeft size={16} /> Kembali ke Daftar Saldo Pelanggan
+            </button>
+          </div>
           <div className="admin-finance-record-head">
             <div>
-              <span className="eyebrow">BUKU SALDO</span>
+              <span className="eyebrow">BUKU SALDO PELANGGAN</span>
               <h3>{selectedWallet.customerName}</h3>
               <p>
-                Saldo terkini: {money(ledger?.customer.balanceIdr ?? selectedWallet.balanceIdr)}
+                {selectedWallet.customerEmail} · Saldo terkini:{' '}
+                <strong>{money(ledger?.customer.balanceIdr ?? selectedWallet.balanceIdr)}</strong>
               </p>
             </div>
             <button

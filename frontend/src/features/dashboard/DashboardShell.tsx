@@ -59,15 +59,21 @@ type Props = {
   section: string
   go: (path: string) => void
   logout: () => void
+  studioName?: string
   children: ReactNode
 }
 
-export function DashboardShell({ actor, member, section, go, logout, children }: Props) {
+export function DashboardShell({ actor, member, section, go, logout, studioName, children }: Props) {
   const [menuOpen, setMenuOpen] = useState(false)
   const closeButton = useRef<HTMLButtonElement>(null)
   const menuButton = useRef<HTMLButtonElement>(null)
   const sidebar = useRef<HTMLElement>(null)
   const title = dashboardTitle(actor, section)
+
+  const brandName = studioName?.trim() || 'SORA Wellness Studio'
+  const brandParts = brandName.split(' ')
+  const brandFirst = brandParts[0].toUpperCase()
+  const brandSecond = (brandParts.slice(1).join(' ') || 'WELLNESS STUDIO').toUpperCase()
 
   useEffect(() => {
     if (!menuOpen) return
@@ -115,8 +121,8 @@ export function DashboardShell({ actor, member, section, go, logout, children }:
         <div className="dashboard-brand">
           <img src="/images/sora-mark.svg" alt="" />
           <span>
-            <strong>SORA</strong>
-            <small>WELLNESS STUDIO</small>
+            <strong>{brandFirst}</strong>
+            <small>{brandSecond}</small>
           </span>
           <button
             ref={closeButton}

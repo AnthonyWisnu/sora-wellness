@@ -54,14 +54,7 @@ export function EventsManagement({ timezone, show }: Props) {
 
   return (
     <section className="live-admin-section">
-      <div className="admin-page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
-        <div>
-          <span className="eyebrow">PROGRAM OUTDOOR & KOMUNITAS</span>
-          <h2 style={{ margin: 0, fontSize: '1.4rem' }}>Manajemen Event Luar Studio</h2>
-          <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: '0.88rem' }}>
-            Selenggarakan event yoga/pilates terbuka setiap 1-2 bulan sekali untuk menjangkau pelanggan baru studio.
-          </p>
-        </div>
+      <div className="admin-page-header" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
         <button
           type="button"
           className="button button-primary"

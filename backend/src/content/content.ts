@@ -48,7 +48,7 @@ export class PublicMediaController {
   @Get(':id')
   async image(@Param('id', ParseUUIDPipe) id: string, @Res() response: Response) {
     const found = await this.db.query<{ storage_path: string; mime_type: string; purpose: string }>('SELECT storage_path,mime_type,purpose FROM media_assets WHERE id=$1', [id]);
-    if (!found.rows[0] || found.rows[0].purpose !== 'public') throw new NotFoundException('Gambar tidak ditemukan');
+    if (!found.rows[0] || !['public', 'avatar'].includes(found.rows[0].purpose)) throw new NotFoundException('Gambar tidak ditemukan');
     try {
       const bytes = await readFile(resolve(mediaDirectory, found.rows[0].storage_path));
       response.setHeader('Content-Type', found.rows[0].mime_type);
