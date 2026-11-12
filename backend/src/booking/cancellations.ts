@@ -46,7 +46,7 @@ export class CancellationsService {
 
   async cancelCustomer(bookingId: string, customerId: string) {
     return this.db.transaction(async (client) => {
-      await client.query('SELECT id FROM app_users WHERE id=$1 FOR UPDATE', [customerId]);
+      await client.query('SELECT id FROM app_users WHERE id=$1 FOR NO KEY UPDATE', [customerId]);
       const probe = await client.query<{ session_id: string }>('SELECT session_id FROM bookings WHERE id=$1 AND customer_id=$2', [bookingId,customerId]);
       if (!probe.rows[0]) throw new NotFoundException('Booking tidak ditemukan');
       const session = await client.query<{ status: string; starts_at: Date; ends_at: Date; cancellation_cutoff_minutes: number }>(`SELECT s.status,s.starts_at,s.ends_at,p.cancellation_cutoff_minutes FROM class_sessions s JOIN studio_policy p ON p.studio_id=1 WHERE s.id=$1 FOR UPDATE OF s`, [probe.rows[0].session_id]);

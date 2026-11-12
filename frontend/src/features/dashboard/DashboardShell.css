@@ -1,11 +1,11 @@
 .dashboard-app {
-  --dashboard-green: #183d31;
+  --dashboard-green: var(--color-primary);
   display: grid;
   grid-template-columns: 250px minmax(0, 1fr);
   min-height: 100vh;
-  background: #f7f8f6;
-  color: #1d2c27;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-ui);
 }
 
 .dashboard-sidebar {
@@ -14,7 +14,7 @@
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #17392e;
+  background: var(--color-primary);
   color: #f7f5ef;
   z-index: 31;
 }
@@ -44,7 +44,7 @@
   line-height: 1;
 }
 .dashboard-brand small {
-  font-size: 8px;
+  font-size: var(--text-xs);
   letter-spacing: 0.19em;
   color: #bbcfc3;
   font-weight: 700;
@@ -75,7 +75,7 @@
 }
 .dashboard-workspace-label {
   padding: 0 13px 22px;
-  font-size: 10px;
+  font-size: var(--text-xs);
   letter-spacing: 0.19em;
   color: #cfbc8d;
   font-weight: 800;
@@ -91,7 +91,7 @@
 .dashboard-nav-heading {
   padding: 0 13px 8px;
   color: #a2b9a9;
-  font-size: 10px;
+  font-size: var(--text-xs);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -177,7 +177,7 @@
 }
 .dashboard-account-text small {
   color: #b3c9bb;
-  font-size: 10px;
+  font-size: var(--text-xs);
 }
 .dashboard-account button {
   display: grid;
@@ -234,7 +234,7 @@
   border-radius: 20px;
   color: #93733c;
   background: #fcf9f0;
-  font-size: 9px;
+  font-size: var(--text-xs);
   font-weight: 800;
   letter-spacing: 0.08em;
   white-space: nowrap;
@@ -339,7 +339,7 @@
 .dashboard-wallet-entry small {
   margin-top: 4px;
   color: #7c8a80;
-  font-size: 10px;
+  font-size: var(--text-xs);
 }
 .dashboard-wallet-amount {
   text-align: right;
@@ -418,7 +418,7 @@
     gap: 1px;
   }
   .dashboard-topbar-title span {
-    font-size: 10px;
+    font-size: var(--text-xs);
   }
   .dashboard-topbar-title span::after {
     display: none;
@@ -427,7 +427,7 @@
     font-size: 13px;
   }
   .dashboard-sandbox-badge {
-    font-size: 7px;
+    font-size: var(--text-xs);
     padding: 6px 7px;
   }
   .dashboard-content {

@@ -1,0 +1,8 @@
+{
+  "result": "PASS",
+  "balanceBefore": 65000,
+  "balanceAfter": 55000,
+  "updatedWithoutReload": true,
+  "bankTransferPerformed": false,
+  "browserErrors": []
+}

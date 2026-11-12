@@ -1,3 +1,4 @@
+import { encryptHealth } from '../src/health/health-crypto';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import supertest from 'supertest';
@@ -18,6 +19,7 @@ async function main() {
       const email = `${role}-${randomUUID()}@example.test`;
       const id = (await pool.query<{ id: string }>('INSERT INTO app_users (email,full_name,role,password_hash) VALUES ($1,$2,$3,$4) RETURNING id', [email,name,role,await hashPassword(password)])).rows[0].id;
       users.push(id);
+      if (role==='admin') await pool.query("UPDATE app_users SET permissions=ARRAY['finance_reports','finance_payouts'] WHERE id=$1",[id]);
       if (role === 'customer') await pool.query('INSERT INTO wallet_accounts (customer_id) VALUES ($1)', [id]);
       const agent = supertest.agent(base);
       const csrf = (await agent.get('/api/v1/auth/csrf').expect(200)).body.token as string;
@@ -52,7 +54,7 @@ async function main() {
     await pool.query('UPDATE wallet_accounts SET balance_idr=150000 WHERE customer_id=$1', [ayu.id]);
     await pool.query(`INSERT INTO wallet_entries (customer_id,booking_id,amount_idr,balance_after_idr,kind,reference) VALUES
       ($1,$2,200000,200000,'class_refund',$3),($1,$2,-50000,150000,'class_purchase',$4)`, [ayu.id,paidBooking,`finance-${randomUUID()}`,`finance-${randomUUID()}`]);
-    await pool.query("INSERT INTO health_profiles (customer_id,note,consented_at) VALUES ($1,'RAHASIA KESEHATAN',now())", [ayu.id]);
+    await pool.query("INSERT INTO health_profiles (customer_id,note,consented_at) VALUES ($1,$2,now())", [ayu.id,encryptHealth('RAHASIA KESEHATAN',ayu.id)]);
 
     for (const path of ['/api/v1/admin/bookings','/api/v1/admin/payments','/api/v1/admin/wallets',`/api/v1/admin/wallets/${ayu.id}/entries`]) {
       await coach.agent.get(path).expect(403);

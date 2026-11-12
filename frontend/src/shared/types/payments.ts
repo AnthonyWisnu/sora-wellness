@@ -7,6 +7,8 @@ export type Payment = {
   createdAt: string
   bookingId: string | null
   packagePurchaseId: string | null
+  eventRegistrationId?: string | null
+  eventSlug?: string | null
   redirectUrl?: string | null
 }
 

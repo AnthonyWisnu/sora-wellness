@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Plus, RotateCcw, ShieldCheck } from 'lucide-react'
-import { api, type AdminAccount } from '../../shared/api'
+import { api, type Actor, type AdminAccount } from '../../shared/api'
 import { type PanelProps, errorMessage } from './management-common'
 import { AdminDialog } from './AdminDialog'
 import { StaffPermissionsDialog } from './StaffPermissionsDialog'
@@ -11,7 +11,8 @@ function randomPassword() {
   return Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join('')
 }
 
-export function AdminAccountsPanel({ show }: PanelProps) {
+export function AdminAccountsPanel({ show, actor }: PanelProps & { actor?: Actor }) {
+  const superadmin=actor?.role==='superadmin'
   const [search, setSearch] = useState('')
   const [query, setQuery] = useState('')
   const [role, setRole] = useState('')
@@ -197,7 +198,7 @@ export function AdminAccountsPanel({ show }: PanelProps) {
                 </td>
                 <td>{row.passwordChangeRequired ? 'Perlu ganti kata sandi' : 'Aktif'}</td>
                 <td style={{ display: 'flex', gap: '6px' }}>
-                  {(row.role === 'admin' || row.role === 'finance') && (
+                  {superadmin && row.role === 'admin' && (
                     <button
                       className="button button-outline"
                       onClick={() => setPermissionsTarget(row)}
@@ -205,7 +206,7 @@ export function AdminAccountsPanel({ show }: PanelProps) {
                       <ShieldCheck size={14} /> Atur Izin
                     </button>
                   )}
-                  <button
+                  {actor?.id !== row.id && (superadmin || ['coach','customer'].includes(row.role)) && <button
                     className="button button-outline"
                     onClick={() => {
                       setResetTarget(row)
@@ -214,7 +215,7 @@ export function AdminAccountsPanel({ show }: PanelProps) {
                     }}
                   >
                     <RotateCcw size={14} /> Reset sandi
-                  </button>
+                  </button>}
                 </td>
               </tr>
             ))}
@@ -279,8 +280,8 @@ export function AdminAccountsPanel({ show }: PanelProps) {
               }
             >
               <option value="coach">Pelatih</option>
-              <option value="admin">Staf Admin</option>
-              <option value="superadmin">Superadmin</option>
+              {superadmin && <option value="admin">Staf Admin</option>}
+              {superadmin && <option value="superadmin">Superadmin</option>}
             </select>
           </label>
           <button className="button button-primary" disabled={busy}>

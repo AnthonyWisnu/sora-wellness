@@ -19,6 +19,7 @@ import type { AdminTab } from '../features/admin/admin-types'
 import type { ActivePayment } from '../features/booking/usePaymentWatcher'
 
 type Props = {
+  reloadCustomer: () => Promise<void>
   authReady: boolean
   path: string
   actor: Actor | null
@@ -46,6 +47,7 @@ type Props = {
   studioName?: string
 }
 export function DashboardPage({
+  reloadCustomer,
   authReady,
   path,
   actor,
@@ -100,6 +102,7 @@ export function DashboardPage({
         </div>
         {actor.role === 'customer' && (
           <CustomerDashboard
+            onWalletChanged={reloadCustomer}
             section={section}
             actor={actor}
             member={member}

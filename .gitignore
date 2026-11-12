@@ -31,3 +31,7 @@ Thumbs.db
 
 # Bahan acuan desain lokal; aset aplikasi yang dipakai ada di frontend/public/
 Referensi UI/
+
+# Arsip audit lokal, tidak dibutuhkan untuk aplikasi atau deployment
+audit/arsip/
+audit/pelaksanaan/00/uploads/

@@ -1,5 +1,7 @@
 # Sora Wellness Studio Platform
 
+Validasi terbaru untuk tugas Pemrograman Backend dan prototipe penelitian tersedia pada [hasil pengujian lokal](audit/pelaksanaan/penelitian/hasil-akhir.md) dan [bahan jurnal](audit/pelaksanaan/penelitian/bahan-jurnal.md). Cakupan ini berfokus pada fungsi studio per peran dengan Midtrans Sandbox. Source penelitian dipublikasikan melalui branch `penelitian/rapikan-audit-benefit-member`, tanpa deployment sesuai instruksi pemilik.
+
 <div align="center">
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue?logo=typescript&logoColor=white)
@@ -35,7 +37,7 @@
 
 Platform melayani seluruh spektrum aktivitas operasional:
 1. **Pemesanan Kelas dan Membership:** Reservasi sesi berulang 180 hari, hold kursi 15 menit, dan kuota langganan prorata kalender.
-2. **Transaksi dan Dompet Saldo:** Pembayaran terpadu Midtrans Snap Sandbox, double-entry wallet ledger, resume checkout modal, serta penarikan saldo (*wallet withdrawal/payout*).
+2. **Transaksi dan Dompet Saldo:** Pembayaran terpadu Midtrans Snap Sandbox, riwayat mutasi wallet, resume checkout modal, serta penarikan saldo (*wallet withdrawal/payout*). Jurnal double-entry lengkap masih menjadi pengembangan lanjutan.
 3. **Presensi Terpisah (Front Desk vs Matras):** Meja depan fokus pada pemindaian e-ticket QR dan penugasan loker fisik; pelatih di ruang kelas fokus pada presensi kehadiran fisik di matras dan pantauan catatan kesehatan berizin (*consented health notes*).
 4. **Event Komunitas Luar Studio:** Pengelolaan workshop outdoor, multi-sesi kegiatan, brosur promosi otomatis, tautan presisi Google Maps, dan e-ticket pass publik.
 5. **Otorisasi Granular Enterprise (RBAC):** Superadmin dapat memberikan kombinasi hak akses spesifik per akun staf (Resepsionis, Koordinator Kelas, Keuangan, Manajer) dengan KPI dashboard yang beradaptasi secara dinamis.
@@ -84,7 +86,7 @@ Platform melayani seluruh spektrum aktivitas operasional:
 ### 5. Mesin Pembayaran Midtrans Snap dan Dompet Saldo (Wallet Ledger)
 - **Midtrans Snap Sandbox Berbatas Waktu:** Setiap pembuatan tagihan Snap mengirim batas kedaluwarsa 15 menit (`expiry: { duration: 15, unit: 'minutes' }`) yang selaras dengan pelepasan penahanan kursi di backend.
 - **Dukungan Buka Kembali Modal Pembayaran (*Resume Checkout*):** Jika pelanggan menutup jendela browser atau pop-up Midtrans tanpa sengaja, tombol 'Lanjutkan Pembayaran' di riwayat booking dapat memanggil kembali token Snap aktif tanpa membuat tagihan ganda.
-- **Buku Besar Saldo (*Double-Entry Ledger*):** Mutasi rupiah akibat pembatalan kelas tepat waktu tersimpan sebagai saldo dompet yang dapat dibelanjakan kembali atau ditarik ke rekening bank pribadi (*payout request*).
+- **Riwayat Mutasi Saldo:** Mutasi rupiah akibat pembatalan kelas tepat waktu tersimpan sebagai saldo dompet yang dapat dibelanjakan kembali atau diajukan penarikannya. Pada prototipe penelitian, payout merupakan pencatatan simulasi manual tanpa transfer bank riil.
 - **Verifikasi Webhook Idempoten:** Notifikasi webhook Midtrans divalidasi menggunakan signature SHA-512 dengan Server Key terenkripsi AES-256 (`MIDTRANS_SETTINGS_KEY`).
 
 ### 6. Foto Profil Member dan Headless CMS Situs Publik
@@ -191,7 +193,7 @@ flowchart TD
         AuthMod["Auth, Session & Granular RBAC Engine"]
         CatalogMod["Catalog & Recurring Schedule Engine (180 Hari)"]
         BookingMod["Booking & 15-Min Hold Sweeper"]
-        PaymentMod["Midtrans Snap Sandbox & Double-Entry Ledger"]
+        PaymentMod["Midtrans Snap Sandbox & Mutasi Wallet"]
         WithdrawalMod["Wallet Payout & Transfer Verification"]
         EventMod["Community Events & Outdoor Ticket Engine"]
         AttendMod["Attendance 2-Tier & Front Desk Lobby Engine"]
@@ -522,22 +524,9 @@ Buka browser di **`http://127.0.0.1:5173`**.
 
 ## Kredensial Akun Demo Resmi
 
-Seluruh akun demo telah diseragamkan dengan kata sandi resmi yang sama untuk memudahkan pengujian di lingkungan lokal maupun VPS:
-
-> **Kata Sandi Seluruh Akun Demo:** `SoraDemo2026!`
-
-| Peran | Nama Akun | Email Login | Hak Akses Utama |
-| :--- | :--- | :--- | :--- |
-| **Superadmin** | Admin Studio | `admin@sora.example.test` | Akses penuh: RBAC Staf, CMS, Loker, Jadwal, Event, Payout, Keuangan |
-| **Staf Resepsionis** | Resepsionis Lobi | `reception@sora.example.test` | Terminal verifikasi e-ticket QR meja depan dan matriks loker fisik |
-| **Pelatih (Coach)** | Nadia Putri | `nadia@sora.example.test` | Presensi matras 2-tier, pantau alert kesehatan, penugasan event |
-| **Pelatih (Coach)** | Made Arya | `arya@sora.example.test` | Presensi matras 2-tier, pantau alert kesehatan, penugasan event |
-| **Pelanggan (Member)** | Ayu Lestari | `ayu.lestari@sora.example.test` | Booking kelas pemula, upload foto profil, dompet saldo, riwayat |
-| **Pelanggan (Member)** | Dimas Saputra | `dimas.saputra@sora.example.test` | Paket langganan aktif, booking kelas, riwayat kehadiran |
-| **Pelanggan (Member)** | Lila Mahendra | `lila.mahendra@sora.example.test` | Riwayat kelas, catatan kesehatan berizin tersimpan, loker |
-| **Pelanggan (Member)** | Maya Kirana | `maya.kirana@sora.example.test` | Reservasi kelas aktif mendatang |
-| **Pelanggan (Member)** | Raka Pratama | `raka.pratama@sora.example.test` | Pelanggan reguler studio |
-| **Pelanggan (Member)** | Sinta Dewi | `sinta.dewi@sora.example.test` | Riwayat kelas dan audit absensi |
+Akun demo hanya dibuat pada PostgreSQL lokal dan Midtrans Sandbox melalui `npm run demo:setup`.
+Sandi acak dibaca dari berkas lokal `backend/.qa/demo-accounts.json`, yang tidak boleh di-commit.
+Jangan memasang akun demo pada VPS operasional. Credential demo yang dahulu dipublikasikan telah dicabut oleh migrasi018; penghapusan teks ini tidak menggantikan penerapan migrasi dan pemulihan akses owner oleh operator.
 
 ---
 
@@ -573,7 +562,7 @@ Platform terintegrasi langsung dengan pipeline CI/CD otomatis berbasis **GitHub 
 - **Workflow:** [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)
 - **Runner:** Self-Hosted Runner `vps-wellness`
 - **Mekanisme Otomatis:**
-  Setiap `git push origin main` secara otomatis mengeksekusi sinkronisasi kode di VPS, kompilasi frontend Vite, kompilasi backend NestJS, migrasi skema database PostgreSQL, reload proses PM2, dan pembaruan aset statis Nginx.
+  Workflow yang aktif pada main menjalankan deployment melalui runner VPS. Source penelitian dipublikasikan ke branch `penelitian/rapikan-audit-benefit-member`, tanpa deployment sesuai instruksi pemilik. Kandidat perubahan pipeline disimpan dalam arsip lokal dan belum diaktifkan.
 
 ---
 

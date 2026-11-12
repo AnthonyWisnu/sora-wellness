@@ -1,0 +1,54 @@
+{
+  "result": "PASS",
+  "checkedAt": "2026-11-12T09:52:04.337Z",
+  "applicationCodeChanged": false,
+  "monthlyClassQuota": 8,
+  "memberScheduleDays": 30,
+  "guestScheduleDays": 7,
+  "checks": {
+    "offer": {
+      "quotaMentioned": true,
+      "levelsMentioned": true,
+      "bookingWindowMentioned": false,
+      "lockerMentioned": false
+    },
+    "cmsBenefits": [
+      {
+        "title": "Manfaat keanggotaan",
+        "items": []
+      }
+    ],
+    "memberWindowUi": "Jadwal tersedia 30 hari ke depan",
+    "quotaBooking": {
+      "result": "PASS",
+      "level": "intermediate_2",
+      "quotaBefore": 1,
+      "quotaAfter": 2,
+      "walletUnchanged": true,
+      "gatewayDueIdr": 0,
+      "paymentIntentCreated": false
+    },
+    "quotaReturn": {
+      "result": "PASS",
+      "quotaReturnedOnce": true,
+      "usedAfterCancellation": 1
+    },
+    "locker": {
+      "result": "PASS",
+      "assignedCodeVisible": true,
+      "assignmentByAdmin": true,
+      "customerSelfSelection": false
+    },
+    "guestWindowUi": "Jadwal tersedia 7 hari ke depan",
+    "levelRestriction": {
+      "result": "PASS",
+      "regularUiBlocked": true,
+      "regularDirectApiHttp": 409
+    },
+    "quotaExhausted": {
+      "result": "PASS",
+      "quotaOptionHidden": true,
+      "directApiHttp": 409
+    }
+  }
+}

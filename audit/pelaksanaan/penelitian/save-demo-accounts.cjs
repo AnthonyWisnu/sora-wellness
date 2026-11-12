@@ -1,0 +1,10 @@
+const fs=require('node:fs'),path=require('node:path');
+const {root,f,pool}=require('./browser-common.cjs');
+const roles={superadmin:'Superadmin',admin:'Admin operasional',coach:'Coach',member:'Member aktif',guest:'Pelanggan tanpa paket',frontdesk:'Resepsionis'};
+const lines=['# Akun sintetis untuk pengujian lokal','','Database fixture penelitian. Bukan akun produksi. Jangan commit berkas ini.','', 'Kata sandi semua akun di tabel: `PenelitianSora_2026_TestOnly`','', '| Peran | Email |','|---|---|'];
+for(const [key,label] of Object.entries(roles)) lines.push(`| ${label} | ${f.users[key].email} |`);
+lines.push('','Alamat: http://127.0.0.1:5173','Catatan: kelas coach aktif memiliki jendela waktu. Screenshot jurnal berasal dari sesi yang aktif ketika diuji. Di luar jendela tersebut catatan kesehatan memang disembunyikan.','');
+const file=path.join(root,'backend/.qa/penelitian-akun-lokal.md');
+fs.writeFileSync(file,lines.join('\n'),{mode:0o600});
+console.log('Akun demo lokal disimpan di folder .qa yang diabaikan Git, tanpa menampilkan kredensial.');
+pool.end();

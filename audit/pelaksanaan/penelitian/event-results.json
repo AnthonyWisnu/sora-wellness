@@ -1,0 +1,30 @@
+{
+  "result": "PASS",
+  "provider": "Midtrans Sandbox nyata",
+  "method": "BCA VA simulator resmi",
+  "orderId": "EVT-5f3af3bb-0382-438f-979e-46e94011e8f9",
+  "providerStatus": "settlement",
+  "localStatus": {
+    "paymentStatus": "success",
+    "eventStatus": "registered",
+    "creditedBalanceIdr": 0
+  },
+  "validWebhookReplays": 2,
+  "invalidWebhookHttp": 403,
+  "delivery": "Replay HTTP lokal, bukan bukti callback otomatis dari internet",
+  "eventId": "6bea1941-51a5-4702-a77c-a8bedc540f03",
+  "slug": "sunrise-yoga-dan-pilates-komunitas-sora-4c6aca11",
+  "dates": [
+    "2026-11-17",
+    "2026-11-18"
+  ],
+  "freeGuestRegistration": true,
+  "freeTicketRestoredAfterReload": true,
+  "paidLoginReturnedToEvent": true,
+  "qrAfterPayment": true,
+  "scheduleLockHttp": 409,
+  "freeCheckin": "attended",
+  "paidCheckin": "attended",
+  "eventInPaymentHistory": true,
+  "browserErrors": []
+}

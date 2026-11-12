@@ -1,0 +1,23 @@
+{
+  "result": "PASS",
+  "provider": "Midtrans Sandbox nyata",
+  "method": "BCA VA simulator resmi",
+  "orderId": "CLS-69a87c2c-27a4-4c63-9d71-224759634c86",
+  "providerStatus": "settlement",
+  "localStatus": {
+    "paymentStatus": "success",
+    "bookingStatus": "confirmed",
+    "creditedBalanceIdr": 0
+  },
+  "validWebhookReplays": 2,
+  "invalidWebhookHttp": 403,
+  "delivery": "Replay HTTP lokal, bukan bukti callback otomatis dari internet",
+  "guestWindowDays": 7,
+  "prioritySessionVisible": false,
+  "paymentDialogVisible": true,
+  "bookingId": "69a87c2c-27a4-4c63-9d71-224759634c86",
+  "cancellation": "PASS",
+  "walletAfterCancellation": 75000,
+  "duplicateCancellation": "no extra credit",
+  "browserErrors": []
+}

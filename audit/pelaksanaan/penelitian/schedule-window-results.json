@@ -1,0 +1,31 @@
+{
+  "result": "PASS",
+  "checkedAt": "2026-11-12T10:00:59.287Z",
+  "target": "fixture lokal",
+  "dates": {
+    "today": "2026-11-12",
+    "last": "2026-12-11",
+    "outside": "2026-12-12"
+  },
+  "window": "30 tanggal, termasuk hari ini, berakhir pada hari ini + 29",
+  "memberViewports": [
+    {
+      "width": 1280,
+      "visibleDates": 30,
+      "distinctDates": 30,
+      "finalDaySessionVisible": true,
+      "bookingDialogAvailable": true
+    },
+    {
+      "width": 375,
+      "visibleDates": 30,
+      "distinctDates": 30,
+      "finalDaySessionVisible": true,
+      "bookingDialogAvailable": true
+    }
+  ],
+  "finalDayBookable": true,
+  "dayBeyondWindowBookable": false,
+  "regularVisibleDates": 7,
+  "regularFinalDaySessionHttp": 404
+}

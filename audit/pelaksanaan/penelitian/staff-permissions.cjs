@@ -1,0 +1,26 @@
+const assert=require('node:assert/strict');
+const {start,base,pool,f,save,screenshot}=require('./browser-common.cjs');
+let runtime;
+(async()=>{
+  runtime=await start('superadmin');const {page}=runtime;
+  await page.goto(base+'/dashboard/accounts');
+  await page.getByPlaceholder('Cari nama atau email',{exact:true}).fill(f.users.frontdesk.email);
+  await page.getByRole('button',{name:'Cari akun',exact:true}).click();
+  const row=page.getByRole('row').filter({hasText:f.users.frontdesk.email});
+  await row.getByRole('button',{name:'Atur Izin',exact:true}).click();
+  const dialog=page.getByRole('dialog');
+  await screenshot(page,'03-superadmin-permissions');
+  const checks=dialog.getByRole('checkbox');assert.equal(await checks.count(),9);
+  for(const checkbox of await checks.all())await checkbox.uncheck();
+  const saveResponse=page.waitForResponse(r=>r.url().endsWith(`/admin/staff/${f.users.frontdesk.id}/permissions`)&&r.request().method()==='PATCH');
+  await dialog.getByRole('button',{name:/Simpan/}).click();assert.equal((await saveResponse).status(),200);
+  await runtime.browser.close();runtime=await start('frontdesk');
+  const nav=runtime.page.getByRole('navigation',{name:'Navigasi dashboard'});
+  assert.equal(await nav.getByRole('link',{name:'Verifikasi tiket',exact:true}).count(),0);
+  assert.equal(await nav.getByRole('link',{name:'Kelola sesi',exact:true}).count(),0);
+  const denied=await runtime.context.request.get(base+'/api/v1/admin/class-types');assert.equal(denied.status(),403);
+  const saved=(await pool.query('SELECT permissions FROM app_users WHERE id=$1',[f.users.frontdesk.id])).rows[0].permissions;
+  assert.deepEqual(saved,[]);
+  save('staff-permissions-results',{result:'PASS',permissionsShown:9,revokedAll:true,noFallbackMenus:true,directApiDenied:denied.status(),browserErrors:runtime.errors});
+  console.log('PASS: superadmin mencabut izin, menu staf kosong mengikuti izin, API langsung 403');
+})().catch(error=>{console.error(error.stack);process.exitCode=1}).finally(async()=>{if(runtime)await runtime.browser.close();await pool.query("UPDATE app_users SET permissions=ARRAY['front_desk'] WHERE id=$1",[f.users.frontdesk.id]);await pool.end()});

@@ -1,0 +1,6 @@
+{
+  "name": "health",
+  "exitCode": 0,
+  "target": "fixture sintetis lokal",
+  "script": "health-attendance-smoke"
+}

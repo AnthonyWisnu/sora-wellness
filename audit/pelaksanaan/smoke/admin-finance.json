@@ -1,0 +1,6 @@
+{
+  "name": "admin-finance",
+  "exitCode": 0,
+  "target": "fixture sintetis lokal",
+  "script": "admin-finance-smoke"
+}

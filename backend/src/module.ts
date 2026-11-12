@@ -11,9 +11,10 @@ import { LockersModule } from './lockers/lockers.module';
 import { MembershipModule } from './membership/membership.module';
 import { PaymentsModule } from './payments/payments.module';
 import { EventsModule } from './events/events.module';
+import { RateLimitModule } from './shared/rate-limit';
 
 @Module({
-  imports: [SharedModule, AuthModule, CatalogModule, BookingModule, FinanceModule,
+  imports: [SharedModule, RateLimitModule, AuthModule, CatalogModule, BookingModule, FinanceModule,
     AttendanceModule, ContentModule, HealthModule, LockersModule, MembershipModule, PaymentsModule, EventsModule],
 })
 export class AppModule {}

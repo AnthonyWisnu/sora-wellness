@@ -1,0 +1,8 @@
+{
+  "result": "PASS",
+  "payoutStaffDefaultTab": true,
+  "noReportsForPayoutOnly": true,
+  "noPayoutForReportsOnly": true,
+  "eventPaymentLabel": true,
+  "browserErrors": []
+}

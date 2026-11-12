@@ -40,12 +40,7 @@ export function getDashboardNavigation(actor: Actor): DashboardGroup[] {
 
   if (actor.role === 'admin' || actor.role === 'finance') {
     const perms = actor.permissions ?? []
-    const activePerms =
-      perms.length > 0
-        ? perms
-        : actor.role === 'finance'
-          ? ['finance_reports', 'finance_payouts']
-          : ['front_desk', 'lockers', 'classes_schedule', 'community_events']
+    const activePerms = actor.role === 'finance' ? ['finance_reports', 'finance_payouts'] : perms
 
     const groups: DashboardGroup[] = [
       { label: 'Menu Utama', items: [{ id: 'sessions', label: 'Ringkasan' }] },
@@ -62,7 +57,6 @@ export function getDashboardNavigation(actor: Actor): DashboardGroup[] {
         { id: 'manage', label: 'Kelola sesi' },
         { id: 'classes', label: 'Jenis kelas' },
         { id: 'rules', label: 'Jadwal berulang' },
-        { id: 'packages', label: 'Paket member' },
       )
     }
     if (classItems.length > 0) groups.push({ label: 'Kelas & sesi', items: classItems })
@@ -76,7 +70,7 @@ export function getDashboardNavigation(actor: Actor): DashboardGroup[] {
     if (opItems.length > 0) groups.push({ label: 'Operasional', items: opItems })
 
     const systemItems: DashboardItem[] = []
-    if (activePerms.includes('studio_policy')) systemItems.push({ id: 'policy', label: 'Aturan studio' })
+    if (activePerms.includes('studio_policy')) systemItems.push({ id: 'policy', label: 'Aturan studio' }, { id: 'packages', label: 'Paket member' })
     if (activePerms.includes('studio_content')) systemItems.push({ id: 'content', label: 'Konten publik' })
     if (systemItems.length > 0) groups.push({ label: 'Pengaturan studio', items: systemItems })
 

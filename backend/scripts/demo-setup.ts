@@ -1,3 +1,4 @@
+import { encryptHealth } from '../src/health/health-crypto';
 import { execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { cp, copyFile, mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
@@ -100,6 +101,7 @@ async function reset(client: PoolClient) {
 
 async function main() {
   localOnly();
+  encryptHealth('Preflight','preflight');
   const backupPath = await backup();
   process.stdout.write(`Cadangan: ${backupPath}\n`);
   const local = JSON.parse(await readFile(resolve(process.cwd(), '.demo.local.json'), 'utf8').catch(() => '{}')) as { phone?: string; whatsapp?: string; mapEmbedUrl?: string };
@@ -198,7 +200,7 @@ async function main() {
       const pastStart = (await client.query<{ starts_at: Date; ends_at: Date }>('SELECT starts_at,ends_at FROM class_sessions WHERE id=$1', [pastSession])).rows[0];
       const lilaBooking = await booking(client, lila.id, pastSession, new Date(pastStart.starts_at.getTime() - 48 * 3600000));
       const sintaBooking = await booking(client, sinta.id, pastSession, new Date(pastStart.starts_at.getTime() - 48 * 3600000));
-      const note = 'Pernah mengalami cedera pergelangan kaki; memilih gerakan dengan beban ringan saat diperlukan.';
+      const note = encryptHealth('Pernah mengalami cedera pergelangan kaki; memilih gerakan dengan beban ringan saat diperlukan.',lila.id);
       const recordedAt = new Date(pastStart.starts_at.getTime() - 10 * 86400000);
       await client.query('INSERT INTO health_profiles (customer_id,note,consented_at,updated_at) VALUES ($1,$2,$3,$3)', [lila.id, note, recordedAt]);
       await client.query('INSERT INTO health_profile_revisions (customer_id,note,recorded_at) VALUES ($1,$2,$3)', [lila.id, note, recordedAt]);

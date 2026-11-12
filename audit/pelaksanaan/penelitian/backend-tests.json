@@ -1,0 +1,4 @@
+{
+  "command": "npm --prefix backend test",
+  "exitCode": 0
+}

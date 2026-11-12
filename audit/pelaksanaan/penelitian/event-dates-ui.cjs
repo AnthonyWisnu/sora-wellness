@@ -1,0 +1,22 @@
+const assert=require('node:assert/strict');
+const {start,base,pool,f,save}=require('./browser-common.cjs');
+const event=require('./event-results.json');
+let runtime;
+(async()=>{
+  runtime=await start('coach');let {page}=runtime;
+  await page.goto(base+'/dashboard/events');
+  let row=page.locator('article').filter({hasText:'Pilates Tepi Pantai'});await row.waitFor();
+  const date=new Intl.DateTimeFormat('id-ID',{timeZone:'UTC',weekday:'long',day:'numeric',month:'long'}).format(new Date(event.dates[1]+'T12:00:00Z'));
+  await row.getByText(new RegExp(date)).waitFor();
+  await runtime.browser.close();runtime=await start('admin');page=runtime.page;
+  await page.goto(base+'/dashboard/events');
+  const title='Sunrise Yoga dan Pilates, Komunitas SORA '+f.suffix;
+  row=page.locator('.live-admin-section .panel').filter({has:page.getByRole('heading',{name:title,exact:true})});
+  await row.getByRole('button',{name:'Brosur & QR',exact:true}).click();
+  const dialog=page.getByRole('dialog');await dialog.waitFor();
+  const shortDate=new Intl.DateTimeFormat('id-ID',{timeZone:'UTC',day:'numeric',month:'short'}).format(new Date(event.dates[1]+'T12:00:00Z'));
+  await dialog.getByRole('listitem').filter({hasText:'Pilates Tepi Pantai'}).filter({hasText:shortDate}).waitFor();
+  assert.deepEqual(runtime.errors,[]);
+  save('event-dates-ui-results',{result:'PASS',coachUsesActivityDate:true,flyerShowsActivityDate:true,secondActivityDate:event.dates[1],browserErrors:runtime.errors});
+  console.log('PASS: jadwal coach dan brosur memakai tanggal masing-masing kegiatan event');
+})().catch(error=>{console.error(error.stack);process.exitCode=1}).finally(async()=>{if(runtime)await runtime.browser.close();await pool.end()});

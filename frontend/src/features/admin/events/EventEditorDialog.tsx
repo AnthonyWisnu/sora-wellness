@@ -26,6 +26,12 @@ export function EventEditorDialog({ event, onClose, onSaved, show }: Props) {
   const [activities, setActivities] = useState<ActivityInput[]>(
     event?.activities?.length
       ? event.activities.map((a) => ({
+          id: a.id,
+          localDate: a.localDate ?? undefined,
+          classTypeId: a.classTypeId ?? undefined,
+          coachId: a.coachId ?? undefined,
+          isGuestCoach: a.isGuestCoach ?? false,
+          guestCoachName: a.guestCoachName ?? undefined,
           title: a.title,
           category: a.category,
           coachName: a.coachName,
@@ -61,6 +67,12 @@ export function EventEditorDialog({ event, onClose, onSaved, show }: Props) {
       endDate: endDate || startDate,
       status,
       activities: activities.map((a) => ({
+        id: a.id,
+        localDate: a.localDate || startDate,
+        classTypeId: a.classTypeId,
+        coachId: a.coachId,
+        isGuestCoach: a.isGuestCoach,
+        guestCoachName: a.isGuestCoach ? a.guestCoachName?.trim() || undefined : undefined,
         title: a.title.trim(),
         category: a.category.trim(),
         coachName: a.coachName.trim(),
@@ -166,6 +178,7 @@ export function EventEditorDialog({ event, onClose, onSaved, show }: Props) {
               <option value="published">Dipublikasikan (Buka Pendaftaran)</option>
               <option value="draft">Draf (Internal)</option>
               <option value="completed">Selesai Terlaksana</option>
+              <option value="cancelled">Dibatalkan, pembayaran dikreditkan ke wallet</option>
             </select>
           </label>
 
@@ -174,7 +187,7 @@ export function EventEditorDialog({ event, onClose, onSaved, show }: Props) {
             <textarea rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
           </label>
 
-          <EventActivitiesInput activities={activities} onChange={setActivities} show={show} />
+          <EventActivitiesInput activities={activities} onChange={setActivities} show={show} startDate={startDate} endDate={endDate || startDate} />
 
           <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
             <button type="button" className="button button-outline" onClick={onClose} disabled={busy} style={{ flex: 1 }}>Batal</button>

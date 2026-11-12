@@ -45,15 +45,15 @@ export function AdminSummary({
   const isLegacyFinance = actor?.role === 'finance'
 
   const showFrontDesk =
-    isSuper || perms.includes('front_desk') || perms.includes('lockers') || (!isLegacyFinance && perms.length === 0)
+    isSuper || perms.includes('front_desk') || perms.includes('lockers')
   const showClasses =
-    isSuper || perms.includes('classes_schedule') || (!isLegacyFinance && perms.length === 0)
+    isSuper || perms.includes('classes_schedule')
   const showEvents = isSuper || perms.includes('community_events')
   const showFinance =
     isSuper || isLegacyFinance || perms.includes('finance_reports') || perms.includes('finance_payouts')
 
   useEffect(() => {
-    if (!showFinance || adminTab !== 'sessions') return
+    if (!isSuper || adminTab !== 'sessions') return
     let active = true
     void (async () => {
       try {
@@ -66,7 +66,7 @@ export function AdminSummary({
     return () => {
       active = false
     }
-  }, [showFinance, adminTab])
+  }, [isSuper, adminTab])
 
   if (adminTab !== 'sessions') return null
 
@@ -83,12 +83,12 @@ export function AdminSummary({
               <p>Operasional penyambutan kedatangan tamu studio hari ini.</p>
             </div>
             <div className="widget-actions">
-              <button className="button button-primary" onClick={() => go?.('/dashboard/attendance')}>
+              {(isSuper || perms.includes('front_desk')) && <button className="button button-primary" onClick={() => go?.('/dashboard/attendance')}>
                 <QrCode size={14} /> Scan Tiket Lobi
-              </button>
-              <button className="button button-outline" onClick={() => go?.('/dashboard/lockers')}>
+              </button>}
+              {(isSuper || perms.includes('lockers')) && <button className="button button-outline" onClick={() => go?.('/dashboard/lockers')}>
                 <LockKeyhole size={14} /> Matriks Loker
-              </button>
+              </button>}
             </div>
           </div>
           <div className="metrics-grid">
@@ -125,7 +125,8 @@ export function AdminSummary({
               </button>
             </div>
           </div>
-          <div className="metrics-grid">
+          {!isSuper && <p>Buka laporan untuk melihat transaksi, mutasi wallet, dan pengajuan penarikan sesuai izin Anda.</p>}
+          {isSuper && <div className="metrics-grid">
             <div className="metric-card">
               <span className="metric-label">Omzet Bulan Berjalan</span>
               <strong className="metric-value">
@@ -154,9 +155,9 @@ export function AdminSummary({
             <div className="metric-card">
               <span className="metric-label">Gateway Pembayaran</span>
               <strong className="metric-value" style={{ fontSize: '18px' }}>Midtrans Sandbox</strong>
-              <span className="metric-hint positive">Snap 15 menit & Webhook Aktif</span>
+              <span className="metric-hint positive">Pembayaran simulasi</span>
             </div>
-          </div>
+          </div>}
         </section>
       )}
 

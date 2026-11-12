@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { api } from '../../shared/api'
+import { paymentFeedback } from './payment-feedback'
+import type { PaymentStatusResponse } from './payment-feedback'
 
 export type ActivePayment = {
   url: string
-  kind: 'booking' | 'package'
+  kind: 'booking' | 'package' | 'event'
   id: string
   orderId?: string
 }
@@ -25,7 +27,7 @@ export function usePaymentWatcher({
   const lastRefreshAt = useRef<number>(0)
   const isChecking = useRef(false)
 
-  const checkStatus = useCallback(async () => {
+  const checkStatus = useCallback(async (manual = false) => {
     if (!activePayment || isChecking.current) return
     isChecking.current = true
 
@@ -33,58 +35,43 @@ export function usePaymentWatcher({
       const endpoint =
         activePayment.kind === 'booking'
           ? `/bookings/${activePayment.id}/refresh-payment`
-          : `/me/membership-purchases/${activePayment.id}/refresh-payment`
+          : activePayment.kind === 'event'
+            ? `/events/registrations/${activePayment.id}/refresh-payment`
+            : `/me/membership-purchases/${activePayment.id}/refresh-payment`
 
-      const res = await api<{
-        bookingStatus?: string
-        purchaseStatus?: string
-        paymentStatus?: string
-      }>(endpoint, { method: 'POST' })
-
-      const isSuccess =
-        res.bookingStatus === 'confirmed' ||
-        res.purchaseStatus === 'paid' ||
-        res.paymentStatus === 'success'
-
-      if (isSuccess) {
+      const res = await api<PaymentStatusResponse>(endpoint, { method: 'POST' })
+      const feedback = paymentFeedback(activePayment.kind, res)
+      if (feedback.terminal) {
         setActivePayment(null)
         await onSuccess()
-        show(
-          activePayment.kind === 'booking'
-            ? 'Pembayaran berhasil dikonfirmasi. Tiket dan sesi kelas Anda telah aktif.'
-            : 'Pembelian paket berhasil. Masa aktif dan jatah kelas telah diperbarui.',
-        )
-        return
-      }
-
-      const isFailed =
-        res.bookingStatus === 'cancelled' ||
-        res.bookingStatus === 'expired' ||
-        res.purchaseStatus === 'cancelled' ||
-        res.purchaseStatus === 'expired' ||
-        res.paymentStatus === 'expired' ||
-        res.paymentStatus === 'failed'
-
-      if (isFailed) {
-        setActivePayment(null)
-        await onSuccess()
-        show('Batas waktu pembayaran telah habis atau pesanan dibatalkan.')
-        return
+        show(feedback.message)
+      } else if (manual) {
+        show(feedback.message)
       }
     } catch {
-      // Abaikan kegagalan jaringan sementara saat polling latar belakang
+      if (manual) show('Status pembayaran belum dapat diperiksa. Periksa koneksi lalu coba lagi.')
     } finally {
       isChecking.current = false
     }
   }, [activePayment, onSuccess, setActivePayment, show])
 
-  // Polling ringan berkala setiap 4 detik saat modal pembayaran aktif
+  // Backoff dibatasi, tab tersembunyi tidak mengirim request.
   useEffect(() => {
     if (!activePayment) return
-    const timer = setInterval(() => {
-      void checkStatus()
-    }, 4000)
-    return () => clearInterval(timer)
+    let cancelled = false
+    let attempts = 0
+    let timer: ReturnType<typeof setTimeout>
+    const schedule = () => {
+      timer = setTimeout(() => {
+        if (cancelled) return
+        if (document.visibilityState === 'visible') {
+          attempts += 1
+          void checkStatus().finally(() => { if (!cancelled) schedule() })
+        } else schedule()
+      }, Math.min(4000 * 1.6 ** attempts, 30000))
+    }
+    schedule()
+    return () => { cancelled = true; clearTimeout(timer) }
   }, [activePayment, checkStatus])
 
   // Cek seketika saat pengguna kembali ke tab ini dari tab Midtrans Sandbox
@@ -121,7 +108,7 @@ export function usePaymentWatcher({
     lastRefreshAt.current = now
     setRefreshing(true)
     try {
-      await checkStatus()
+      await checkStatus(true)
     } catch (err) {
       show(err instanceof Error ? err.message : 'Gagal memperbarui status dari penyedia pembayaran.')
     } finally {

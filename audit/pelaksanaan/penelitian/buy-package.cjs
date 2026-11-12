@@ -1,0 +1,24 @@
+const assert=require('node:assert/strict');
+const {start,base,pool,save,qaOrder,screenshot}=require('./browser-common.cjs');
+let runtime;
+(async()=>{
+  runtime=await start('member');const {page}=runtime;
+  await page.goto(base+'/membership');
+  const plan=page.locator('#pilihan-paket article').filter({has:page.getByRole('heading',{name:'1 bulan',exact:true})});
+  await plan.waitFor();console.log((await plan.ariaSnapshot()).slice(0,900));
+  const request=page.waitForResponse(res=>res.url().endsWith('/api/v1/me/membership-purchases')&&res.request().method()==='POST');
+  await plan.getByRole('button',{name:'Pilih paket',exact:true}).click();
+  const response=await request;
+  if(!response.ok())throw new Error('Checkout paket: '+JSON.stringify(await response.json()));
+  const purchase=await response.json();assert.equal(purchase.status,'pending_payment');assert.ok(purchase.payment?.redirectUrl);
+  qaOrder('package',purchase);
+  await page.getByRole('heading',{name:'Ringkasan',exact:true}).waitFor();
+  const visible=await page.getByRole('heading',{name:'Lanjutkan pembayaran',exact:true}).isVisible();
+  await screenshot(page,'package-pending');
+  console.log(JSON.stringify({purchaseCreated:true,paymentDialogVisible:visible}));
+  save('package-order',{id:purchase.id,orderId:purchase.payment.orderId,status:purchase.status,paymentDialogVisible:visible});
+  const popup=await runtime.context.newPage();await popup.goto(purchase.payment.redirectUrl);
+  await popup.getByText('Bank transfer',{exact:false}).waitFor({timeout:20000}).catch(()=>undefined);
+  console.log((await popup.locator('body').ariaSnapshot()).slice(0,5500));
+  assert.deepEqual(runtime.errors,[]);
+})().catch(error=>{console.error(error.message);process.exitCode=1}).finally(async()=>{if(runtime)await runtime.browser.close();await pool.end()});

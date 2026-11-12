@@ -1,0 +1,234 @@
+
+> backend@1.0.0 test
+> npm run build && node --test dist/test/*.test.js
+
+
+> backend@1.0.0 build
+> tsc -p tsconfig.json
+
+TAP version 13
+# Subtest: front desk tidak dapat memulai reset superadmin
+ok 1 - front desk tidak dapat memulai reset superadmin
+  ---
+  duration_ms: 2.4261
+  type: 'test'
+  ...
+# Subtest: staff_management tidak dapat mereset admin
+ok 2 - staff_management tidak dapat mereset admin
+  ---
+  duration_ms: 0.6767
+  type: 'test'
+  ...
+# Subtest: staff_management tidak dapat mereset superadmin
+ok 3 - staff_management tidak dapat mereset superadmin
+  ---
+  duration_ms: 0.2645
+  type: 'test'
+  ...
+# Subtest: admin dapat mereset coach dan mencabut sesi
+ok 4 - admin dapat mereset coach dan mencabut sesi
+  ---
+  duration_ms: 607.5257
+  type: 'test'
+  ...
+# Subtest: admin dapat mereset customer dan mencabut sesi
+ok 5 - admin dapat mereset customer dan mencabut sesi
+  ---
+  duration_ms: 605.2827
+  type: 'test'
+  ...
+# Subtest: superadmin dapat mereset admin dan mencabut sesi
+ok 6 - superadmin dapat mereset admin dan mencabut sesi
+  ---
+  duration_ms: 585.266
+  type: 'test'
+  ...
+# Subtest: reset diri sendiri tidak mencabut sesi melalui jalur admin
+ok 7 - reset diri sendiri tidak mencabut sesi melalui jalur admin
+  ---
+  duration_ms: 0.9464
+  type: 'test'
+  ...
+# Subtest: batas pembatalan tepat 24 jam sudah terlambat
+ok 8 - batas pembatalan tepat 24 jam sudah terlambat
+  ---
+  duration_ms: 1.212
+  type: 'test'
+  ...
+# Subtest: sesi yang sudah lewat waktu mulai atau berakhir tidak dapat dibatalkan
+ok 9 - sesi yang sudah lewat waktu mulai atau berakhir tidak dapat dibatalkan
+  ---
+  duration_ms: 0.2269
+  type: 'test'
+  ...
+# Subtest: cipher kesehatan acak, terikat pemilik, mendeteksi perubahan dan mendukung rotasi
+ok 10 - cipher kesehatan acak, terikat pemilik, mendeteksi perubahan dan mendukung rotasi
+  ---
+  duration_ms: 9.871
+  type: 'test'
+  ...
+# Subtest: paket satu bulan biasa berakhir sehari sebelum padanan tanggal
+ok 11 - paket satu bulan biasa berakhir sehari sebelum padanan tanggal
+  ---
+  duration_ms: 4.9984
+  type: 'test'
+  ...
+# Subtest: tanggal 31 berakhir pada akhir bulan tujuan jika padanannya tidak ada
+ok 12 - tanggal 31 berakhir pada akhir bulan tujuan jika padanannya tidak ada
+  ---
+  duration_ms: 0.5711
+  type: 'test'
+  ...
+# Subtest: tahun berganti dan tanggal padanan tetap benar
+ok 13 - tahun berganti dan tanggal padanan tetap benar
+  ---
+  duration_ms: 0.4979
+  type: 'test'
+  ...
+# Subtest: Server Key Sandbox berawalan SB-Mid-server diterima
+ok 14 - Server Key Sandbox berawalan SB-Mid-server diterima
+  ---
+  duration_ms: 4.3294
+  type: 'test'
+  ...
+# Subtest: signature notifikasi Midtrans memakai SHA512 dan Server Key
+ok 15 - signature notifikasi Midtrans memakai SHA512 dan Server Key
+  ---
+  duration_ms: 1.9423
+  type: 'test'
+  ...
+# Subtest: order ID dan rupiah harus valid sebelum memanggil provider
+ok 16 - order ID dan rupiah harus valid sebelum memanggil provider
+  ---
+  duration_ms: 2.0859
+  type: 'test'
+  ...
+# Subtest: Snap menerima email pelanggan dan rincian yang sama dengan tagihan gateway
+ok 17 - Snap menerima email pelanggan dan rincian yang sama dengan tagihan gateway
+  ---
+  duration_ms: 50.6917
+  type: 'test'
+  ...
+# Subtest: status 404 sebelum metode pembayaran dipilih tetap dapat dibaca
+ok 18 - status 404 sebelum metode pembayaran dipilih tetap dapat dibaca
+  ---
+  duration_ms: 0.8092
+  type: 'test'
+  ...
+# Subtest: pembatalan provider hanya memakai endpoint Sandbox dan menolak respons gagal
+ok 19 - pembatalan provider hanya memakai endpoint Sandbox dan menolak respons gagal
+  ---
+  duration_ms: 1.6847
+  type: 'test'
+  ...
+# Subtest: SyncOrderDto menerima format order_id yang valid
+ok 20 - SyncOrderDto menerima format order_id yang valid
+  ---
+  duration_ms: 1902.215
+  type: 'test'
+  ...
+# Subtest: SyncOrderDto menolak order_id kosong atau terlalu pendek
+ok 21 - SyncOrderDto menolak order_id kosong atau terlalu pendek
+  ---
+  duration_ms: 1.527
+  type: 'test'
+  ...
+# Subtest: assertPermission mengizinkan peran finance untuk izin operasional finance_payouts
+ok 22 - assertPermission mengizinkan peran finance untuk izin operasional finance_payouts
+  ---
+  duration_ms: 1.12
+  type: 'test'
+  ...
+# Subtest: prorata September dan Oktober mengikuti bulan sesi
+ok 23 - prorata September dan Oktober mengikuti bulan sesi
+  ---
+  duration_ms: 9.2921
+  type: 'test'
+  ...
+# Subtest: perpanjangan dalam bulan yang sama tidak menggandakan hari
+ok 24 - perpanjangan dalam bulan yang sama tidak menggandakan hari
+  ---
+  duration_ms: 0.6801
+  type: 'test'
+  ...
+# Subtest: Februari kabisat memakai jumlah hari kalender yang tepat
+ok 25 - Februari kabisat memakai jumlah hari kalender yang tepat
+  ---
+  duration_ms: 0.3993
+  type: 'test'
+  ...
+# Subtest: dokumen situs menerima blok terstruktur yang diurutkan ulang
+ok 26 - dokumen situs menerima blok terstruktur yang diurutkan ulang
+  ---
+  duration_ms: 4.4235
+  type: 'test'
+  ...
+# Subtest: URL peta selain sematan Google ditolak
+ok 27 - URL peta selain sematan Google ditolak
+  ---
+  duration_ms: 1.0166
+  type: 'test'
+  ...
+# Subtest: URL sematan Google Maps berbasis pencarian lokasi diterima
+ok 28 - URL sematan Google Maps berbasis pencarian lokasi diterima
+  ---
+  duration_ms: 0.4981
+  type: 'test'
+  ...
+# Subtest: blok ganda dan tautan tombol sembarang ditolak
+ok 29 - blok ganda dan tautan tombol sembarang ditolak
+  ---
+  duration_ms: 0.5335
+  type: 'test'
+  ...
+# Subtest: gambar dalam testimoni tercatat sebagai gambar terpakai
+ok 30 - gambar dalam testimoni tercatat sebagai gambar terpakai
+  ---
+  duration_ms: 1.3686
+  type: 'test'
+  ...
+# Subtest: draf boleh memiliki blok kosong, tetapi judul manfaat terbit wajib terisi
+ok 31 - draf boleh memiliki blok kosong, tetapi judul manfaat terbit wajib terisi
+  ---
+  duration_ms: 0.813
+  type: 'test'
+  ...
+# Subtest: UpdateStaffPermissionsDto menerima izin staf yang valid
+ok 32 - UpdateStaffPermissionsDto menerima izin staf yang valid
+  ---
+  duration_ms: 4.152
+  type: 'test'
+  ...
+# Subtest: UpdateStaffPermissionsDto menerima array kosong (mencabut semua izin)
+ok 33 - UpdateStaffPermissionsDto menerima array kosong (mencabut semua izin)
+  ---
+  duration_ms: 0.4446
+  type: 'test'
+  ...
+# Subtest: UpdateStaffPermissionsDto menolak kunci izin yang tidak dikenal
+ok 34 - UpdateStaffPermissionsDto menolak kunci izin yang tidak dikenal
+  ---
+  duration_ms: 1.1819
+  type: 'test'
+  ...
+# Subtest: UpdateStaffPermissionsDto menolak nilai permissions yang bukan array
+ok 35 - UpdateStaffPermissionsDto menolak nilai permissions yang bukan array
+  ---
+  duration_ms: 0.5476
+  type: 'test'
+  ...
+# Subtest: Daftar ALLOWED_STAFF_PERMISSIONS mencakup sembilan kunci izin modular resmi
+ok 36 - Daftar ALLOWED_STAFF_PERMISSIONS mencakup sembilan kunci izin modular resmi
+  ---
+  duration_ms: 0.186
+  type: 'test'
+  ...
+1..36
+# tests 36
+# suites 0
+# pass 36
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 5308.8884

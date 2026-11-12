@@ -2,36 +2,46 @@ import { ForbiddenException, Injectable, NotFoundException, ServiceUnavailableEx
 import { PoolClient } from 'pg';
 import { Db } from '../shared/db';
 import { MidtransClient, MidtransNotification, MidtransStatus } from './midtrans';
-import { PACKAGE_CHECKOUT_MINUTES } from '../membership/package-policy';
 import { PaymentSettings } from './payment-settings';
 import { amountIdr, BookingPaymentRow } from './payment-guards';
+import { prepareSnapIntent } from './snap-intent';
+import { applyEventStatus, expireEventHolds } from '../events/event-payment-state';
 
 @Injectable()
 export class PaymentsService {
   constructor(private readonly db: Db, private readonly settings: PaymentSettings) {}
 
-  async createSnapForBooking(client: PoolClient, bookingId: string, amount: number, holdMinutes: number) {
-    const { serverKey } = await this.settings.credentials();
+  async createBookingIntent(client: PoolClient, bookingId: string, amount: number) {
     const orderId = `CLS-${bookingId}`;
-    const customer = await client.query<{ email: string; name: string; title: string; wallet_reserved_idr: number }>(`SELECT u.email,u.full_name AS name,t.title,b.wallet_reserved_idr FROM bookings b JOIN app_users u ON u.id=b.customer_id JOIN class_sessions s ON s.id=b.session_id JOIN class_types t ON t.id=s.class_type_id WHERE b.id=$1`, [bookingId]);
-    if (!customer.rows[0]) throw new NotFoundException('Pelanggan booking tidak ditemukan');
-    const payment = await client.query<{ id: string }>(`INSERT INTO payment_transactions (booking_id,order_id,gross_amount_idr,status) VALUES ($1,$2,$3,'pending') RETURNING id`, [bookingId,orderId,amount]);
-    const buyer = customer.rows[0];
-    const snap = await new MidtransClient(serverKey).createSnapTransaction(orderId, amount, holdMinutes, { email: buyer.email, name: buyer.name, itemName: `${buyer.wallet_reserved_idr > 0 ? 'Sisa pembayaran' : 'Pembayaran'} kelas ${buyer.title}` });
-    await client.query('UPDATE payment_transactions SET snap_token=$1,redirect_url=$2,updated_at=now() WHERE id=$3', [snap.token,snap.redirect_url,payment.rows[0].id]);
-    return { paymentId: payment.rows[0].id, orderId, snapToken: snap.token, redirectUrl: snap.redirect_url };
+    await client.query(`INSERT INTO payment_transactions(booking_id,order_id,gross_amount_idr,status) VALUES($1,$2,$3,'pending')`, [bookingId,orderId,amount]);
+    return { orderId, snapToken: null as string | null, redirectUrl: null as string | null };
   }
 
-  async createSnapForPackage(client: PoolClient, purchaseId: string, amount: number) {
-    const { serverKey } = await this.settings.credentials();
+  async createPackageIntent(client: PoolClient, purchaseId: string, amount: number) {
     const orderId = `PKG-${purchaseId}`;
-    const customer = await client.query<{ email: string; name: string; duration_months: number }>(`SELECT u.email,u.full_name AS name,p.duration_months FROM package_purchases p JOIN app_users u ON u.id=p.customer_id WHERE p.id=$1`, [purchaseId]);
-    if (!customer.rows[0]) throw new NotFoundException('Pelanggan paket tidak ditemukan');
-    const payment = await client.query<{ id: string }>(`INSERT INTO payment_transactions (package_purchase_id,order_id,gross_amount_idr,status) VALUES ($1,$2,$3,'pending') RETURNING id`, [purchaseId,orderId,amount]);
-    const buyer = customer.rows[0];
-    const snap = await new MidtransClient(serverKey).createSnapTransaction(orderId,amount,PACKAGE_CHECKOUT_MINUTES, { email: buyer.email, name: buyer.name, itemName: `Membership ${buyer.duration_months} bulan` });
-    await client.query('UPDATE payment_transactions SET snap_token=$1,redirect_url=$2,updated_at=now() WHERE id=$3', [snap.token,snap.redirect_url,payment.rows[0].id]);
-    return { orderId, redirectUrl: snap.redirect_url };
+    await client.query(`INSERT INTO payment_transactions(package_purchase_id,order_id,gross_amount_idr,status) VALUES($1,$2,$3,'pending')`, [purchaseId,orderId,amount]);
+    return { orderId };
+  }
+
+  prepareSnap(orderId: string) { return prepareSnapIntent(this.db,this.settings,orderId); }
+
+  async createEventIntent(client: PoolClient, registrationId: string, amount: number) {
+    const orderId = `EVT-${registrationId}`;
+    await client.query(`INSERT INTO payment_transactions(event_registration_id,order_id,gross_amount_idr,status)
+      VALUES($1,$2,$3,'pending')`, [registrationId,orderId,amount]);
+    return { orderId };
+  }
+
+  expirePendingEvents(customerId?: string) { return expireEventHolds(this.db,customerId); }
+
+  applyTrustedEventStatus(orderId: string, status: MidtransStatus) {
+    return applyEventStatus(this.db,orderId,status,this.walletEntry.bind(this));
+  }
+
+  async resumeBooking(bookingId: string, customerId: string) {
+    const found = await this.db.query<{ order_id: string }>(`SELECT p.order_id FROM payment_transactions p JOIN bookings b ON b.id=p.booking_id WHERE b.id=$1 AND b.customer_id=$2 AND b.status='pending_payment'`, [bookingId,customerId]);
+    if (!found.rows[0]) throw new NotFoundException('Pembayaran booking tidak ditemukan');
+    return this.prepareSnap(found.rows[0].order_id);
   }
 
   async walletEntry(client: PoolClient, customerId: string, bookingId: string | null, amount: number, kind: string, reference: string) {
@@ -54,7 +64,7 @@ export class PaymentsService {
       const probe = await client.query<{ customer_id: string; session_id: string }>('SELECT customer_id,session_id FROM bookings WHERE id=$1', [bookingId]);
       if (!probe.rows[0]) return;
       const { customer_id, session_id } = probe.rows[0];
-      await client.query('SELECT id FROM app_users WHERE id=$1 FOR UPDATE', [customer_id]);
+      await client.query('SELECT id FROM app_users WHERE id=$1 FOR NO KEY UPDATE', [customer_id]);
       await client.query('SELECT id FROM class_sessions WHERE id=$1 FOR UPDATE', [session_id]);
       const found = await client.query<{ id: string; customer_id: string; status: string; wallet_reserved_idr: number; hold_expires_at: Date | null }>('SELECT id,customer_id,status,wallet_reserved_idr,hold_expires_at FROM bookings WHERE id=$1 FOR UPDATE', [bookingId]);
       if (found.rows[0]) await this.expireLocked(client, found.rows[0]);
@@ -88,31 +98,38 @@ export class PaymentsService {
 
   async expirePendingPackages(customerId?: string) {
     const expired = await this.db.query<{ order_id: string }>(`SELECT p.order_id FROM package_purchases b JOIN payment_transactions p ON p.package_purchase_id=b.id WHERE b.status='pending_payment' AND b.expires_at<=now() AND ($1::uuid IS NULL OR b.customer_id=$1) ORDER BY b.expires_at LIMIT 100`, [customerId ?? null]);
-    for (const row of expired.rows) await this.refreshByOrder(row.order_id);
+    for (const row of expired.rows) await this.expirePackageHold(row.order_id,'local_hold_expired');
   }
 
   async refreshByOrder(orderId: string) {
     const credentials = await this.settings.credentials();
-    const payment = await this.db.query<{ gross_amount_idr: number; status: string; package_purchase_id: string | null; package_expires_at: Date | null }>('SELECT p.gross_amount_idr,p.status,p.package_purchase_id,b.expires_at AS package_expires_at FROM payment_transactions p LEFT JOIN package_purchases b ON b.id=p.package_purchase_id WHERE p.order_id=$1', [orderId]);
+    const payment = await this.db.query<{ gross_amount_idr: number; status: string; package_purchase_id: string | null; package_expires_at: Date | null; event_registration_id: string | null }>('SELECT p.gross_amount_idr,p.status,p.package_purchase_id,p.event_registration_id,b.expires_at AS package_expires_at FROM payment_transactions p LEFT JOIN package_purchases b ON b.id=p.package_purchase_id WHERE p.order_id=$1', [orderId]);
     if (!payment.rows[0]) throw new NotFoundException('Order pembayaran tidak ditemukan');
     const status = await new MidtransClient(credentials.serverKey).getTransactionStatus(orderId);
     if (status.status_code === '404') {
-      if (payment.rows[0].package_purchase_id && payment.rows[0].package_expires_at && payment.rows[0].package_expires_at.getTime() <= Date.now()) return this.expireUnstartedPackage(orderId);
+      if (payment.rows[0].event_registration_id) {
+        await this.expirePendingEvents();
+        const local = await this.db.query<{ paymentStatus: string; eventStatus: string }>(`SELECT p.status AS "paymentStatus",r.status AS "eventStatus"
+          FROM payment_transactions p JOIN event_registrations r ON r.id=p.event_registration_id WHERE p.order_id=$1`, [orderId]);
+        return { ...local.rows[0], providerStatus: 'not_started' };
+      }
+      if (payment.rows[0].package_purchase_id && payment.rows[0].package_expires_at && payment.rows[0].package_expires_at.getTime() <= Date.now()) return this.expirePackageHold(orderId,'snap_page_expired');
       return { paymentStatus: payment.rows[0].status, providerStatus: 'not_started' };
     }
     if (status.order_id !== orderId || status.merchant_id !== credentials.merchantId || amountIdr(status.gross_amount) !== payment.rows[0].gross_amount_idr) throw new ServiceUnavailableException('Data status Midtrans tidak cocok dengan order');
+    if (payment.rows[0].event_registration_id) return this.applyTrustedEventStatus(orderId,status);
     return payment.rows[0].package_purchase_id ? this.applyTrustedPackageStatus(orderId,status) : this.applyTrustedStatus(orderId, status);
   }
 
-  private async expireUnstartedPackage(orderId: string) {
+  private async expirePackageHold(orderId: string, reason: string) {
     return this.db.transaction(async (client) => {
       const probe = await client.query<{ customer_id: string }>('SELECT b.customer_id FROM payment_transactions p JOIN package_purchases b ON b.id=p.package_purchase_id WHERE p.order_id=$1', [orderId]);
       if (!probe.rows[0]) throw new NotFoundException('Order paket tidak ditemukan');
-      await client.query('SELECT id FROM app_users WHERE id=$1 FOR UPDATE', [probe.rows[0].customer_id]);
+      await client.query('SELECT id FROM app_users WHERE id=$1 FOR NO KEY UPDATE', [probe.rows[0].customer_id]);
       const found = await client.query<{ purchase_id: string; purchase_status: string; payment_status: string }>(`SELECT b.id AS purchase_id,b.status AS purchase_status,p.status AS payment_status FROM payment_transactions p JOIN package_purchases b ON b.id=p.package_purchase_id WHERE p.order_id=$1 FOR UPDATE OF p,b`, [orderId]);
       if (found.rows[0].purchase_status !== 'pending_payment') return { paymentStatus: found.rows[0].payment_status, purchaseStatus: found.rows[0].purchase_status };
       await client.query("UPDATE package_purchases SET status='expired' WHERE id=$1", [found.rows[0].purchase_id]);
-      await client.query("UPDATE payment_transactions SET status='expired',provider_status='snap_page_expired',updated_at=now() WHERE order_id=$1", [orderId]);
+      await client.query("UPDATE payment_transactions SET status='expired',provider_status=COALESCE(provider_status,$2),updated_at=now() WHERE order_id=$1", [orderId,reason]);
       return { paymentStatus: 'expired', purchaseStatus: 'expired' };
     });
   }
@@ -121,7 +138,7 @@ export class PaymentsService {
     return this.db.transaction(async (client) => {
       const probe = await client.query<{ customer_id: string }>('SELECT b.customer_id FROM payment_transactions p JOIN package_purchases b ON b.id=p.package_purchase_id WHERE p.order_id=$1', [orderId]);
       if (!probe.rows[0]) throw new NotFoundException('Order paket tidak ditemukan');
-      await client.query('SELECT id FROM app_users WHERE id=$1 FOR UPDATE', [probe.rows[0].customer_id]);
+      await client.query('SELECT id FROM app_users WHERE id=$1 FOR NO KEY UPDATE', [probe.rows[0].customer_id]);
       const found = await client.query<{ payment_id: string; payment_status: string; purchase_id: string; purchase_status: string; customer_id: string; package_option_id: string; amount_idr: number; duration_months: number }>(`SELECT p.id AS payment_id,p.status AS payment_status,b.id AS purchase_id,b.status AS purchase_status,b.customer_id,b.package_option_id,b.amount_idr,b.duration_months FROM payment_transactions p JOIN package_purchases b ON b.id=p.package_purchase_id WHERE p.order_id=$1 FOR UPDATE OF p,b`, [orderId]);
       const row = found.rows[0];
       if (row.payment_status === 'success') return { paymentStatus: 'success', purchaseStatus: row.purchase_status };
@@ -150,7 +167,7 @@ export class PaymentsService {
       const probe = await client.query<BookingPaymentRow>(`SELECT p.id AS payment_id,p.order_id,p.gross_amount_idr AS amount_idr,p.status AS payment_status,b.id AS booking_id,b.customer_id,b.session_id,b.status AS booking_status,b.hold_expires_at,b.wallet_reserved_idr FROM payment_transactions p JOIN bookings b ON b.id=p.booking_id WHERE p.order_id=$1`, [orderId]);
       if (!probe.rows[0]) throw new NotFoundException('Order pembayaran tidak ditemukan');
       const row = probe.rows[0];
-      await client.query('SELECT id FROM app_users WHERE id=$1 FOR UPDATE', [row.customer_id]);
+      await client.query('SELECT id FROM app_users WHERE id=$1 FOR NO KEY UPDATE', [row.customer_id]);
       const session = await client.query<{ id: string; status: string; starts_at: Date; capacity: number; local_date: string; level: string; booking_cutoff_minutes: number; guest_schedule_days: number; member_schedule_days: number; timezone: string }>(`SELECT s.id,s.status,s.starts_at,s.capacity,s.local_date::text,t.level,p.booking_cutoff_minutes,p.guest_schedule_days,p.member_schedule_days,st.timezone FROM class_sessions s JOIN class_types t ON t.id=s.class_type_id JOIN studio_policy p ON p.studio_id=1 JOIN studio st ON st.id=1 WHERE s.id=$1 FOR UPDATE OF s`, [row.session_id]);
       const booking = await client.query<BookingPaymentRow>(`SELECT p.id AS payment_id,p.order_id,p.gross_amount_idr AS amount_idr,p.status AS payment_status,b.id AS booking_id,b.customer_id,b.session_id,b.status AS booking_status,b.hold_expires_at,b.wallet_reserved_idr FROM payment_transactions p JOIN bookings b ON b.id=p.booking_id WHERE p.id=$1 FOR UPDATE OF p,b`, [row.payment_id]);
       const current = booking.rows[0];

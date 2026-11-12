@@ -4,7 +4,7 @@ import { Type } from 'class-transformer';
 import { IsDateString, IsIn, IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min } from 'class-validator';
 import type { Response } from 'express';
 import { Db } from '../shared/db';
-import { AuthRequest, assertRole, SessionGuard } from '../shared/security';
+import { AuthRequest, assertPermission, SessionGuard } from '../shared/security';
 
 class PageFilter {
   @ApiPropertyOptional({ example: 1 }) @IsOptional() @Type(() => Number) @IsInt() @Min(1) page?: number;
@@ -22,8 +22,8 @@ class BookingFilter extends DatedFilter {
 class PaymentFilter extends DatedFilter {
   @ApiPropertyOptional({ enum: ['pending','success','failed','expired'] })
   @IsOptional() @IsIn(['pending','success','failed','expired']) status?: string;
-  @ApiPropertyOptional({ enum: ['class','package'] })
-  @IsOptional() @IsIn(['class','package']) kind?: string;
+  @ApiPropertyOptional({ enum: ['class','package','event'] })
+  @IsOptional() @IsIn(['class','package','event']) kind?: string;
 }
 class LedgerFilter extends DatedFilter {
   @ApiPropertyOptional({ enum: ['class_refund','late_payment','class_purchase','reservation_release','correction'] })
@@ -49,7 +49,7 @@ export class AdminFinanceController {
   @Get('bookings')
   @ApiOkResponse({ description: 'Daftar booking terfilter dan dipaginasi tanpa data kesehatan.', schema: { example: { items: [{ id: 'booking-uuid', customerName: 'Ayu', title: 'Gentle Flow', status: 'confirmed', priceIdr: 75000 }], page: 1, limit: 20, total: 1 } } })
   async bookings(@Req() req: AuthRequest, @Query() filter: BookingFilter) {
-    assertRole(req, 'admin', 'finance', 'superadmin');
+    assertPermission(req, 'finance_reports');
     await this.reconcileStalePayments();
     const { page,limit } = pageOf(filter);
     const [from,to] = datesOf(filter);
@@ -76,7 +76,7 @@ export class AdminFinanceController {
   @Get('payments')
   @ApiOkResponse({ description: 'Pembayaran kelas dan paket tanpa token Snap atau kredensial gateway.' })
   async payments(@Req() req: AuthRequest, @Query() filter: PaymentFilter) {
-    assertRole(req, 'finance', 'superadmin');
+    assertPermission(req, 'finance_reports');
     await this.reconcileStalePayments();
     const { page,limit } = pageOf(filter);
     const [from,to] = datesOf(filter);
@@ -85,21 +85,23 @@ export class AdminFinanceController {
       LEFT JOIN class_sessions s ON s.id=b.session_id LEFT JOIN class_types t ON t.id=s.class_type_id
       LEFT JOIN package_purchases pp ON pp.id=p.package_purchase_id
       LEFT JOIN package_options po ON po.id=pp.package_option_id
-      JOIN app_users u ON u.id=COALESCE(b.customer_id,pp.customer_id)
+      LEFT JOIN event_registrations er ON er.id=p.event_registration_id
+      LEFT JOIN event_activities ea ON ea.id=er.activity_id
+      JOIN app_users u ON u.id=COALESCE(b.customer_id,pp.customer_id,er.customer_id)
       CROSS JOIN studio st WHERE st.id=1
         AND ($1::text IS NULL OR u.full_name ILIKE '%'||$1||'%' OR u.email::text ILIKE '%'||$1||'%' OR p.order_id ILIKE '%'||$1||'%')
         AND ($2::text IS NULL OR p.status=$2)
-        AND ($3::text IS NULL OR ($3='class' AND p.booking_id IS NOT NULL) OR ($3='package' AND p.package_purchase_id IS NOT NULL))
+        AND ($3::text IS NULL OR ($3='class' AND p.booking_id IS NOT NULL) OR ($3='package' AND p.package_purchase_id IS NOT NULL) OR ($3='event' AND p.event_registration_id IS NOT NULL))
         AND ($4::date IS NULL OR (p.created_at AT TIME ZONE st.timezone)::date >= $4::date)
         AND ($5::date IS NULL OR (p.created_at AT TIME ZONE st.timezone)::date <= $5::date)`;
     const [total,rows] = await Promise.all([
       this.db.query<{ count: number }>(`SELECT count(*)::int AS count ${where}`,values),
       this.db.query(`SELECT p.id,p.order_id AS "orderId",p.gross_amount_idr AS "grossAmountIdr",p.status,
         p.provider_status AS "providerStatus",p.created_at AS "createdAt",p.updated_at AS "updatedAt",
-        p.booking_id AS "bookingId",p.package_purchase_id AS "packagePurchaseId",
-        CASE WHEN p.booking_id IS NOT NULL THEN 'class' ELSE 'package' END AS kind,
+        p.booking_id AS "bookingId",p.package_purchase_id AS "packagePurchaseId",p.event_registration_id AS "eventRegistrationId",
+        CASE WHEN p.booking_id IS NOT NULL THEN 'class' WHEN p.event_registration_id IS NOT NULL THEN 'event' ELSE 'package' END AS kind,
         u.id AS "customerId",u.full_name AS "customerName",u.email AS "customerEmail",
-        t.title AS "classTitle",s.local_date::text AS "localDate",pp.amount_idr AS "packageAmountIdr",
+        COALESCE(t.title,ea.title) AS "classTitle",COALESCE(s.local_date,ea.local_date)::text AS "localDate",pp.amount_idr AS "packageAmountIdr",
         COALESCE(pp.duration_months,po.duration_months) AS "durationMonths" ${where}
         ORDER BY p.created_at DESC,p.id DESC LIMIT $6 OFFSET $7`,[...values,limit,(page-1)*limit]),
     ]);
@@ -112,18 +114,20 @@ export class AdminFinanceController {
     @Query() filter: PaymentFilter,
     @Res() res: Response,
   ) {
-    assertRole(req, 'finance', 'superadmin');
+    assertPermission(req, 'finance_reports');
     const [from, to] = datesOf(filter);
     const values = [filter.q?.trim() || null, filter.status ?? null, filter.kind ?? null, from, to];
     const where = `FROM payment_transactions p LEFT JOIN bookings b ON b.id=p.booking_id
       LEFT JOIN class_sessions s ON s.id=b.session_id LEFT JOIN class_types t ON t.id=s.class_type_id
       LEFT JOIN package_purchases pp ON pp.id=p.package_purchase_id
       LEFT JOIN package_options po ON po.id=pp.package_option_id
-      JOIN app_users u ON u.id=COALESCE(b.customer_id,pp.customer_id)
+      LEFT JOIN event_registrations er ON er.id=p.event_registration_id
+      LEFT JOIN event_activities ea ON ea.id=er.activity_id
+      JOIN app_users u ON u.id=COALESCE(b.customer_id,pp.customer_id,er.customer_id)
       CROSS JOIN studio st WHERE st.id=1
         AND ($1::text IS NULL OR u.full_name ILIKE '%'||$1||'%' OR u.email::text ILIKE '%'||$1||'%' OR p.order_id ILIKE '%'||$1||'%')
         AND ($2::text IS NULL OR p.status=$2)
-        AND ($3::text IS NULL OR ($3='class' AND p.booking_id IS NOT NULL) OR ($3='package' AND p.package_purchase_id IS NOT NULL))
+        AND ($3::text IS NULL OR ($3='class' AND p.booking_id IS NOT NULL) OR ($3='package' AND p.package_purchase_id IS NOT NULL) OR ($3='event' AND p.event_registration_id IS NOT NULL))
         AND ($4::date IS NULL OR (p.created_at AT TIME ZONE st.timezone)::date >= $4::date)
         AND ($5::date IS NULL OR (p.created_at AT TIME ZONE st.timezone)::date <= $5::date)`;
 
@@ -139,16 +143,17 @@ export class AdminFinanceController {
     }>(
       `SELECT p.order_id AS "orderId", p.gross_amount_idr AS "grossAmountIdr", p.status,
               p.created_at AS "createdAt",
-              CASE WHEN p.booking_id IS NOT NULL THEN 'Kelas' ELSE 'Paket Membership' END AS kind,
+              CASE WHEN p.booking_id IS NOT NULL THEN 'Kelas' WHEN p.event_registration_id IS NOT NULL THEN 'Event' ELSE 'Paket Membership' END AS kind,
               u.full_name AS "customerName", u.email AS "customerEmail",
-              COALESCE(t.title, 'Membership ' || COALESCE(pp.duration_months, po.duration_months) || ' Bulan') AS "itemName"
+              COALESCE(t.title,ea.title, 'Membership ' || COALESCE(pp.duration_months, po.duration_months) || ' Bulan') AS "itemName"
        ${where}
        ORDER BY p.created_at DESC, p.id DESC LIMIT 5000`,
       values,
     );
 
     const escapeCsv = (str: string | number | null | undefined) => {
-      const s = String(str ?? '');
+      const raw = String(str ?? '');
+      const s = typeof str === 'string' && /^[\s]*[=+\-@\t\r]/.test(raw) ? `'${raw}` : raw;
       return `"${s.replace(/"/g, '""')}"`;
     };
 
@@ -194,7 +199,7 @@ export class AdminFinanceController {
   @Get('wallets')
   @ApiOkResponse({ description: 'Saldo kelas per pelanggan; nominal IDR dikirim sebagai angka.' })
   async wallets(@Req() req: AuthRequest, @Query() filter: PageFilter) {
-    assertRole(req, 'finance', 'superadmin');
+    assertPermission(req, 'finance_reports');
     const { page,limit } = pageOf(filter);
     const q = filter.q?.trim() || null;
     const where = `FROM wallet_accounts w JOIN app_users u ON u.id=w.customer_id
@@ -211,7 +216,7 @@ export class AdminFinanceController {
   @Get('wallets/:customerId/entries')
   @ApiOkResponse({ description: 'Buku saldo satu pelanggan, termasuk referensi dan saldo sesudah transaksi.' })
   async walletEntries(@Req() req: AuthRequest, @Param('customerId', ParseUUIDPipe) customerId: string, @Query() filter: LedgerFilter) {
-    assertRole(req, 'finance', 'superadmin');
+    assertPermission(req, 'finance_reports');
     const { page,limit } = pageOf(filter);
     const [from,to] = datesOf(filter);
     const account = await this.db.query<{ customerId: string; customerName: string; customerEmail: string; balanceIdr: string }>(`SELECT w.customer_id AS "customerId",u.full_name AS "customerName",u.email AS "customerEmail",w.balance_idr AS "balanceIdr"

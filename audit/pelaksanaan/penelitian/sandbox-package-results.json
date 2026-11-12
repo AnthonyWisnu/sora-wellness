@@ -1,0 +1,21 @@
+{
+  "result": "PASS",
+  "provider": "Midtrans Sandbox nyata",
+  "method": "BCA VA simulator resmi",
+  "orderId": "PKG-f10b7a99-db18-4d68-a53f-ab50d0dfb8fa",
+  "providerStatus": "settlement",
+  "localStatus": {
+    "paymentStatus": "success",
+    "purchaseStatus": "paid",
+    "startsOn": "2026-11-12",
+    "endsOn": "2026-12-11"
+  },
+  "validWebhookReplays": 2,
+  "invalidWebhookHttp": 403,
+  "delivery": "Replay HTTP lokal, bukan bukti callback otomatis dari internet",
+  "membershipRows": 1,
+  "purchaseStatus": "paid",
+  "startsOn": "2026-11-12",
+  "endsOn": "2026-12-11",
+  "browserErrors": []
+}

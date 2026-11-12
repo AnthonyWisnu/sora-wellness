@@ -1,0 +1,14 @@
+{
+  "result": "PASS",
+  "withdrawalReserved": true,
+  "duplicatePendingBlocked": true,
+  "rejectionRestoresOnce": true,
+  "completeDoesNotDebitTwice": true,
+  "bankTransferPerformed": false,
+  "walletUi": true,
+  "eventFinanceReport": true,
+  "eventCsvExport": true,
+  "balanceBefore": 75000,
+  "balanceAfter": 65000,
+  "browserErrors": []
+}

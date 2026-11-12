@@ -1,0 +1,48 @@
+{
+  "dbName": "sora_audit_1794412324963",
+  "users": {
+    "superadmin": {
+      "id": "2cd62fa7-7534-436f-b785-8cb5503f0734",
+      "email": "superadmin@audit.invalid"
+    },
+    "admin": {
+      "id": "e61cdbbe-95e2-45c8-a312-2808d5764c11",
+      "email": "admin@audit.invalid"
+    },
+    "coach": {
+      "id": "58095a5c-8930-45a0-bb3c-db8f00f3753f",
+      "email": "coach@audit.invalid"
+    },
+    "customer": {
+      "id": "f268ee7e-6e8b-4a97-8631-ccd323c4e56f",
+      "email": "customer@audit.invalid"
+    }
+  },
+  "other": "ba056574-b723-43e1-a103-7f2899217b16",
+  "classId": "35ea9dbe-9a38-4825-9da0-b58ec96a9a3e",
+  "sessions": [
+    "e87a152b-9211-4ddd-b19f-e843b4003fd3",
+    "3f9ae0e7-d68a-4f2c-b905-aacc5c59cb46",
+    "6e5077d1-3cf7-4557-8cf0-ce089a7f059b",
+    "12c57e4a-077d-4b24-9455-0541199ddcd5",
+    "c7e8a820-25c8-4cc9-acaf-deb32ac789f1",
+    "e42b9bc8-cf77-452b-83af-fef8b9fd07d3",
+    "1dbe8c3c-1446-479b-bcf7-cac8578f0c8a"
+  ],
+  "options": [
+    {
+      "id": "6a34fc58-28dc-459e-93e2-369835b6864b",
+      "price_idr": 450000
+    },
+    {
+      "id": "9937f6f7-3a2a-4e6e-9083-d3c4b43c40e2",
+      "price_idr": 1200000
+    },
+    {
+      "id": "16aeb84f-1326-40cd-8277-0bdb4f60c227",
+      "price_idr": 0
+    }
+  ],
+  "event": "7bf1d3f1-541c-4cd2-bbad-95acc55eb03c",
+  "act": "1774de31-d018-4085-b4bd-899b81a104c8"
+}

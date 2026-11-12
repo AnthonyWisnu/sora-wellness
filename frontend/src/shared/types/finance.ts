@@ -33,7 +33,7 @@ export type AdminPaymentRecord = {
   updatedAt: string
   bookingId: string | null
   packagePurchaseId: string | null
-  kind: 'class' | 'package'
+  kind: 'class' | 'package' | 'event'
   customerId: string
   customerName: string
   customerEmail: string

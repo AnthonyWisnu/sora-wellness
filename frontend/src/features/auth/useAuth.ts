@@ -1,5 +1,6 @@
 import { useEffect, useState, type Dispatch, type FormEvent, type SetStateAction } from 'react'
 import { api, ApiError, type Actor } from '../../shared/api'
+import { loginReturnPath } from './return-path'
 
 type Options = {
   go: (path: string) => void
@@ -67,7 +68,7 @@ export function useAuth({ go, show, setBusy, resetCustomer }: Options) {
       }
       const profile = await api<Actor>('/me')
       setActor(profile)
-      go('/dashboard')
+      go(profile.role === 'customer' ? loginReturnPath(window.location.search,window.location.origin) : '/dashboard')
       show(
         authMode === 'register'
           ? 'Akun dibuat. Anda dapat langsung memesan kelas.'

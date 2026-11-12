@@ -125,7 +125,7 @@ export function useBooking({ actor, go, show, setBusy, loadSessions, loadCustome
         await loadSessions()
         show('Status pembayaran diperbarui dari Midtrans.')
       } else {
-        const detail = await api<{ id: string; redirectUrl: string | null; payment?: { orderId?: string } }>(`/bookings/${id}`)
+        const detail = await api<{ id: string; redirectUrl: string | null; payment?: { orderId?: string } }>(`/bookings/${id}/resume-payment`, { method: 'POST' })
         if (!detail.redirectUrl)
           throw new Error('Tautan pembayaran tidak tersedia untuk booking ini.')
         setActivePayment({

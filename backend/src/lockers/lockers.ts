@@ -2,7 +2,7 @@ import { BadRequestException, Body, ConflictException, Controller, Delete, Get, 
 import { ApiCookieAuth, ApiProperty, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
 import { IsBoolean, IsInt, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
 import { Db } from '../shared/db';
-import { AuthRequest, assertRole, SessionGuard } from '../shared/security';
+import { AuthRequest, assertPermission, assertRole, SessionGuard } from '../shared/security';
 
 class LockerDto { @ApiProperty({ example: 'A-01' }) @IsString() @MaxLength(32) code!: string; }
 class LockerStatusDto { @ApiProperty({ example: false }) @IsBoolean() active!: boolean; }
@@ -53,7 +53,7 @@ export class AdminLockersController {
 
   @Get()
   async list(@Req() req: AuthRequest) {
-    assertRole(req, 'admin'); await this.lockers.releaseExpired();
+    assertPermission(req, 'lockers'); await this.lockers.releaseExpired();
     const enabled = (await this.db.query<{ locker_enabled: boolean }>('SELECT locker_enabled FROM studio_policy WHERE studio_id=1')).rows[0].locker_enabled;
     const rows = (await this.db.query(`SELECT l.id,l.code,l.active,a.customer_id AS "customerId",u.full_name AS "customerName",u.email AS "customerEmail",a.assigned_at AS "assignedAt",m.ends_on::text AS "membershipEndsOn"
       FROM lockers l LEFT JOIN locker_assignments a ON a.locker_id=l.id AND a.released_at IS NULL
@@ -63,7 +63,7 @@ export class AdminLockersController {
 
   @Get('eligible-customers')
   async eligible(@Req() req: AuthRequest, @Query() search: MemberSearch) {
-    assertRole(req, 'admin'); await this.lockers.releaseExpired();
+    assertPermission(req, 'lockers'); await this.lockers.releaseExpired();
     return (await this.db.query(`SELECT u.id,u.full_name AS "fullName",u.email,m.ends_on::text AS "membershipEndsOn"
       FROM app_users u JOIN memberships m ON m.customer_id=u.id JOIN studio s ON s.id=1
       WHERE u.role='customer' AND m.starts_on <= (now() AT TIME ZONE s.timezone)::date
@@ -75,7 +75,7 @@ export class AdminLockersController {
 
   @Post()
   async create(@Req() req: AuthRequest, @Body() body: LockerDto) {
-    assertRole(req, 'admin');
+    assertPermission(req, 'lockers');
     const code = body.code.trim().toUpperCase();
     if (!/^[A-Z0-9][A-Z0-9-]{0,31}$/.test(code)) throw new BadRequestException('Nomor loker hanya boleh huruf, angka, dan tanda hubung');
     try { return (await this.db.query('INSERT INTO lockers (code) VALUES ($1) RETURNING id,code,active', [code])).rows[0]; }
@@ -84,7 +84,7 @@ export class AdminLockersController {
 
   @Post('batch')
   async createBatch(@Req() req: AuthRequest, @Body() body: BatchLockerDto) {
-    assertRole(req, 'admin');
+    assertPermission(req, 'lockers');
     const prefix = body.prefix.trim().toUpperCase();
     if (!/^[A-Z0-9-]{0,10}$/.test(prefix)) {
       throw new BadRequestException('Prefix hanya boleh huruf kapital, angka, dan tanda hubung');
@@ -124,19 +124,21 @@ export class AdminLockersController {
 
   @Patch(':id/status')
   async updateStatus(@Req() req: AuthRequest, @Param('id', ParseUUIDPipe) lockerId: string, @Body() body: LockerStatusDto) {
-    assertRole(req, 'admin');
-    if (!body.active) {
-      const assigned = await this.db.query('SELECT 1 FROM locker_assignments WHERE locker_id=$1 AND released_at IS NULL LIMIT 1', [lockerId]);
-      if (assigned.rowCount) throw new ConflictException('Loker sedang digunakan oleh member. Lepas penetapan terlebih dahulu sebelum menandai perawatan.');
-    }
-    const updated = await this.db.query('UPDATE lockers SET active=$1 WHERE id=$2 RETURNING id,code,active', [body.active, lockerId]);
-    if (!updated.rows[0]) throw new BadRequestException('Loker tidak ditemukan');
-    return updated.rows[0];
+    assertPermission(req, 'lockers');
+    return this.db.transaction(async client => {
+      const locker = await client.query('SELECT id FROM lockers WHERE id=$1 FOR UPDATE', [lockerId]);
+      if (!locker.rows[0]) throw new BadRequestException('Loker tidak ditemukan');
+      if (!body.active) {
+        const assigned = await client.query('SELECT 1 FROM locker_assignments WHERE locker_id=$1 AND released_at IS NULL LIMIT 1', [lockerId]);
+        if (assigned.rowCount) throw new ConflictException('Loker sedang digunakan. Lepas penetapan sebelum menandai perawatan.');
+      }
+      return (await client.query('UPDATE lockers SET active=$1 WHERE id=$2 RETURNING id,code,active', [body.active,lockerId])).rows[0];
+    });
   }
 
   @Put(':id/assignment')
   async assign(@Req() req: AuthRequest, @Param('id', ParseUUIDPipe) lockerId: string, @Body() body: AssignDto) {
-    const admin = assertRole(req, 'admin');
+    const admin = assertPermission(req, 'lockers');
     await this.lockers.releaseExpired();
     try {
       return await this.db.transaction(async (client) => {
@@ -162,7 +164,7 @@ export class AdminLockersController {
 
   @Delete(':id/assignment')
   async release(@Req() req: AuthRequest, @Param('id', ParseUUIDPipe) lockerId: string) {
-    assertRole(req, 'admin');
+    assertPermission(req, 'lockers');
     const found = await this.db.query('UPDATE locker_assignments SET released_at=now() WHERE locker_id=$1 AND released_at IS NULL RETURNING id', [lockerId]);
     if (!found.rows[0]) throw new BadRequestException('Loker tidak memiliki penetapan aktif');
     return { released: true };

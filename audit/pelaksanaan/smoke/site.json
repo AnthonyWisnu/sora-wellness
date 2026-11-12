@@ -1,0 +1,6 @@
+{
+  "name": "site",
+  "exitCode": 0,
+  "target": "fixture sintetis lokal",
+  "script": "site-cms-smoke"
+}

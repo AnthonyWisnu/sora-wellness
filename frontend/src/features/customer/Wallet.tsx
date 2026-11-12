@@ -32,10 +32,12 @@ export function CustomerWalletPanel({
   balance,
   timezone,
   show,
+  onChanged,
 }: {
   balance: number
   timezone: string
   show: (text: string) => void
+  onChanged: () => Promise<void>
 }) {
   const [entries, setEntries] = useState<WalletEntry[]>([])
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([])
@@ -189,7 +191,7 @@ export function CustomerWalletPanel({
         open={withdrawOpen}
         balance={balance}
         onClose={() => setWithdrawOpen(false)}
-        onSuccess={loadData}
+        onSuccess={() => { loadData(); void onChanged().catch(error => show(errorMessage(error))) }}
         show={show}
       />
     </>

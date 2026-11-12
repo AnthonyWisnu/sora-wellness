@@ -37,7 +37,7 @@ async function main() {
     const abandoned = await db.query<{ id: string }>(`INSERT INTO package_purchases (customer_id,package_option_id,amount_idr,duration_months,status,idempotency_key,expires_at) VALUES ($1,$2,$3,$4,'pending_payment',$5,now()-interval '1 minute') RETURNING id`, [customerId,o.id,o.price_idr,o.duration_months,randomUUID()]);
     const abandonedOrder = `PKG-${abandoned.rows[0].id}`;
     await db.query(`INSERT INTO payment_transactions (package_purchase_id,order_id,gross_amount_idr,status) VALUES ($1,$2,$3,'pending')`, [abandoned.rows[0].id,abandonedOrder,o.price_idr]);
-    await payments.refreshByOrder(abandonedOrder);
+    await payments.expirePendingPackages(customerId);
     const expired = await db.query<{ status: string }>('SELECT status FROM package_purchases WHERE id=$1', [abandoned.rows[0].id]);
     assert.equal(expired.rows[0].status,'expired');
     const unused = await db.query<{ duration: number }>('SELECT d AS duration FROM generate_series(36,1,-1) d WHERE NOT EXISTS (SELECT 1 FROM package_options WHERE duration_months=d) LIMIT 1');

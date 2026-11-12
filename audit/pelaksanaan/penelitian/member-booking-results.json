@@ -1,0 +1,12 @@
+{
+  "result": "PASS",
+  "memberWindowDays": 30,
+  "prioritySessionVisible": true,
+  "bookingId": "d83b9306-25d4-4d6f-a035-45d1cb56e610",
+  "source": "quota",
+  "status": "confirmed",
+  "quotaBefore": 0,
+  "quotaAfter": 1,
+  "qrVisible": true,
+  "browserErrors": []
+}

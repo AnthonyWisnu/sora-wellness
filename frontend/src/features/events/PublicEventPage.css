@@ -1,0 +1,29 @@
+.public-event-page { width: min(100% - 2 * var(--space-4), 46rem); margin: var(--space-8) auto var(--space-16); }
+.event-page-header { margin-bottom: var(--space-8); }
+.event-page-header h1 { font-family: var(--font-display); font-weight: 500; font-size: clamp(2rem, 5vw, 3rem); }
+.event-page-header p { max-width: 66ch; line-height: 1.65; }
+.event-page-header p:has(svg), .event-activity-copy span { display: flex; align-items: center; gap: var(--space-2); }
+.event-registration { gap: var(--space-6); }
+.event-activity-options { border: 0; padding: 0; margin: 0; display: grid; gap: var(--space-3); min-width: 0; }
+.event-activity-options legend { font-size: var(--text-lg); font-weight: 700; padding-bottom: var(--space-4); }
+.event-activity-option { display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-control); cursor: pointer; }
+.event-activity-option:has(:checked) { border-color: var(--color-primary); background: var(--color-tint); }
+.event-activity-option input { width: 20px; min-width: 20px; min-height: 20px; height: 20px; margin-top: 4px; accent-color: var(--color-primary); }
+.event-activity-copy { display: grid; gap: var(--space-2); min-width: 0; overflow-wrap: anywhere; font-weight: 400; }
+.event-activity-copy > strong { font-size: var(--text-lg); }
+.event-payment-summary, .event-order-state { padding: var(--space-6); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-card); }
+.event-payment-summary h2, .event-order-state h2 { font-size: var(--text-xl); }
+.event-order-state { margin-bottom: var(--space-6); }
+.event-ticket { max-width: 30rem; margin-inline: auto; padding: var(--space-6); text-align: center; }
+.event-ticket img { margin: var(--space-4) auto; }
+.event-ticket-details { text-align: left; }
+.event-ticket-details > div { display: grid; grid-template-columns: 6rem 1fr; gap: var(--space-3); padding-block: var(--space-2); }
+.event-ticket-details dt { color: var(--color-muted); }
+.event-ticket-details dd { margin: 0; overflow-wrap: anywhere; }
+.event-ticket-code { font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.event-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); justify-content: center; margin-block: var(--space-4); }
+@media print {
+  body:has(.event-ticket) header, body:has(.event-ticket) footer, body:has(.event-ticket) .no-print { display: none !important; }
+  .public-event-page { width: 100%; margin: 0; }
+  .event-ticket { color: black; background: white; box-shadow: none; break-inside: avoid; }
+}

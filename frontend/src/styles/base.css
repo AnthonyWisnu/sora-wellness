@@ -1,15 +1,3 @@
-:root {
-  --green: #203e32;
-  --green-2: #335845;
-  --ink: #1d2924;
-  --muted: #6e7772;
-  --cream: #fcfaf6;
-  --beige: #f4f0e9;
-  --line: #e7e2d9;
-  --gold: #ad8950;
-  --white: #fffefa;
-  --shadow: 0 14px 40px rgba(33, 45, 35, 0.07);
-}
 #root {
   min-height: 100vh;
 }
@@ -22,7 +10,7 @@ p {
 h1,
 h2,
 h3 {
-  letter-spacing: -0.055em;
+  letter-spacing: -0.025em;
 }
 h1 {
   line-height: 1.08;
@@ -34,7 +22,7 @@ p {
   line-height: 1.7;
 }
 em {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--font-display);
   font-weight: 600;
   letter-spacing: -0.025em;
 }
@@ -46,14 +34,14 @@ em {
   padding-block: 112px;
 }
 .eyebrow {
-  font-size: 11px;
-  letter-spacing: 0.22em;
+  font-size: var(--text-sm);
+  letter-spacing: 0.02em;
   font-weight: 800;
-  color: #9b7d4d;
+  color: var(--color-muted);
 }
 .button {
   border: 1px solid transparent;
-  border-radius: 7px;
+  border-radius: var(--radius-control);
   min-height: 48px;
   padding: 0 20px;
   display: inline-flex;
@@ -61,7 +49,7 @@ em {
   justify-content: center;
   gap: 10px;
   font-weight: 700;
-  font-size: 13px;
+  font-size: var(--text-sm);
   transition:
     transform 0.2s,
     background 0.2s,
@@ -70,8 +58,7 @@ em {
   white-space: nowrap;
 }
 .button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 18px rgba(22, 54, 40, 0.15);
+  filter: brightness(0.96);
 }
 .button:disabled {
   opacity: 0.5;
@@ -106,7 +93,7 @@ em {
   min-height: 27px;
   padding: 3px 10px;
   border-radius: 100px;
-  font-size: 10px;
+  font-size: var(--text-xs);
   font-weight: 800;
   letter-spacing: 0.05em;
   white-space: nowrap;
@@ -116,12 +103,12 @@ em {
   color: #2e684e;
 }
 .tag-gold {
-  background: #f8efe0;
-  color: #9d743e;
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
 }
 .tag-gray {
-  background: #f0f0ed;
-  color: #66716b;
+  background: var(--color-tint);
+  color: var(--color-muted);
 }
 .icon-bubble {
   height: 46px;
@@ -225,7 +212,7 @@ em {
   background: transparent;
   border-radius: 999px;
   padding: 11px 22px;
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: 700;
   color: #66716a;
 }

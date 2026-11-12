@@ -19,6 +19,14 @@ import {
 } from 'class-validator'
 
 export class CreateActivityDto {
+  @ApiPropertyOptional({ format: 'uuid' })
+  @IsOptional() @IsUUID()
+  id?: string
+
+  @ApiPropertyOptional({ format: 'date', description: 'Tanggal kegiatan di dalam rentang event. Wajib untuk event beberapa hari.' })
+  @IsOptional() @IsDateString()
+  localDate?: string
+
   @ApiProperty({ example: 'Sunrise Yoga Flow' })
   @IsString()
   @Length(2, 120)

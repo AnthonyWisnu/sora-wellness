@@ -26,6 +26,7 @@ async function main() {
       const email = `${role}-${randomUUID()}@example.test`;
       const found = await pool.query<{ id: string }>('INSERT INTO app_users (email,full_name,role,password_hash) VALUES ($1,$2,$3,$4) RETURNING id', [email,role==='admin' ? 'Admin Konten' : 'Member Loker',role,await hashPassword(password)]);
       const id = found.rows[0].id; userIds.push(id);
+      if (role==='admin') await pool.query("UPDATE app_users SET permissions=ARRAY['studio_content','studio_policy','lockers'] WHERE id=$1",[id]);
       if (role==='customer') await pool.query('INSERT INTO wallet_accounts (customer_id) VALUES ($1)', [id]);
       const agent = supertest.agent(base);
       const first = (await agent.get('/api/v1/auth/csrf').expect(200)).body.token as string;

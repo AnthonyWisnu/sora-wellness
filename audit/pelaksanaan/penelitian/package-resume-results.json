@@ -1,0 +1,10 @@
+{
+  "result": "PASS",
+  "provider": "Midtrans Sandbox nyata",
+  "paymentDialogAfterNavigation": true,
+  "resumeSameOrder": true,
+  "resumeSameUrl": true,
+  "paymentIntents": 1,
+  "orderLeftToExpire": true,
+  "browserErrors": []
+}

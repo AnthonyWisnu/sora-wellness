@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Post, Put, Req, UseGuards } from '@nestjs/common';
 import { ApiBody, ApiCookieAuth, ApiOkResponse, ApiProperty, ApiTags } from '@nestjs/swagger';
 import { IsInt, IsObject, Min } from 'class-validator';
-import { AuthRequest, assertRole, SessionGuard } from '../shared/security';
+import { AuthRequest, assertPermission, SessionGuard } from '../shared/security';
 import { SiteService } from './site.service';
 import { initialSiteDocument } from './site-document';
 
@@ -24,11 +24,11 @@ export class PublicSiteController {
 export class AdminSiteController {
   constructor(private readonly site: SiteService) {}
   @ApiOkResponse({ schema: { example: { document: siteExample, draftVersion: 2, publishedVersion: 1, updatedAt: '2026-09-26T00:00:00.000Z', publishedAt: '2026-09-25T00:00:00.000Z' } } })
-  @Get() async read(@Req() req: AuthRequest) { assertRole(req, 'admin'); return this.site.draft(); }
+  @Get() async read(@Req() req: AuthRequest) { assertPermission(req, 'studio_content'); return this.site.draft(); }
   @ApiOkResponse({ description: 'Hanya draf untuk pratinjau admin.', schema: { example: siteExample } })
-  @Get('preview') async preview(@Req() req: AuthRequest) { assertRole(req, 'admin'); return (await this.site.draft()).document; }
+  @Get('preview') async preview(@Req() req: AuthRequest) { assertPermission(req, 'studio_content'); return (await this.site.draft()).document; }
   @ApiBody({ schema: { example: { expectedVersion: 1, document: siteExample } } })
-  @Put() async save(@Req() req: AuthRequest, @Body() body: SaveSiteDto) { assertRole(req, 'admin'); return this.site.save(body.document, body.expectedVersion); }
+  @Put() async save(@Req() req: AuthRequest, @Body() body: SaveSiteDto) { assertPermission(req, 'studio_content'); return this.site.save(body.document, body.expectedVersion); }
   @ApiBody({ schema: { example: { expectedVersion: 2 } } })
-  @Post('publish') async publish(@Req() req: AuthRequest, @Body() body: PublishSiteDto) { const admin = assertRole(req, 'admin'); return this.site.publish(body.expectedVersion, admin.id); }
+  @Post('publish') async publish(@Req() req: AuthRequest, @Body() body: PublishSiteDto) { const admin = assertPermission(req, 'studio_content'); return this.site.publish(body.expectedVersion, admin.id); }
 }

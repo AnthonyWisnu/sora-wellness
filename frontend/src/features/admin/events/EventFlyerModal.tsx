@@ -73,7 +73,7 @@ export function EventFlyerModal({ event, onClose, show }: Props) {
           <div style={{ fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#64748b', fontWeight: 700 }}>
             SORA WELLNESS COMMUNITY
           </div>
-          <h2 style={{ margin: '8px 0', fontSize: '1.45rem', color: '#17392e', fontFamily: 'serif' }}>
+          <h2 style={{ margin: '8px 0', fontSize: '1.45rem', color: '#17392e', fontFamily: 'var(--font-display)' }}>
             {event.title}
           </h2>
           <p style={{ margin: '0 0 14px', fontSize: '0.88rem', color: '#475569' }}>
@@ -94,7 +94,7 @@ export function EventFlyerModal({ event, onClose, show }: Props) {
               marginBottom: '16px',
             }}
           >
-            <MapPin size={14} /> {event.locationName} · {formatDate(event.startDate, { day: 'numeric', month: 'short', year: 'numeric' })}
+            <MapPin size={14} /> {event.locationName} · {formatDate(event.startDate, { day: 'numeric', month: 'short', year: 'numeric' })}{event.endDate!==event.startDate && ` sampai ${formatDate(event.endDate,{day:'numeric',month:'short',year:'numeric'})}`}
           </div>
 
           <div style={{ margin: '14px 0', display: 'flex', justifyContent: 'center' }}>
@@ -118,7 +118,7 @@ export function EventFlyerModal({ event, onClose, show }: Props) {
               {event.activities?.length ? (
                 event.activities.map((act) => (
                   <li key={act.id}>
-                    <strong>{act.title}</strong> ({act.startTime} - {act.endTime}) · Kuota: {act.capacity} orang
+                    <strong>{act.title}</strong> · {act.localDate ? formatDate(act.localDate,{day:'numeric',month:'short'}) : 'Tanggal belum ditetapkan'} ({act.startTime} - {act.endTime}) · Kuota: {act.capacity} orang
                   </li>
                 ))
               ) : (

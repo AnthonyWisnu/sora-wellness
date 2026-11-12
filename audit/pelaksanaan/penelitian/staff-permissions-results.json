@@ -1,0 +1,8 @@
+{
+  "result": "PASS",
+  "permissionsShown": 9,
+  "revokedAll": true,
+  "noFallbackMenus": true,
+  "directApiDenied": 403,
+  "browserErrors": []
+}

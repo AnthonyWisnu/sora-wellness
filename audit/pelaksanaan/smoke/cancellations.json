@@ -1,0 +1,6 @@
+{
+  "name": "cancellations",
+  "exitCode": 0,
+  "target": "fixture sintetis lokal",
+  "script": "cancellation-smoke"
+}

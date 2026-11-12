@@ -194,7 +194,7 @@ export class AdminWithdrawalController {
 
   @Get('withdrawals')
   async list(@Req() req: AuthRequest, @Query('status') status?: string) {
-    assertRole(req, 'finance', 'superadmin')
+    assertPermission(req, 'finance_payouts')
     const values = [status ?? null]
     const rows = await this.db.query(
       `SELECT w.id, w.customer_id AS "customerId", u.full_name AS "customerName",

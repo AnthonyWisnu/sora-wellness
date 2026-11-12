@@ -1,21 +1,16 @@
-@import '@fontsource/plus-jakarta-sans/latin-400.css';
-@import '@fontsource/plus-jakarta-sans/latin-500.css';
-@import '@fontsource/plus-jakarta-sans/latin-600.css';
-@import '@fontsource/plus-jakarta-sans/latin-700.css';
-@import '@fontsource/plus-jakarta-sans/latin-800.css';
 @import '@fontsource/manrope/latin-400.css';
 @import '@fontsource/manrope/latin-500.css';
 @import '@fontsource/manrope/latin-600.css';
 @import '@fontsource/manrope/latin-700.css';
 @import '@fontsource/playfair-display/latin-400.css';
 @import '@fontsource/playfair-display/latin-500.css';
-@import '@fontsource/cormorant-garamond/latin-500-italic.css';
-@import '@fontsource/cormorant-garamond/latin-600-italic.css';
+
+@import './styles/tokens.css';
 
 :root {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  color: #1d2924;
-  background: #fcfaf6;
+  font-family: var(--font-ui);
+  color: var(--color-ink);
+  background: var(--color-canvas);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -48,6 +43,12 @@ img {
   display: block;
 }
 ::selection {
-  background: #d7e4d6;
-  color: #17392e;
+  background: var(--color-tint);
+  color: var(--color-primary);
+}
+:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 3px; }
+.dashboard-sidebar :focus-visible { outline-color: var(--color-tint); }
+input, textarea { caret-color: var(--color-primary); }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
 }

@@ -1,0 +1,7 @@
+{
+  "result": "PASS",
+  "adminCannotOfferRootReset": true,
+  "adminCannotOfferGrantPermissions": true,
+  "adminCreatesCoachOnly": true,
+  "browserErrors": []
+}

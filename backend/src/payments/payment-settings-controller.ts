@@ -8,8 +8,8 @@ import { MidtransClient } from './midtrans';
 
 class PaymentSettingsDto {
   @ApiProperty({ example: 'G123456789' }) @IsString() merchantId!: string;
-  @ApiProperty({ example: 'Mid-client-example' }) @IsString() @Matches(/^Mid-client-/) clientKey!: string;
-  @ApiProperty({ writeOnly: true, example: 'Mid-server-example' }) @IsString() @Matches(/^Mid-server-/) serverKey!: string;
+  @ApiProperty({ example: 'SB-Mid-client-example' }) @IsString() @Matches(/^(SB-)?Mid-client-/) clientKey!: string;
+  @ApiProperty({ writeOnly: true, example: 'SB-Mid-server-example' }) @IsString() @Matches(/^(SB-)?Mid-server-/) serverKey!: string;
 }
 
 @ApiTags('admin payment settings') @ApiCookieAuth('wellness.sid') @UseGuards(SessionGuard)

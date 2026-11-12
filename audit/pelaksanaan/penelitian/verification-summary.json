@@ -1,0 +1,116 @@
+{
+  "result": "PASS",
+  "recordedAt": "2026-11-12T10:06:44.573Z",
+  "scope": "Lima langkah fungsional prototipe penelitian",
+  "functionalGroups": [
+    {
+      "name": "register",
+      "result": "PASS"
+    },
+    {
+      "name": "concurrency",
+      "result": "PASS"
+    },
+    {
+      "name": "sandbox-package",
+      "result": "PASS"
+    },
+    {
+      "name": "package-resume",
+      "result": "PASS"
+    },
+    {
+      "name": "member-booking",
+      "result": "PASS"
+    },
+    {
+      "name": "paid-booking",
+      "result": "PASS"
+    },
+    {
+      "name": "staff-permissions",
+      "result": "PASS"
+    },
+    {
+      "name": "account-actions",
+      "result": "PASS"
+    },
+    {
+      "name": "admin-studio",
+      "result": "PASS"
+    },
+    {
+      "name": "attendance",
+      "result": "PASS"
+    },
+    {
+      "name": "event",
+      "result": "PASS"
+    },
+    {
+      "name": "event-dates-ui",
+      "result": "PASS"
+    },
+    {
+      "name": "supporting",
+      "result": "PASS"
+    },
+    {
+      "name": "wallet-ui",
+      "result": "PASS"
+    },
+    {
+      "name": "finance-ui",
+      "result": "PASS"
+    }
+  ],
+  "commands": [
+    {
+      "command": "npm --prefix frontend run build",
+      "exitCode": 0
+    },
+    {
+      "command": "npm --prefix frontend run lint",
+      "exitCode": 0
+    },
+    {
+      "command": "npm --prefix backend test",
+      "exitCode": 0
+    },
+    {
+      "exitCode": 0,
+      "command": "npm --prefix backend run lint"
+    },
+    {
+      "exitCode": 0,
+      "command": "npm --prefix frontend run test:payment-feedback"
+    }
+  ],
+  "backendUnitTests": 36,
+  "frontendFeedbackTests": 6,
+  "rbacHttpChecks": 110,
+  "concurrency": {
+    "result": "PASS",
+    "transport": "HTTP /api/v1/bookings",
+    "authenticatedCustomers": 50,
+    "requests": 50,
+    "capacity": 1,
+    "statuses": {
+      "201": 1,
+      "409": 49
+    },
+    "confirmedBookings": 1,
+    "overbooking": 0,
+    "dispatchWindowMs": 11.692900000001828,
+    "elapsedMs": 749.9668999999994
+  },
+  "selectedScreenshots": [
+    "screenshots/01-member-booking.png",
+    "screenshots/02-admin-sessions.png",
+    "screenshots/03-superadmin-permissions.png",
+    "screenshots/04-coach-roster.png",
+    "screenshots/05-event.png"
+  ],
+  "deploymentPerformed": false,
+  "automaticInternetWebhookDeliveryVerified": false
+}

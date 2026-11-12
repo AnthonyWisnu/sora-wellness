@@ -1,0 +1,28 @@
+const assert=require('node:assert/strict');
+const {start,base,pool,f,api,save}=require('./browser-common.cjs');
+const event=require('./event-results.json');
+let customer,admin;
+(async()=>{
+  customer=await start('guest');admin=await start('admin');
+  const body={amountIdr:10000,destinationType:'bank',providerCode:'BCA',accountNumber:'0000000000',accountName:'Data Sintetis Penelitian'};
+  const before=(await api(customer.context,'/me/wallet')).balanceIdr;assert.ok(before>=20000);
+  const withdrawal=await api(customer.context,'/me/wallet/withdraw','POST',body);
+  assert.equal((await api(customer.context,'/me/wallet')).balanceIdr,before-10000);
+  await assert.rejects(api(customer.context,'/me/wallet/withdraw','POST',body),/HTTP 400/);
+  await api(admin.context,`/admin/finance/withdrawals/${withdrawal.id}/reject`,'POST',{reason:'Pengujian penolakan permohonan sintetis'});
+  assert.equal((await api(customer.context,'/me/wallet')).balanceIdr,before);
+  await assert.rejects(api(admin.context,`/admin/finance/withdrawals/${withdrawal.id}/reject`,'POST',{reason:'Percobaan ulang sintetis'}),/HTTP 400/);
+  const next=await api(customer.context,'/me/wallet/withdraw','POST',body);
+  await api(admin.context,`/admin/finance/withdrawals/${next.id}/complete`,'POST',{transferRefNote:'SIMULASI PENELITIAN, TANPA TRANSFER BANK RIIL'});
+  assert.equal((await api(customer.context,'/me/wallet')).balanceIdr,before-10000);
+  await assert.rejects(api(admin.context,`/admin/finance/withdrawals/${next.id}/complete`,'POST',{transferRefNote:'RETRY SINTETIS'}),/HTTP 400/);
+  const listing=await api(admin.context,'/admin/payments?kind=event&q='+encodeURIComponent(event.orderId));
+  assert.equal(listing.total,1);assert.equal(listing.items[0].kind,'event');assert.equal(listing.items[0].classTitle,'Pilates Tepi Pantai');
+  const csv=await admin.context.request.get(base+'/api/v1/admin/payments/export?kind=event&q='+encodeURIComponent(event.orderId));
+  assert.equal(csv.status(),200);assert.match(await csv.text(),/Pilates Tepi Pantai/);
+  await customer.page.goto(base+'/dashboard/wallet');await customer.page.getByText('Status penarikan dana',{exact:true}).waitFor();
+  const ledger=await api(customer.context,'/me/wallet/entries?limit=100');
+  assert.ok(ledger.some(row=>row.kind==='payout_refund'));assert.ok(ledger.some(row=>row.kind==='payout_withdrawal'));
+  save('supporting-results',{result:'PASS',withdrawalReserved:true,duplicatePendingBlocked:true,rejectionRestoresOnce:true,completeDoesNotDebitTwice:true,bankTransferPerformed:false,walletUi:true,eventFinanceReport:true,eventCsvExport:true,balanceBefore:before,balanceAfter:before-10000,browserErrors:[...customer.errors,...admin.errors]});
+  assert.deepEqual([...customer.errors,...admin.errors],[]);console.log('PASS: pengajuan/penolakan/penyelesaian payout sintetis, riwayat wallet, laporan dan ekspor event');
+})().catch(error=>{console.error(error.stack);process.exitCode=1}).finally(async()=>{if(customer)await customer.browser.close();if(admin)await admin.browser.close();await pool.end()});

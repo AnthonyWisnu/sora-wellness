@@ -1,3 +1,4 @@
+import { encryptHealth } from '../src/health/health-crypto';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import supertest from 'supertest';
@@ -24,7 +25,7 @@ async function main() {
     assert.equal((await customer.get('/api/v1/me/health').expect(200)).body.note,'Riwayat patah tulang');
     await pool.query("UPDATE health_profile_revisions SET recorded_at=now()-interval '2 hours' WHERE customer_id=$1", [customerId]);
 
-    async function staff(role: 'coach' | 'admin') {
+    async function staff(role: 'coach' | 'admin' | 'superadmin') {
       const created = await pool.query<{ id: string; email: string }>(`INSERT INTO app_users (email,full_name,role,password_hash) VALUES ($1,$2,$3,$4) RETURNING id,email`, [`${role}-${randomUUID()}@example.test`,role==='coach' ? 'Pelatih Uji' : 'Admin Uji',role,await hashPassword(password)]);
       ids.push(created.rows[0].id);
       const agent = supertest.agent(base);
@@ -35,6 +36,8 @@ async function main() {
     const coach = await staff('coach');
     const otherCoach = await staff('coach');
     const admin = await staff('admin');
+    const owner = await staff('superadmin');
+    await pool.query("UPDATE app_users SET permissions=ARRAY['front_desk'] WHERE id=$1",[admin.id]);
     const classType = await pool.query<{ id: string }>("SELECT id FROM class_types WHERE level='beginner' LIMIT 1");
     assert.ok(classType.rows[0]);
     async function session(coachId: string, startOffset: string, endOffset: string) {
@@ -42,6 +45,7 @@ async function main() {
       sessions.push(made.rows[0].id);
       return made.rows[0].id;
     }
+    const active = await session(coach.id,'-30 minutes','30 minutes');
     const historical = await session(coach.id,'-1 hour','-30 minutes');
     const future = await session(coach.id,'1 hour','2 hours');
     const tooOld = await session(coach.id,'-27 hours','-26 hours');
@@ -49,14 +53,14 @@ async function main() {
     const localDate = (await pool.query<{ local_date: string }>('SELECT local_date::text FROM class_sessions WHERE id=$1', [historical])).rows[0].local_date;
     assert.ok((await coach.agent.get('/api/v1/coach/sessions').query({ date: localDate }).expect(200)).body.some((row: { id: string }) => row.id === historical));
     assert.ok((await admin.agent.get('/api/v1/admin/sessions').query({ date: localDate }).expect(200)).body.some((row: { id: string }) => row.id === historical));
-    for (const sessionId of [historical,future,tooOld,expiredHistory]) await pool.query(`INSERT INTO bookings (customer_id,session_id,status,source,price_idr,idempotency_key,confirmed_at) VALUES ($1,$2,'confirmed','free',0,$3,now())`, [customerId,sessionId,randomUUID()]);
-    await pool.query(`INSERT INTO health_snapshots (booking_id,customer_id,note,delete_after) SELECT id,$1,'Catatan yang harus kedaluwarsa',now()-interval '1 minute' FROM bookings WHERE session_id=$2 AND customer_id=$1`, [customerId,expiredHistory]);
+    for (const sessionId of [active,historical,future,tooOld,expiredHistory]) await pool.query(`INSERT INTO bookings (customer_id,session_id,status,source,price_idr,idempotency_key,confirmed_at) VALUES ($1,$2,'confirmed','free',0,$3,now())`, [customerId,sessionId,randomUUID()]);
+    await pool.query(`INSERT INTO health_snapshots (booking_id,customer_id,note,delete_after) SELECT id,$1,$3,now()-interval '1 minute' FROM bookings WHERE session_id=$2 AND customer_id=$1`, [customerId,expiredHistory,encryptHealth('Catatan yang harus kedaluwarsa',customerId!)]);
     await otherCoach.agent.get(`/api/v1/coach/sessions/${historical}/participants`).expect(404);
     assert.equal((await otherCoach.agent.get('/api/v1/coach/sessions').expect(200)).body.length,0);
     await admin.agent.get(`/api/v1/coach/sessions/${historical}/participants`).expect(403);
     await admin.agent.get('/api/v1/me/health').expect(403);
     await customer.get(`/api/v1/coach/sessions/${historical}/participants`).expect(403);
-    const first = await coach.agent.get(`/api/v1/coach/sessions/${historical}/participants`).expect(200);
+    const first = await coach.agent.get(`/api/v1/coach/sessions/${active}/participants`).expect(200);
     assert.equal(first.body.participants[0].healthNote,'Riwayat patah tulang');
     assert.equal(first.body.participants[0].healthSource,'snapshot');
     assert.equal((await coach.agent.get(`/api/v1/coach/sessions/${expiredHistory}/participants`).expect(200)).body.participants[0].healthNote,null);
@@ -66,15 +70,17 @@ async function main() {
     assert.equal('email' in adminParticipants.body[0],false);
     await customer.put('/api/v1/me/health').set('x-csrf-token',customerToken).send({ note: 'Kondisi terbaru',consent: true }).expect(200);
     const past = await coach.agent.get(`/api/v1/coach/sessions/${historical}/participants`).expect(200);
-    assert.equal(past.body.participants[0].healthNote,'Riwayat patah tulang');
+    assert.equal(past.body.participants[0].healthNote,null);
+    assert.equal((await coach.agent.get(`/api/v1/coach/sessions/${active}/participants`).expect(200)).body.participants[0].healthNote,'Riwayat patah tulang');
     const upcoming = await coach.agent.get(`/api/v1/coach/sessions/${future}/participants`).expect(200);
-    assert.equal(upcoming.body.participants[0].healthNote,'Kondisi terbaru');
+    assert.equal(upcoming.body.participants[0].healthNote,null);
     await coach.agent.put(`/api/v1/coach/sessions/${future}/attendance/${customerId}`).set('x-csrf-token',coach.token).send({ present: true }).expect(409);
     await coach.agent.put(`/api/v1/coach/sessions/${historical}/attendance/${customerId}`).set('x-csrf-token',coach.token).send({ present: true }).expect(200);
     await otherCoach.agent.put(`/api/v1/coach/sessions/${historical}/attendance/${customerId}`).set('x-csrf-token',otherCoach.token).send({ present: false }).expect(404);
     await coach.agent.put(`/api/v1/coach/sessions/${tooOld}/attendance/${customerId}`).set('x-csrf-token',coach.token).send({ present: false }).expect(409);
-    await admin.agent.put(`/api/v1/admin/sessions/${tooOld}/attendance/${customerId}`).set('x-csrf-token',admin.token).send({ present: false,reason: 'Koreksi daftar hadir manual' }).expect(200);
-    const corrections = await admin.agent.get(`/api/v1/admin/sessions/${tooOld}/attendance-corrections`).expect(200);
+    await admin.agent.put(`/api/v1/admin/sessions/${tooOld}/attendance/${customerId}`).set('x-csrf-token',admin.token).send({ present: false,reason: 'Koreksi daftar hadir manual' }).expect(403);
+    await owner.agent.put(`/api/v1/admin/sessions/${tooOld}/attendance/${customerId}`).set('x-csrf-token',owner.token).send({ present: false,reason: 'Koreksi daftar hadir manual' }).expect(200);
+    const corrections = await owner.agent.get(`/api/v1/admin/sessions/${tooOld}/attendance-corrections`).expect(200);
     assert.equal(corrections.body.length,1);
     assert.equal(corrections.body[0].adminName,'Admin Uji');
     await customer.delete('/api/v1/me/health').set('x-csrf-token',customerToken).expect(200);
@@ -83,7 +89,7 @@ async function main() {
     assert.equal((await pool.query<{ count: number }>('SELECT count(*)::int AS count FROM health_profile_revisions WHERE customer_id=$1', [customerId])).rows[0].count,0);
     await pool.query("UPDATE bookings SET status='cancelled',cancelled_at=now(),cancellation_origin='customer' WHERE customer_id=$1 AND session_id=$2", [customerId,future]);
     assert.equal((await coach.agent.get(`/api/v1/coach/sessions/${future}/participants`).expect(200)).body.participants.length,0);
-    process.stdout.write('Health/attendance OK: consent, akses pelatih, snapshot historis, penghapusan, absensi 24 jam, dan audit admin.\n');
+    process.stdout.write('Health/attendance OK: consent, akses pelatih, snapshot saat sesi aktif, enkripsi, penghapusan, absensi 24 jam, dan audit admin.\n');
   } finally {
     await pool.query('DELETE FROM attendance_corrections WHERE session_id=ANY($1::uuid[])', [sessions]);
     await pool.query('DELETE FROM attendance WHERE session_id=ANY($1::uuid[])', [sessions]);

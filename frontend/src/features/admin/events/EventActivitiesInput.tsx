@@ -8,9 +8,11 @@ type Props = {
   activities: ActivityInput[]
   onChange: (items: ActivityInput[]) => void
   show: (msg: string) => void
+  startDate: string
+  endDate: string
 }
 
-export function EventActivitiesInput({ activities, onChange, show }: Props) {
+export function EventActivitiesInput({ activities, onChange, show, startDate, endDate }: Props) {
   const [classTypes, setClassTypes] = useState<AdminClassType[]>([])
   const [coaches, setCoaches] = useState<Coach[]>([])
 
@@ -34,6 +36,7 @@ export function EventActivitiesInput({ activities, onChange, show }: Props) {
       ...activities,
       {
         title: defaultClass?.title ?? 'Sesi Komunitas Terbuka',
+        localDate: startDate,
         category: defaultClass?.category ?? 'Komunitas',
         classTypeId: defaultClass?.id,
         coachId: defaultCoach?.id,
@@ -168,6 +171,8 @@ export function EventActivitiesInput({ activities, onChange, show }: Props) {
                 </label>
               )}
 
+              <label>Tanggal kegiatan<input type="date" required min={startDate} max={endDate} value={act.localDate ?? (startDate===endDate ? startDate : '')} onChange={e=>updateRow(idx,{localDate:e.target.value})}/></label>
+              <label>Harga tiket (Rp)<input type="number" min={0} step={1} value={act.priceIdr} onChange={e=>updateRow(idx,{priceIdr:Number(e.target.value)})} required/></label>
               <div className="time-split-row">
                 <label>
                   Jam Mulai

@@ -155,13 +155,13 @@
   text-align: center;
 }
 .quote-mark {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--font-display);
   font-size: 100px;
   line-height: 0.5;
   color: #af996c;
 }
 .quote-inner blockquote {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--font-display);
   font-size: clamp(27px, 3vw, 42px);
   font-style: italic;
   line-height: 1.3;

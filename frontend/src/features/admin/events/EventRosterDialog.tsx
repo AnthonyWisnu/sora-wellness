@@ -130,14 +130,14 @@ export function EventRosterDialog({ event, timezone, onClose, show }: Props) {
                   </td>
                   <td>
                     <span className={`tag ${item.status === 'attended' ? 'tag-green' : 'tag-gold'}`}>
-                      {item.status === 'attended' ? 'Hadir' : 'Terdaftar'}
+                      {{attended:'Hadir',registered:'Terdaftar',pending_payment:'Menunggu bayar',cancelled:'Dibatalkan',expired:'Kedaluwarsa',failed:'Gagal',credited:'Dikreditkan ke wallet'}[item.status]}
                     </span>
                     <small style={{ display: 'block', color: '#94a3b8', fontSize: '11px', marginTop: '2px' }}>
                       {localDateTime(item.createdAt, timezone)}
                     </small>
                   </td>
                   <td>
-                    {item.status !== 'attended' ? (
+                    {item.status === 'registered' ? (
                       <button
                         type="button"
                         className="button button-primary"
@@ -148,7 +148,7 @@ export function EventRosterDialog({ event, timezone, onClose, show }: Props) {
                         <Check size={12} /> Tandai Hadir
                       </button>
                     ) : (
-                      <small style={{ color: '#16a34a', fontWeight: 600 }}>Tercatat</small>
+                      <small>{item.status === 'attended' ? 'Tercatat' : 'Belum dapat check-in'}</small>
                     )}
                   </td>
                 </tr>

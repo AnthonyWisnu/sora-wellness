@@ -2100,3 +2100,10 @@
 }
 
 
+input.permission-checkbox {
+  width: 20px;
+  height: 20px;
+  min-height: 20px;
+  flex: 0 0 20px;
+  accent-color: var(--color-primary);
+}

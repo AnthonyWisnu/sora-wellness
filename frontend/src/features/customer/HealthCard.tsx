@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useId, useState, type FormEvent } from 'react'
 import { HeartPulse, Trash2 } from 'lucide-react'
 import { api, type HealthProfile } from '../../shared/api'
 import { localDateTime } from '../../shared/format'
@@ -13,6 +13,7 @@ type HealthCardProps = {
 }
 
 export function HealthCard({ health, setHealth, timezone, show }: HealthCardProps) {
+  const privacyId = useId()
   const confirm = useConfirm()
   const [note, setNote] = useState(health?.note ?? '')
   const [consent, setConsent] = useState(false)
@@ -73,9 +74,11 @@ export function HealthCard({ health, setHealth, timezone, show }: HealthCardProp
       <span className="eyebrow">
         <HeartPulse size={15} /> CATATAN KESEHATAN OPSIONAL
       </span>
-      <p>
-        Isi hanya kondisi yang perlu diketahui pelatih untuk kelas Anda. Pelatih lain dan admin
-        tidak dapat membaca isinya.
+      <p id={privacyId}>
+        Prototipe penelitian, gunakan catatan simulasi dan jangan masukkan informasi kesehatan nyata.
+        Catatan ini opsional dan hanya dapat dibaca coach kelas Anda saat sesi berlangsung.
+        Snapshot dijadwalkan terhapus satu tahun setelah kelas. Pilih Hapus semua data kesehatan
+        untuk mencabut persetujuan sekaligus menghapus profil, revisi dan snapshot.
       </p>
       <label>
         Catatan untuk pelatih
@@ -83,14 +86,16 @@ export function HealthCard({ health, setHealth, timezone, show }: HealthCardProp
           value={note}
           maxLength={2000}
           rows={5}
+          aria-describedby={privacyId}
           onChange={(event) => setNote(event.target.value)}
-          placeholder="Contoh: sedang pemulihan setelah cedera lutut"
+          placeholder="Contoh simulasi: membutuhkan gerakan rendah benturan"
           required
         />
       </label>
       <label className="live-checkbox">
         <input
           type="checkbox"
+          aria-describedby={privacyId}
           checked={consent}
           onChange={(event) => setConsent(event.target.checked)}
           required

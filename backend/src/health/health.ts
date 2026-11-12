@@ -3,6 +3,7 @@ import { ApiCookieAuth, ApiProperty, ApiTags } from '@nestjs/swagger';
 import { Equals, IsBoolean, IsString, Length } from 'class-validator';
 import { Db } from '../shared/db';
 import { AuthRequest, assertRole, SessionGuard } from '../shared/security';
+import { encryptHealth, decryptHealth } from './health-crypto';
 
 class HealthDto {
   @ApiProperty({ description: 'Catatan sederhana yang relevan untuk kelas.', maxLength: 2000 })
@@ -17,18 +18,20 @@ export class HealthService {
 
   async read(customerId: string) {
     const found = await this.db.query<{ note: string; consentedAt: Date; updatedAt: Date }>('SELECT note,consented_at AS "consentedAt",updated_at AS "updatedAt" FROM health_profiles WHERE customer_id=$1', [customerId]);
-    return found.rows[0] ?? { note: null, consentedAt: null, updatedAt: null };
+    const row = found.rows[0];
+    return row ? { ...row, note: decryptHealth(row.note,customerId) } : { note: null, consentedAt: null, updatedAt: null };
   }
 
   async save(customerId: string, note: string) {
     const cleaned = note.trim();
     if (!cleaned || cleaned.length > 2000) throw new BadRequestException('Catatan kesehatan harus 1-2000 karakter');
+    const encrypted = encryptHealth(cleaned,customerId);
     await this.db.transaction(async (client) => {
       await client.query('SELECT id FROM app_users WHERE id=$1 FOR UPDATE', [customerId]);
       const timestamp = await client.query<{ at: Date }>('SELECT clock_timestamp() AS at');
       const at = timestamp.rows[0].at;
-      await client.query(`INSERT INTO health_profiles (customer_id,note,consented_at,updated_at) VALUES ($1,$2,$3,$3) ON CONFLICT (customer_id) DO UPDATE SET note=$2,consented_at=$3,updated_at=$3`, [customerId,cleaned,at]);
-      await client.query('INSERT INTO health_profile_revisions (customer_id,note,recorded_at) VALUES ($1,$2,$3)', [customerId,cleaned,at]);
+      await client.query(`INSERT INTO health_profiles (customer_id,note,consented_at,updated_at) VALUES ($1,$2,$3,$3) ON CONFLICT (customer_id) DO UPDATE SET note=$2,consented_at=$3,updated_at=$3`, [customerId,encrypted,at]);
+      await client.query('INSERT INTO health_profile_revisions (customer_id,note,recorded_at) VALUES ($1,$2,$3)', [customerId,encrypted,at]);
     });
     return this.read(customerId);
   }

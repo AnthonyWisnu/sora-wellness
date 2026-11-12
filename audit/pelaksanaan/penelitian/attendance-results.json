@@ -1,0 +1,10 @@
+{
+  "result": "PASS",
+  "frontDeskLockerVisible": true,
+  "frontDeskHealthExcluded": true,
+  "lobbyDidNotMarkMat": true,
+  "coachRosterHealthVisible": true,
+  "coachMatAttendance": true,
+  "otherCoachDenied": 404,
+  "browserErrors": []
+}

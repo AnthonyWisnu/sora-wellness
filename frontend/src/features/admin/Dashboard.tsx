@@ -74,7 +74,7 @@ export function AdminDashboard({
   const loadAdmin = useCallback(async () => {
     try {
       const [nextPolicy, nextSummary] = await Promise.all([
-        api<Policy>('/admin/policies').catch(() => null),
+        actor?.role==='superadmin' || actor?.permissions?.includes('studio_policy') ? api<Policy>('/admin/policies').catch(() => null) : Promise.resolve(null),
         api<AdminDashboardSummary>('/admin/dashboard-summary').catch(() => null),
       ])
       if (nextPolicy) setPolicy(nextPolicy)
@@ -87,7 +87,7 @@ export function AdminDashboard({
     } catch {
       // Abaikan error latar belakang agar tidak memunculkan toast akses ditolak
     }
-  }, [actor?.role])
+  }, [actor?.role,actor?.permissions])
   useEffect(() => {
     void loadAdmin()
   }, [loadAdmin])
@@ -217,8 +217,8 @@ export function AdminDashboard({
           }}
         />
       )}
-      {adminTab === 'accounts' && <AdminAccountsPanel show={show} />}
-      {adminTab === 'finance' && <AdminFinancePanel timezone={timezone} show={show} />}
+      {adminTab === 'accounts' && <AdminAccountsPanel actor={actor} show={show} />}
+      {adminTab === 'finance' && <AdminFinancePanel actor={actor} timezone={timezone} show={show} />}
       {adminTab === 'events' && <EventsManagement timezone={timezone} show={show} />}
       {adminTab === 'lockers' && <AdminLockersPanel show={show} />}
       {adminTab === 'content' && (

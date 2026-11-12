@@ -1,0 +1,30 @@
+
+> frontend@0.0.0 build
+> tsc -b && vite build
+
+vite v6.4.6 building for production...
+transforming...
+✓ 2054 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                                 0.59 kB │ gzip:   0.36 kB
+dist/assets/manrope-latin-500-normal-BYYD-dBL.woff2            14.04 kB
+dist/assets/manrope-latin-400-normal-PaqtzbVb.woff2            14.11 kB
+dist/assets/manrope-latin-600-normal-4f0koTD-.woff2            14.17 kB
+dist/assets/manrope-latin-700-normal-BZp_XxE4.woff2            14.21 kB
+dist/assets/manrope-latin-500-normal-DMZssgOp.woff             18.24 kB
+dist/assets/manrope-latin-400-normal-8tf8FM3T.woff             18.29 kB
+dist/assets/manrope-latin-600-normal-BqgrALkZ.woff             18.38 kB
+dist/assets/manrope-latin-700-normal-DGRFkw-m.woff             18.41 kB
+dist/assets/playfair-display-latin-400-normal-CFtfchNt.woff2   21.86 kB
+dist/assets/playfair-display-latin-500-normal-DIxvyhka.woff2   23.05 kB
+dist/assets/playfair-display-latin-400-normal-DHYHbkg3.woff    26.90 kB
+dist/assets/playfair-display-latin-500-normal-BScSeVwi.woff    28.10 kB
+dist/assets/index-CVT4Quka.css                                140.45 kB │ gzip:  26.17 kB
+dist/assets/index-xbGjUXW0.js                                 540.84 kB │ gzip: 152.96 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 5.16s

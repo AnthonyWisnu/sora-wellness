@@ -6,6 +6,7 @@ import {
   type AdminPaymentRecord,
   type AdminWalletLedger,
   type AdminWalletRecord,
+  type Actor,
 } from '../../shared/api'
 import { money } from '../../shared/format'
 import { FinanceFilters } from './FinanceFilters'
@@ -20,13 +21,18 @@ function errorMessage(error: unknown) {
 }
 
 export function AdminFinancePanel({
+  actor,
   timezone,
   show,
 }: {
+  actor?: Actor
   timezone: string
   show: (message: string) => void
 }) {
-  const [tab, setTab] = useState<Tab>('bookings')
+  const fullFinance=actor?.role==='superadmin' || actor?.role==='finance'
+  const canReports=fullFinance || Boolean(actor?.permissions?.includes('finance_reports'))
+  const canPayouts=fullFinance || Boolean(actor?.permissions?.includes('finance_payouts'))
+  const [tab, setTab] = useState<Tab>(canReports ? 'bookings' : 'withdrawals')
   const [search, setSearch] = useState('')
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState('')
@@ -125,8 +131,8 @@ export function AdminFinancePanel({
         metric1Val: 'Payout Dompet',
         metric1Desc: 'Pencairan saldo rekening & e-wallet',
         metric2Label: 'VERIFIKASI MANUAL',
-        metric2Val: '1x24 Jam Kerja',
-        metric2Desc: 'Transfer oleh staf keuangan',
+        metric2Val: 'Simulasi manual',
+        metric2Desc: 'Tanpa transfer bank riil',
         metric3Label: 'METODE DIDUKUNG',
         metric3Val: 'Bank & E-Wallet',
         metric3Desc: 'BCA, Mandiri, BRI, GoPay, DANA',
@@ -207,7 +213,7 @@ export function AdminFinancePanel({
     <section className="admin-workspace admin-finance">
       <div className="admin-workspace-head" style={{ justifyContent: 'flex-end', marginBottom: '10px' }}>
         <div style={{ display: 'flex', gap: '8px' }}>
-          <button
+          {canReports && <button
             className="button button-primary"
             style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
             onClick={() => {
@@ -221,7 +227,7 @@ export function AdminFinancePanel({
             }}
           >
             <Download size={15} /> Unduh Laporan CSV
-          </button>
+          </button>}
           <button className="button button-outline" onClick={() => setRefresh((value) => value + 1)}>
             <RefreshCw size={15} /> Muat ulang
           </button>
@@ -262,7 +268,7 @@ export function AdminFinancePanel({
       </div>
 
       <div className="filter-list admin-finance-tabs">
-        <button
+        {canReports && <><button
           className={tab === 'bookings' ? 'selected' : ''}
           onClick={() => switchTab('bookings')}
         >
@@ -279,13 +285,13 @@ export function AdminFinancePanel({
           onClick={() => switchTab('wallets')}
         >
           Saldo pelanggan
-        </button>
-        <button
+        </button></>}
+        {canPayouts && <button
           className={tab === 'withdrawals' ? 'selected' : ''}
           onClick={() => switchTab('withdrawals')}
         >
           Antrean Penarikan
-        </button>
+        </button>}
       </div>
       {tab === 'withdrawals' ? (
         <FinanceWithdrawals timezone={timezone} show={show} />

@@ -1,0 +1,50 @@
+
+> frontend@0.0.0 test:payment-feedback
+> node --experimental-strip-types --test scripts/payment-feedback.test.mjs
+
+TAP version 13
+# Subtest: provider paid tidak menjanjikan tiket pada booking expired/cancelled
+ok 1 - provider paid tidak menjanjikan tiket pada booking expired/cancelled
+  ---
+  duration_ms: 2.3994
+  type: 'test'
+  ...
+# Subtest: hanya booking confirmed menyatakan tiket tersedia
+ok 2 - hanya booking confirmed menyatakan tiket tersedia
+  ---
+  duration_ms: 0.4346
+  type: 'test'
+  ...
+# Subtest: paket lunas tidak mengklaim masa aktif dimulai sekarang
+ok 3 - paket lunas tidak mengklaim masa aktif dimulai sekarang
+  ---
+  duration_ms: 0.3517
+  type: 'test'
+  ...
+# Subtest: pending dan respons kosong tidak ditampilkan sebagai sukses
+ok 4 - pending dan respons kosong tidak ditampilkan sebagai sukses
+  ---
+  duration_ms: 0.3927
+  type: 'test'
+  ...
+# Subtest: pembayaran event yang dikreditkan ke wallet tidak menjanjikan tiket
+ok 5 - pembayaran event yang dikreditkan ke wallet tidak menjanjikan tiket
+  ---
+  duration_ms: 0.5958
+  type: 'test'
+  ...
+# Subtest: tiket event tersedia setelah pendaftaran dikonfirmasi
+ok 6 - tiket event tersedia setelah pendaftaran dikonfirmasi
+  ---
+  duration_ms: 0.3421
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 253.7317

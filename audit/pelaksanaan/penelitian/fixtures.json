@@ -1,0 +1,52 @@
+{
+  "suffix": "4c6aca11",
+  "users": {
+    "superadmin": {
+      "id": "42b22908-19ca-4ed5-9aef-3f4695da8dda",
+      "email": "superadmin-4c6aca11@example.test"
+    },
+    "admin": {
+      "id": "8d3b18ac-02d8-43d5-a50d-b40b7eb51d6a",
+      "email": "admin-4c6aca11@example.test"
+    },
+    "coach": {
+      "id": "17dd006a-647b-4e3a-99f5-5791bd3ecf9d",
+      "email": "coach-4c6aca11@example.test"
+    },
+    "member": {
+      "id": "684c731c-305b-4626-8070-99ac6350b13a",
+      "email": "member-4c6aca11@example.test"
+    },
+    "guest": {
+      "id": "60b5b803-0830-4c8b-a3a4-f4047081bcb4",
+      "email": "guest-4c6aca11@example.test"
+    },
+    "frontdesk": {
+      "id": "b2883b1c-a3ae-4676-bd0b-9a1bdb59558a",
+      "email": "frontdesk-4c6aca11@example.test"
+    },
+    "otherCoach": {
+      "id": "2c0604ca-c01f-499b-925e-08c82816359d",
+      "email": "otherCoach-4c6aca11@example.test"
+    },
+    "rosterMember": {
+      "id": "6ee0abee-23c8-43eb-b706-ecf4d3ef6373",
+      "email": "rosterMember-4c6aca11@example.test"
+    }
+  },
+  "classes": {
+    "yoga": "3bd817fa-b1f8-4439-82c1-49ea25f65880",
+    "pilates": "6c66c95e-4d89-4911-9d46-6c6d94bc8b9f"
+  },
+  "sessions": {
+    "free": "9c6fe458-efb1-4220-9a6d-f8e839baf8f2",
+    "paid": "74d9a3a3-ef54-4681-8d27-af9825c3ee1c",
+    "quota": "608c360e-5990-4a73-8f3a-9252ca062bd3",
+    "priority": "e563ff5b-8b2d-47c4-8a19-ca392c3d39e9",
+    "race": "8e497023-c1b5-4c5d-a63c-ec5a234d1702",
+    "active": "ecccda2e-7b4f-4d46-806e-6fd85c128df5"
+  },
+  "activeBooking": "ae638821-7ee9-4e07-b06f-e6d69fd23100",
+  "createdAt": "2026-11-12T04:45:55.642Z",
+  "provider": "Midtrans Sandbox nyata bila checkout diuji"
+}

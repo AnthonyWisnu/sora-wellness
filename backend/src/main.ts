@@ -16,10 +16,16 @@ import { LockersService } from './lockers/lockers';
 async function bootstrap() {
   if (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 32) throw new Error('SESSION_SECRET minimal 32 karakter');
   const app = await NestFactory.create(AppModule);
-  if (process.env.NODE_ENV === 'production') app.getHttpAdapter().getInstance().set('trust proxy', 1);
+  if (process.env.NODE_ENV === 'production') app.getHttpAdapter().getInstance().set('trust proxy', 'loopback');
   const db = app.get(Db);
   const PgStore = connectPgSimple(session);
   app.use(helmet());
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    if (req.path.startsWith('/api/v1/') && !req.path.startsWith('/api/v1/public/')) {
+      res.setHeader('Cache-Control', 'private, no-store');
+    }
+    next();
+  });
   app.use(session({
     name: 'wellness.sid',
     secret: process.env.SESSION_SECRET,
@@ -50,6 +56,7 @@ async function bootstrap() {
     try {
       await payments.expirePending();
       await payments.expirePendingPackages();
+      await payments.expirePendingEvents();
     } catch (err) {
       console.warn('[BackgroundWorker] Error during pending payment sweep:', err);
     }

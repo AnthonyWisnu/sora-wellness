@@ -1,0 +1,13 @@
+{
+  "result": "PASS",
+  "classId": "87de1582-8e61-4a5d-aa7a-f4ced0721de9",
+  "sessionId": "5948a073-8c00-4f25-99a7-6190142f4d22",
+  "createClass": true,
+  "createSession": true,
+  "editSession": true,
+  "cancelSession": true,
+  "lockerId": "23ef73eb-c544-4cf3-a150-8d20caaeca39",
+  "lockerCode": "STUDI-4C6ACA11",
+  "lockerAssignedTo": "684c731c-305b-4626-8070-99ac6350b13a",
+  "browserErrors": []
+}

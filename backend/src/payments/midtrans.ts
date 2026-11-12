@@ -23,12 +23,12 @@ export type MidtransNotification = MidtransStatus & {
 
 export class MidtransClient {
   constructor(private readonly serverKey: string) {
-    if (!serverKey || !serverKey.startsWith('Mid-server-')) throw new Error('Server Key Midtrans Sandbox tidak tersedia');
+    if (!serverKey || !/^(SB-)?Mid-server-/.test(serverKey)) throw new Error('Server Key Midtrans Sandbox tidak tersedia');
   }
 
   private authorization() { return `Basic ${Buffer.from(`${this.serverKey}:`).toString('base64')}`; }
 
-  async createSnapTransaction(orderId: string, grossAmountIdr: number, expiryMinutes?: number, customer?: SnapCustomer): Promise<SnapTransaction> {
+  async createSnapTransaction(orderId: string, grossAmountIdr: number, expiryMinutes?: number, customer?: SnapCustomer, returnPath = '/dashboard'): Promise<SnapTransaction> {
     if (!/^[a-zA-Z0-9._~-]{1,50}$/.test(orderId)) throw new Error('order_id Midtrans tidak valid');
     if (!Number.isSafeInteger(grossAmountIdr) || grossAmountIdr <= 0) throw new Error('Nominal Midtrans tidak valid');
     if (expiryMinutes !== undefined && (!Number.isInteger(expiryMinutes) || expiryMinutes < 1 || expiryMinutes > 10080)) throw new Error('Durasi pembayaran tidak valid');
@@ -40,6 +40,14 @@ export class MidtransClient {
     }
     const jakartaNow = new Date(Date.now() + 7 * 60 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ') + ' +0700';
     const appBaseUrl = (process.env.PUBLIC_APP_URL || process.env.FRONTEND_ORIGIN || 'https://wellness.anthonywj.my.id').replace(/\/+$/, '');
+    if (!returnPath.startsWith('/') || returnPath.startsWith('//') || /[\r\n]/.test(returnPath)) throw new Error('Jalur kembali pembayaran tidak valid');
+    const callback = (result: string) => {
+      const target = new URL(returnPath,appBaseUrl);
+      if (target.origin !== new URL(appBaseUrl).origin) throw new Error('Jalur kembali pembayaran tidak valid');
+      target.searchParams.set('payment',result);
+      target.searchParams.set('order_id',orderId);
+      return target.href;
+    };
     const response = await fetch(snapUrl, {
       method: 'POST',
       headers: { Authorization: this.authorization(), Accept: 'application/json', 'Content-Type': 'application/json', ...(notificationUrl ? { 'X-Override-Notification': notificationUrl } : {}) },
@@ -54,9 +62,9 @@ export class MidtransClient {
           page_expiry: { duration: Math.max(expiryMinutes, 15), unit: 'minutes' },
         }),
         callbacks: {
-          finish: `${appBaseUrl}/dashboard?payment=finish&order_id=${encodeURIComponent(orderId)}`,
-          unfinish: `${appBaseUrl}/dashboard?payment=unfinish&order_id=${encodeURIComponent(orderId)}`,
-          error: `${appBaseUrl}/dashboard?payment=error&order_id=${encodeURIComponent(orderId)}`,
+          finish: callback('finish'),
+          unfinish: callback('unfinish'),
+          error: callback('error'),
         },
       }),
       signal: AbortSignal.timeout(15000),

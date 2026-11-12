@@ -1,0 +1,658 @@
+[
+  {
+    "permission": "front_desk",
+    "required": "front_desk",
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "permission": "front_desk",
+    "required": "lockers",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "front_desk",
+    "required": "classes_schedule",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "front_desk",
+    "required": "community_events",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "front_desk",
+    "required": "studio_content",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "front_desk",
+    "required": "studio_policy",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "front_desk",
+    "required": "finance_reports",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "front_desk",
+    "required": "finance_payouts",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "front_desk",
+    "required": "staff_management",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "lockers",
+    "required": "front_desk",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "lockers",
+    "required": "lockers",
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "permission": "lockers",
+    "required": "classes_schedule",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "lockers",
+    "required": "community_events",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "lockers",
+    "required": "studio_content",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "lockers",
+    "required": "studio_policy",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "lockers",
+    "required": "finance_reports",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "lockers",
+    "required": "finance_payouts",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "lockers",
+    "required": "staff_management",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "classes_schedule",
+    "required": "front_desk",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "classes_schedule",
+    "required": "lockers",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "classes_schedule",
+    "required": "classes_schedule",
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "permission": "classes_schedule",
+    "required": "community_events",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "classes_schedule",
+    "required": "studio_content",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "classes_schedule",
+    "required": "studio_policy",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "classes_schedule",
+    "required": "finance_reports",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "classes_schedule",
+    "required": "finance_payouts",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "classes_schedule",
+    "required": "staff_management",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "community_events",
+    "required": "front_desk",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "community_events",
+    "required": "lockers",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "community_events",
+    "required": "classes_schedule",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "community_events",
+    "required": "community_events",
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "permission": "community_events",
+    "required": "studio_content",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "community_events",
+    "required": "studio_policy",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "community_events",
+    "required": "finance_reports",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "community_events",
+    "required": "finance_payouts",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "community_events",
+    "required": "staff_management",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "studio_content",
+    "required": "front_desk",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "studio_content",
+    "required": "lockers",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "studio_content",
+    "required": "classes_schedule",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "studio_content",
+    "required": "community_events",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "studio_content",
+    "required": "studio_content",
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "permission": "studio_content",
+    "required": "studio_policy",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "studio_content",
+    "required": "finance_reports",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "studio_content",
+    "required": "finance_payouts",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "studio_content",
+    "required": "staff_management",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "studio_policy",
+    "required": "front_desk",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "studio_policy",
+    "required": "lockers",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "studio_policy",
+    "required": "classes_schedule",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "studio_policy",
+    "required": "community_events",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "studio_policy",
+    "required": "studio_content",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "studio_policy",
+    "required": "studio_policy",
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "permission": "studio_policy",
+    "required": "finance_reports",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "studio_policy",
+    "required": "finance_payouts",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "studio_policy",
+    "required": "staff_management",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "finance_reports",
+    "required": "front_desk",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "finance_reports",
+    "required": "lockers",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "finance_reports",
+    "required": "classes_schedule",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "finance_reports",
+    "required": "community_events",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "finance_reports",
+    "required": "studio_content",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "finance_reports",
+    "required": "studio_policy",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "finance_reports",
+    "required": "finance_reports",
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "permission": "finance_reports",
+    "required": "finance_payouts",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "finance_reports",
+    "required": "staff_management",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "finance_payouts",
+    "required": "front_desk",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "finance_payouts",
+    "required": "lockers",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "finance_payouts",
+    "required": "classes_schedule",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "finance_payouts",
+    "required": "community_events",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "finance_payouts",
+    "required": "studio_content",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "finance_payouts",
+    "required": "studio_policy",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "finance_payouts",
+    "required": "finance_reports",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "finance_payouts",
+    "required": "finance_payouts",
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "permission": "finance_payouts",
+    "required": "staff_management",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "staff_management",
+    "required": "front_desk",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "staff_management",
+    "required": "lockers",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "staff_management",
+    "required": "classes_schedule",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "staff_management",
+    "required": "community_events",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "staff_management",
+    "required": "studio_content",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "staff_management",
+    "required": "studio_policy",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "staff_management",
+    "required": "finance_reports",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "staff_management",
+    "required": "finance_payouts",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "permission": "staff_management",
+    "required": "staff_management",
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "role": "coach",
+    "required": "front_desk",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "role": "coach",
+    "required": "lockers",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "role": "coach",
+    "required": "classes_schedule",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "role": "coach",
+    "required": "community_events",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "role": "coach",
+    "required": "studio_content",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "role": "coach",
+    "required": "studio_policy",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "role": "coach",
+    "required": "finance_reports",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "role": "coach",
+    "required": "finance_payouts",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "role": "coach",
+    "required": "staff_management",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "role": "customer",
+    "required": "front_desk",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "role": "customer",
+    "required": "lockers",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "role": "customer",
+    "required": "classes_schedule",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "role": "customer",
+    "required": "community_events",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "role": "customer",
+    "required": "studio_content",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "role": "customer",
+    "required": "studio_policy",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "role": "customer",
+    "required": "finance_reports",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "role": "customer",
+    "required": "finance_payouts",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "role": "customer",
+    "required": "staff_management",
+    "status": 403,
+    "expected": 403
+  },
+  {
+    "role": "superadmin",
+    "required": "front_desk",
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "role": "superadmin",
+    "required": "lockers",
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "role": "superadmin",
+    "required": "classes_schedule",
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "role": "superadmin",
+    "required": "community_events",
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "role": "superadmin",
+    "required": "studio_content",
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "role": "superadmin",
+    "required": "studio_policy",
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "role": "superadmin",
+    "required": "finance_reports",
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "role": "superadmin",
+    "required": "finance_payouts",
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "role": "superadmin",
+    "required": "staff_management",
+    "status": 200,
+    "expected": 200
+  },
+  {
+    "name": "POST class direct request front_desk denied",
+    "status": 403
+  },
+  {
+    "name": "sensitive response private no-store",
+    "status": "PASS"
+  }
+]

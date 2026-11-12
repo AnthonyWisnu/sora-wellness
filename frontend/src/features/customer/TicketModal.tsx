@@ -24,10 +24,6 @@ export function TicketModal({
       type: 'pass',
       bookingId: booking.id,
       bookingCode: booking.bookingCode || booking.id,
-      customerId: actor.id,
-      customerName: actor.fullName,
-      classTitle: booking.title,
-      startsAt: booking.startsAt,
     })
 
     void QRCode.toDataURL(payload, {
@@ -39,7 +35,7 @@ export function TicketModal({
       },
       errorCorrectionLevel: 'M',
     }).then(setQrUrl)
-  }, [booking, actor])
+  }, [booking])
 
   function handlePrint() {
     window.print()

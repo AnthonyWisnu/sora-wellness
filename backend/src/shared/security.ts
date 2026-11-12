@@ -2,6 +2,7 @@ import { randomBytes, scrypt as scryptCallback, timingSafeEqual } from 'node:cry
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Request } from 'express';
 import { Db } from './db';
+import { isCompromisedDemoHash } from '../auth/utils/demo-credentials';
 
 const params = { N: 131072, r: 8, p: 1, maxmem: 256 * 1024 * 1024 };
 function scrypt(password: string, salt: string, options = params): Promise<Buffer> {
@@ -34,10 +35,14 @@ export class SessionGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest<AuthRequest>();
     if (!req.session.userId) throw new UnauthorizedException('Silakan login');
-    const found = await this.db.query<Actor>('SELECT id, email, full_name, role, password_change_required, avatar_media_id, COALESCE(permissions, \'{}\') AS permissions FROM app_users WHERE id = $1', [req.session.userId]);
+    const found = await this.db.query<Actor & { password_hash: string }>('SELECT password_hash, id, email, full_name, role, password_change_required, avatar_media_id, COALESCE(permissions, \'{}\') AS permissions FROM app_users WHERE id = $1', [req.session.userId]);
     const actor = found.rows[0];
-    if (!actor) throw new UnauthorizedException('Sesi tidak valid');
-    req.actor = actor;
+    if (!actor || isCompromisedDemoHash(actor.password_hash)) throw new UnauthorizedException('Sesi tidak valid');
+    req.actor = {
+      id: actor.id, email: actor.email, full_name: actor.full_name, role: actor.role,
+      password_change_required: actor.password_change_required,
+      avatar_media_id: actor.avatar_media_id, permissions: actor.permissions,
+    };
     if (actor.password_change_required && !['/api/v1/auth/change-password', '/api/v1/auth/logout'].includes(req.path)) throw new ForbiddenException('Ganti kata sandi sementara lebih dulu');
     return true;
   }
@@ -45,7 +50,7 @@ export class SessionGuard implements CanActivate {
 
 export function assertRole(req: AuthRequest, ...roles: UserRole[]): Actor {
   if (!req.actor) throw new ForbiddenException('Akses ditolak');
-  if (req.actor.role === 'superadmin') return req.actor;
+  if (req.actor.role === 'superadmin' && roles.some(role => ['superadmin','admin','finance'].includes(role))) return req.actor;
   if (roles.includes(req.actor.role)) return req.actor;
   if (roles.includes('finance') && req.actor.role === 'admin' && ((req.actor.permissions || []).includes('finance_reports') || (req.actor.permissions || []).includes('finance_payouts'))) {
     return req.actor;
@@ -69,4 +74,13 @@ export function assertPermission(req: AuthRequest, permission: string): Actor {
     return req.actor;
   }
   throw new ForbiddenException(`Akses ditolak: izin '${permission}' diperlukan`);
+}
+
+export function assertAnyPermission(req: AuthRequest, ...permissions: string[]): Actor {
+  for (const permission of permissions) {
+    try { return assertPermission(req, permission); } catch (error) {
+      if (!(error instanceof ForbiddenException)) throw error;
+    }
+  }
+  throw new ForbiddenException('Akses ditolak');
 }

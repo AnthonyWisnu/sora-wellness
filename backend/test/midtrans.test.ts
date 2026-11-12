@@ -3,6 +3,10 @@ import { createHash } from 'node:crypto';
 import test from 'node:test';
 import { MidtransClient } from '../src/payments/midtrans';
 
+test('Server Key Sandbox berawalan SB-Mid-server diterima', () => {
+  assert.doesNotThrow(() => new MidtransClient('SB-Mid-server-fixture-only'));
+});
+
 test('signature notifikasi Midtrans memakai SHA512 dan Server Key', () => {
   const key = 'Mid-server-test-only';
   const midtrans = new MidtransClient(key);

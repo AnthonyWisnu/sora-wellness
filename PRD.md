@@ -157,6 +157,7 @@ Bagian kebutuhan dan aturan bisnis mendeskripsikan perilaku produk yang disepaka
   - Jika sesi telah penuh atau tidak lagi memenuhi syarat, nominal pembayaran gateway secara otomatis dikonversi menjadi saldo dompet pelanggan tanpa ada dana yang hilang.
 
 ### 8.3 Buku Besar Saldo Dompet (Wallet Ledger)
+- **Status prototipe penelitian:** pencatatan mutasi wallet, hold, refund dan payout telah diuji. Jurnal akuntansi double-entry lengkap masih merupakan target lanjutan, bukan fitur yang dinyatakan selesai pada rilis penelitian ini.
 - Menggunakan prinsip pencatatan ganda (*double-entry bookkeeping*). Setiap kredit, debit, dan pembebasan reservasi memiliki nomor referensi transaksi asal yang jelas.
 - Saldo dompet dapat digunakan untuk membayar sebagian atau seluruh biaya pemesanan kelas satuan. Saldo tidak dapat digunakan untuk membeli paket membership.
 
@@ -376,3 +377,16 @@ erDiagram
 <div align="center">
   <sub>Sora Wellness Studio · Product Requirements Document · Terakhir Diperbarui: 28 September 2026</sub>
 </div>
+
+## Keputusan tambahan hasil audit, 11 November2026
+
+- Diputuskan pemilik: prototipe digunakan untuk tugas kuliah dan penelitian yang ditujukan ke jurnal SINTA3. Pengujian memakai data sintetis dan Midtrans Sandbox. Target standar tidak merupakan klaim sertifikasi atau kepatuhan yang sudah dicapai.
+- Diputuskan pemilik: settlement paket lama setelah paket baru aktif menambahkan hak sebagai perpanjangan setelah paket aktif terakhir, tanpa membatasi pemulihan pembayaran dengan aturan jendela pembelian baru.
+- Diputuskan pemilik: distribusi versi pertama ke studio lain memakai deployment serta database terpisah per studio. Shared tenancy berada di luar cakupan ini.
+
+- Diputuskan pemilik: event berbayar memakai checkout Midtrans Sandbox. Jadwal event/kegiatan yang sudah berpeserta tidak dapat diubah dan kegiatannya tidak dapat dihapus; judul/deskripsi tetap dapat diedit.
+
+- Diputuskan pemilik: arah visual Ruang Terang, mode terang untuk versi penelitian. Mode gelap tidak termasuk rilis penelitian ini.
+- Diputuskan pemilik: event berbayar wajib login pelanggan. Jika pembayaran lunas terlambat dan kursi habis, dana masuk wallet pelanggan tanpa menerbitkan tiket.
+- Diputuskan pemilik: setiap sub-kegiatan event memiliki tanggal sendiri di dalam rentang tanggal event. Pendaftaran event berbayar ditutup 15 menit sebelum kegiatan dimulai.
+- Penajaman target oleh pemilik, 12 November 2026: penyelesaian tugas difokuskan pada fungsi inti studio dan logika backend, dengan pengujian utama serta screenshot terpilih untuk jurnal. Penyelesaian seluruh audit produksi, redesign menyeluruh, dan kesiapan komersial bukan syarat rilis penelitian ini. Hasil aktif: `audit/pelaksanaan/penelitian/hasil-akhir.md`. Keamanan akses dan integritas transaksi tetap wajib.

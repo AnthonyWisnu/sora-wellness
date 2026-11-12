@@ -7,6 +7,7 @@ export type EventActivity = {
   coachId?: string | null
   isGuestCoach?: boolean
   guestCoachName?: string | null
+  localDate?: string | null
   startTime: string
   endTime: string
   capacity: number
@@ -23,6 +24,7 @@ export type ActivityInput = {
   coachId?: string
   isGuestCoach?: boolean
   guestCoachName?: string
+  localDate?: string
   startTime: string
   endTime: string
   capacity: number
@@ -54,7 +56,7 @@ export type EventRegistration = {
   guestName: string
   guestEmail: string
   guestPhone?: string
-  status: 'registered' | 'attended' | 'cancelled'
+  status: 'pending_payment' | 'registered' | 'attended' | 'cancelled' | 'expired' | 'failed' | 'credited'
   attendedAt?: string | null
   createdAt: string
   activityTitle: string

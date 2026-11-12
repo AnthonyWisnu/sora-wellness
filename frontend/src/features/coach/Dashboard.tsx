@@ -38,6 +38,7 @@ type CoachCommunityEvent = {
   locationMapsUrl?: string
   startDate: string
   endDate: string
+  localDate: string | null
   status: string
   bannerUrl: string | null
   activityId: string
@@ -311,11 +312,11 @@ export function CoachDashboard({
             <article className="panel live-booking" style={{ borderLeft: '4px solid #17392e' }}>
               <div>
                 <span className="eyebrow">
-                  {formatDate(coachEvents[0].startDate, {
+                  {coachEvents[0].localDate ? formatDate(coachEvents[0].localDate, {
                     weekday: 'long',
                     day: 'numeric',
                     month: 'long',
-                  })} · {coachEvents[0].startTime} - {coachEvents[0].endTime} WITA
+                  }) : 'Tanggal kegiatan belum ditetapkan'} · {coachEvents[0].startTime} - {coachEvents[0].endTime} {timezone}
                 </span>
                 <h3 style={{ margin: '4px 0' }}>{coachEvents[0].title}</h3>
                 <p style={{ fontWeight: '500', color: '#17392e', margin: '4px 0' }}>
@@ -362,11 +363,11 @@ export function CoachDashboard({
               <article className="panel live-booking" key={evt.activityId} style={{ padding: '22px', borderRadius: '12px' }}>
                 <div>
                   <span className="eyebrow">
-                    {formatDate(evt.startDate, {
+                    {evt.localDate ? formatDate(evt.localDate, {
                       weekday: 'long',
                       day: 'numeric',
                       month: 'long',
-                    })} · {evt.startTime} - {evt.endTime} WITA
+                    }) : 'Tanggal kegiatan belum ditetapkan'} · {evt.startTime} - {evt.endTime} {timezone}
                   </span>
                   <h3 style={{ fontSize: '18px', margin: '6px 0' }}>{evt.title}</h3>
                   <p style={{ fontWeight: '600', color: '#17392e', margin: '4px 0' }}>

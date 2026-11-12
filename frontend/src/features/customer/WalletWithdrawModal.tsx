@@ -167,7 +167,7 @@ export function WalletWithdrawModal({ open, balance, onClose, onSuccess, show }:
             <p style={{ margin: '0 0 4px', fontWeight: 600, color: '#334155' }}>Syarat & Ketentuan Penarikan:</p>
             <ul style={{ margin: 0, paddingLeft: '16px', lineHeight: 1.5 }}>
               <li>Minimal penarikan Rp 10.000.</li>
-              <li>Diproses manual oleh staf keuangan dalam 1x24 jam kerja studio.</li>
+              <li>Persetujuan dicatat manual untuk prototipe penelitian ini, tanpa transfer bank riil.</li>
               <li>Saldo dompet akan ditahan sementara hingga transfer diverifikasi.</li>
             </ul>
           </div>

@@ -1,0 +1,6 @@
+{
+  "name": "payments",
+  "exitCode": 0,
+  "target": "fixture sintetis lokal",
+  "script": "payment-state-smoke"
+}

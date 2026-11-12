@@ -87,10 +87,10 @@ export function FinanceList({
                   <div className="admin-finance-record-head">
                     <div>
                       <span className="eyebrow">
-                        {row.kind === 'class' ? 'PEMBAYARAN KELAS' : 'PEMBELIAN PAKET'}
+                        {row.kind === 'class' ? 'PEMBAYARAN KELAS' : row.kind === 'event' ? 'PEMBAYARAN EVENT' : 'PEMBELIAN PAKET'}
                       </span>
                       <h3>
-                        {row.kind === 'class'
+                        {row.kind !== 'package'
                           ? row.classTitle
                           : `Paket ${row.durationMonths ?? '-'} bulan`}
                       </h3>

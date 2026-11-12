@@ -1,0 +1,6 @@
+{
+  "name": "content-lockers",
+  "exitCode": 0,
+  "target": "fixture sintetis lokal",
+  "script": "content-lockers-smoke"
+}

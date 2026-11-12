@@ -1,0 +1,4 @@
+{
+  "exitCode": 0,
+  "command": "npm --prefix frontend run test:payment-feedback"
+}

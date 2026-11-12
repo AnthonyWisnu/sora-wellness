@@ -37,7 +37,7 @@
 .sora-ticket-brand h3 {
   margin: 0;
   font-size: 1.35rem;
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   letter-spacing: 0.05em;
   font-weight: 600;
   color: #f5f4ef;
@@ -150,7 +150,8 @@
 }
 
 .sora-ticket-code {
-  font-family: monospace;
+  font-family: var(--font-ui);
+  font-variant-numeric: tabular-nums;
   font-size: 0.78rem;
   font-weight: 600;
   letter-spacing: 0.08em;

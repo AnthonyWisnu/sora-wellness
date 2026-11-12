@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { Check } from 'lucide-react'
 import { api } from '../../shared/api'
 import type { AdminAccount } from '../../shared/types/auth'
 import { AdminDialog } from './AdminDialog'
@@ -20,10 +19,10 @@ type PermissionItem = {
 const ALL_PERMISSIONS: PermissionItem[] = [
   { key: 'front_desk', label: 'Verifikasi Tiket Lobi', desc: 'Memvalidasi e-ticket QR kedatangan peserta di meja depan' },
   { key: 'lockers', label: 'Matriks Loker Fisik', desc: 'Melihat status dan menetapkan loker fisik member studio' },
-  { key: 'classes_schedule', label: 'Kelola Kelas & Jadwal', desc: 'Mengatur sesi kelas, kategori kelas, jadwal rutin, dan paket' },
+  { key: 'classes_schedule', label: 'Kelola Kelas & Jadwal', desc: 'Mengatur sesi kelas, kategori kelas, dan jadwal rutin' },
   { key: 'community_events', label: 'Event Komunitas', desc: 'Mengelola jadwal event luar studio, brosur, dan pendaftar' },
   { key: 'studio_content', label: 'Konten Situs Publik', desc: 'Mengubah teks, galeri foto, dan tata letak landing page' },
-  { key: 'studio_policy', label: 'Aturan Kebijakan Studio', desc: 'Mengatur batas pembatalan, kuota, dan durasi hold kursi' },
+  { key: 'studio_policy', label: 'Aturan Kebijakan Studio', desc: 'Mengatur paket, batas pembatalan, kuota, dan durasi hold kursi' },
   { key: 'finance_reports', label: 'Laporan Keuangan', desc: 'Melihat omzet riil, mutasi saldo, dan ekspor rekonsiliasi CSV' },
   { key: 'finance_payouts', label: 'Persetujuan Payout', desc: 'Memverifikasi dan memproses transfer penarikan dana member' },
   { key: 'staff_management', label: 'Manajemen Akun Staf', desc: 'Mendaftarkan staf baru dan mereset kata sandi sementara' },
@@ -135,14 +134,8 @@ export function StaffPermissionsDialog({ account, onClose, onSaved, show }: Prop
             <label
               key={p.key}
               className={`permission-toggle-item${active ? ' is-active' : ''}`}
-              onClick={(e) => {
-                e.preventDefault()
-                toggle(p.key)
-              }}
             >
-              <div className={`switch-checkbox${active ? ' is-checked' : ''}`}>
-                {active && <Check size={14} />}
-              </div>
+              <input className="permission-checkbox" type="checkbox" checked={active} onChange={() => toggle(p.key)} />
               <div className="perm-info">
                 <strong>{p.label}</strong>
                 <small>{p.desc}</small>

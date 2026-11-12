@@ -1,0 +1,9 @@
+{
+  "result": "PASS",
+  "viewport": 375,
+  "registration": true,
+  "customerRole": true,
+  "logoutRevokesSession": true,
+  "loginAgain": true,
+  "browserErrors": []
+}

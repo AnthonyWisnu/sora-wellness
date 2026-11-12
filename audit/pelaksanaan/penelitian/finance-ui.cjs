@@ -1,0 +1,27 @@
+const assert=require('node:assert/strict');
+const {start,base,pool,f,save}=require('./browser-common.cjs');
+const event=require('./event-results.json');
+let runtime;
+(async()=>{
+  await pool.query("UPDATE app_users SET permissions=ARRAY['finance_payouts'] WHERE id=$1",[f.users.frontdesk.id]);
+  runtime=await start('frontdesk');let {page}=runtime;const forbidden=[];
+  page.on('response',r=>{if(r.status()===403&&r.url().includes('/api/v1/admin/'))forbidden.push(r.url())});
+  await page.goto(base+'/dashboard/finance');
+  await page.getByRole('button',{name:'Antrean Penarikan',exact:true}).waitFor();
+  assert.equal(await page.getByRole('button',{name:'Pembayaran',exact:true}).count(),0);
+  assert.equal(await page.getByRole('button',{name:'Unduh Laporan CSV',exact:true}).count(),0);
+  assert.deepEqual(forbidden,[]);
+  await runtime.browser.close();
+  await pool.query("UPDATE app_users SET permissions=ARRAY['finance_reports'] WHERE id=$1",[f.users.frontdesk.id]);
+  runtime=await start('frontdesk');page=runtime.page;
+  await page.goto(base+'/dashboard/finance');
+  await page.getByRole('button',{name:'Pembayaran',exact:true}).click();
+  await page.getByRole('combobox',{name:'Jenis pembayaran',exact:true}).selectOption('event');
+  await page.getByPlaceholder('Ketik kata pencarian',{exact:true}).fill(event.orderId);
+  const form=page.locator('form.admin-finance-filters');await form.getByRole('button').click();
+  await page.getByRole('heading',{name:'Pilates Tepi Pantai',exact:true}).waitFor();
+  await page.getByText('PEMBAYARAN EVENT',{exact:true}).waitFor();
+  assert.equal(await page.getByRole('button',{name:'Antrean Penarikan',exact:true}).count(),0);
+  save('finance-ui-results',{result:'PASS',payoutStaffDefaultTab:true,noReportsForPayoutOnly:true,noPayoutForReportsOnly:true,eventPaymentLabel:true,browserErrors:runtime.errors});
+  assert.deepEqual(runtime.errors,[]);console.log('PASS: tab keuangan mengikuti izin, pembayaran event diberi label dan judul benar');
+})().catch(error=>{console.error(error.stack);process.exitCode=1}).finally(async()=>{if(runtime)await runtime.browser.close();await pool.query("UPDATE app_users SET permissions=ARRAY['front_desk'] WHERE id=$1",[f.users.frontdesk.id]);await pool.end()});

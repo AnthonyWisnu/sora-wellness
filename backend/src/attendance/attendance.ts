@@ -3,7 +3,9 @@ import { ApiCookieAuth, ApiProperty, ApiPropertyOptional, ApiTags } from '@nestj
 import { IsBoolean, IsDateString, IsOptional, IsString, Length } from 'class-validator';
 import { PoolClient } from 'pg';
 import { Db } from '../shared/db';
-import { AuthRequest, assertRole, SessionGuard } from '../shared/security';
+import { checkInAtLobby } from './lobby-check-in';
+import { decryptHealth } from '../health/health-crypto';
+import { AuthRequest, assertPermission, assertRole, SessionGuard } from '../shared/security';
 
 class AttendanceDto { @ApiProperty({ example: true }) @IsBoolean() present!: boolean; }
 class CorrectionDto extends AttendanceDto { @ApiProperty({ minLength: 5, maxLength: 500 }) @IsString() @Length(5,500) reason!: string; }
@@ -27,7 +29,7 @@ export class AttendanceService {
       this.db.query<{ completedCount: number; attendedCount: number }>(`
         SELECT 
           count(DISTINCT s.id) FILTER (WHERE s.ends_at < now() AND s.status = 'scheduled')::int AS "completedCount",
-          count(a.booking_id) FILTER (WHERE a.present = true)::int AS "attendedCount"
+          count(a.booking_id) FILTER (WHERE a.present = true AND a.source<>'legacy_unknown')::int AS "attendedCount"
         FROM class_sessions s
         LEFT JOIN attendance a ON a.session_id = s.id
         WHERE s.coach_id = $1
@@ -47,10 +49,10 @@ export class AttendanceService {
         SELECT b.id,b.customer_id,revision.note,s.ends_at+interval '1 year'
         FROM bookings b JOIN class_sessions s ON s.id=b.session_id
         JOIN LATERAL (SELECT r.note FROM health_profile_revisions r WHERE r.customer_id=b.customer_id AND r.recorded_at<=s.starts_at ORDER BY r.recorded_at DESC,r.id DESC LIMIT 1) revision ON true
-        WHERE b.session_id=$1 AND b.status='confirmed' AND s.starts_at<=now() AND s.ends_at+interval '1 year'>now()
+        WHERE b.session_id=$1 AND b.status='confirmed' AND s.starts_at<=now() AND s.ends_at>=now()
         ON CONFLICT (booking_id) DO NOTHING`, [sessionId]);
-      const found = await client.query(`SELECT b.id AS "bookingId",u.id AS "customerId",u.full_name AS "fullName",CASE WHEN u.avatar_media_id IS NOT NULL THEN '/api/v1/public/media/' || u.avatar_media_id ELSE NULL END AS "avatarUrl",a.present,a.recorded_at AS "recordedAt",CASE WHEN a.recorded_by IS NOT NULL AND (SELECT role FROM app_users WHERE id=a.recorded_by) = 'admin' THEN true ELSE false END AS "lobbyCheckedIn",CASE WHEN s.starts_at>now() THEN hp.note WHEN hs.delete_after>now() THEN hs.note ELSE NULL END AS "healthNote",CASE WHEN s.starts_at>now() THEN 'current' WHEN hs.delete_after>now() AND hs.id IS NOT NULL THEN 'snapshot' ELSE NULL END AS "healthSource" FROM bookings b JOIN app_users u ON u.id=b.customer_id JOIN class_sessions s ON s.id=b.session_id LEFT JOIN attendance a ON a.booking_id=b.id LEFT JOIN health_profiles hp ON hp.customer_id=u.id LEFT JOIN health_snapshots hs ON hs.booking_id=b.id WHERE b.session_id=$1 AND b.status='confirmed' ORDER BY u.full_name,u.id`, [sessionId]);
-      return { sessionId, startsAt: session.rows[0].starts_at, endsAt: session.rows[0].ends_at, participants: found.rows };
+      const found = await client.query(`SELECT b.id AS "bookingId",u.id AS "customerId",u.full_name AS "fullName",CASE WHEN u.avatar_media_id IS NOT NULL THEN '/api/v1/public/media/' || u.avatar_media_id ELSE NULL END AS "avatarUrl",CASE WHEN a.source<>'legacy_unknown' THEN a.present ELSE NULL END AS present,a.recorded_at AS "recordedAt",EXISTS(SELECT 1 FROM lobby_check_ins l WHERE l.booking_id=b.id) AS "lobbyCheckedIn",CASE WHEN s.starts_at<=now() AND s.ends_at>=now() AND hs.delete_after>now() THEN hs.note ELSE NULL END AS "healthNote",CASE WHEN s.starts_at<=now() AND s.ends_at>=now() AND hs.delete_after>now() AND hs.id IS NOT NULL THEN 'snapshot' ELSE NULL END AS "healthSource" FROM bookings b JOIN app_users u ON u.id=b.customer_id JOIN class_sessions s ON s.id=b.session_id LEFT JOIN attendance a ON a.booking_id=b.id LEFT JOIN health_profiles hp ON hp.customer_id=u.id LEFT JOIN health_snapshots hs ON hs.booking_id=b.id WHERE b.session_id=$1 AND b.status='confirmed' ORDER BY u.full_name,u.id`, [sessionId]);
+      return { sessionId, startsAt: session.rows[0].starts_at, endsAt: session.rows[0].ends_at, participants: found.rows.map(row => ({ ...row, healthNote: row.healthNote ? decryptHealth(row.healthNote,row.customerId) : null })) };
     });
   }
 
@@ -68,7 +70,7 @@ export class AttendanceService {
   async mark(coachId: string, sessionId: string, customerId: string, present: boolean) {
     return this.db.transaction(async (client) => {
       const bookingId = await this.eligible(client,sessionId,customerId,coachId);
-      const saved = await client.query<{ present: boolean; recorded_at: Date }>(`INSERT INTO attendance (session_id,customer_id,booking_id,present,recorded_by) VALUES ($1,$2,$3,$4,$5) ON CONFLICT (session_id,customer_id) DO UPDATE SET present=$4,recorded_by=$5,recorded_at=now() RETURNING present,recorded_at`, [sessionId,customerId,bookingId,present,coachId]);
+      const saved = await client.query<{ present: boolean; recorded_at: Date }>(`INSERT INTO attendance (session_id,customer_id,booking_id,present,recorded_by,source) VALUES ($1,$2,$3,$4,$5,'coach') ON CONFLICT (session_id,customer_id) DO UPDATE SET present=$4,recorded_by=$5,recorded_at=now(),source='coach' RETURNING present,recorded_at`, [sessionId,customerId,bookingId,present,coachId]);
       return { sessionId, customerId, present: saved.rows[0].present, recordedAt: saved.rows[0].recorded_at };
     });
   }
@@ -79,7 +81,7 @@ export class AttendanceService {
     return this.db.transaction(async (client) => {
       const bookingId = await this.eligible(client,sessionId,customerId);
       const previous = await client.query<{ present: boolean }>('SELECT present FROM attendance WHERE session_id=$1 AND customer_id=$2 FOR UPDATE', [sessionId,customerId]);
-      await client.query(`INSERT INTO attendance (session_id,customer_id,booking_id,present,recorded_by) VALUES ($1,$2,$3,$4,$5) ON CONFLICT (session_id,customer_id) DO UPDATE SET present=$4,recorded_by=$5,recorded_at=now()`, [sessionId,customerId,bookingId,present,adminId]);
+      await client.query(`INSERT INTO attendance (session_id,customer_id,booking_id,present,recorded_by,source) VALUES ($1,$2,$3,$4,$5,'admin_correction') ON CONFLICT (session_id,customer_id) DO UPDATE SET present=$4,recorded_by=$5,recorded_at=now(),source='admin_correction'`, [sessionId,customerId,bookingId,present,adminId]);
       await client.query(`INSERT INTO attendance_corrections (session_id,customer_id,booking_id,actor_id,previous_present,new_present,reason) VALUES ($1,$2,$3,$4,$5,$6,$7)`, [sessionId,customerId,bookingId,adminId,previous.rows[0]?.present ?? null,present,cleaned]);
       return { sessionId,customerId,present,previousPresent: previous.rows[0]?.present ?? null,reason: cleaned };
     });
@@ -92,81 +94,13 @@ export class AttendanceService {
   async adminParticipants(sessionId: string) {
     const session = await this.db.query('SELECT id FROM class_sessions WHERE id=$1', [sessionId]);
     if (!session.rows[0]) throw new NotFoundException('Sesi tidak ditemukan');
-    return (await this.db.query(`SELECT b.id AS "bookingId",b.customer_id AS "customerId",u.full_name AS "fullName",a.present,a.recorded_at AS "recordedAt" FROM bookings b JOIN app_users u ON u.id=b.customer_id LEFT JOIN attendance a ON a.booking_id=b.id WHERE b.session_id=$1 AND b.status='confirmed' ORDER BY u.full_name,u.id`, [sessionId])).rows;
+    return (await this.db.query(`SELECT b.id AS "bookingId",b.customer_id AS "customerId",u.full_name AS "fullName",CASE WHEN a.source<>'legacy_unknown' THEN a.present ELSE NULL END AS present,a.recorded_at AS "recordedAt" FROM bookings b JOIN app_users u ON u.id=b.customer_id LEFT JOIN attendance a ON a.booking_id=b.id WHERE b.session_id=$1 AND b.status='confirmed' ORDER BY u.full_name,u.id`, [sessionId])).rows;
   }
 
-  async checkInByBooking(adminId: string, bookingId: string) {
-    const booking = await this.db.query<{
-      id: string;
-      bookingCode: string | null;
-      sessionId: string;
-      customerId: string;
-      status: string;
-      customerName: string;
-      avatarUrl: string | null;
-      classTitle: string;
-      startsAt: Date;
-      endsAt: Date;
-    }>(
-      `SELECT b.id, b.booking_code AS "bookingCode", b.session_id AS "sessionId", b.customer_id AS "customerId", b.status,
-              u.full_name AS "customerName",
-              CASE WHEN u.avatar_media_id IS NOT NULL THEN '/api/v1/public/media/' || u.avatar_media_id ELSE NULL END AS "avatarUrl",
-              t.title AS "classTitle",
-              s.starts_at AS "startsAt", s.ends_at AS "endsAt"
-       FROM bookings b
-       JOIN class_sessions s ON s.id = b.session_id
-       JOIN class_types t ON t.id = s.class_type_id
-       JOIN app_users u ON u.id = b.customer_id
-       WHERE (b.id::text = $1 OR upper(b.booking_code) = upper($1))`,
-      [bookingId],
-    );
-
-    const row = booking.rows[0];
-    if (!row) throw new NotFoundException('Tiket booking tidak ditemukan');
-    if (row.status !== 'confirmed') {
-      throw new ConflictException(`Status booking adalah ${row.status}, belum terkonfirmasi/lunas`);
-    }
-
-    const prev = await this.db.query<{ present: boolean }>(
-      'SELECT present FROM attendance WHERE booking_id = $1',
-      [row.id],
-    );
-
-    const alreadyPresent = prev.rows[0]?.present === true;
-
-    await this.db.query(
-      `INSERT INTO attendance (session_id, customer_id, booking_id, present, recorded_by, recorded_at)
-       VALUES ($1, $2, $3, true, $4, now())
-       ON CONFLICT (session_id, customer_id)
-       DO UPDATE SET present = true, recorded_by = $4, recorded_at = now()`,
-      [row.sessionId, row.customerId, row.id, adminId],
-    );
-
-    const locker = await this.db.query<{ lockerCode: string }>(
-      `SELECT l.code AS "lockerCode"
-       FROM locker_assignments la
-       JOIN lockers l ON l.id = la.locker_id
-       WHERE la.customer_id = $1 AND la.released_at IS NULL
-       LIMIT 1`,
-      [row.customerId],
-    );
-
-    return {
-      success: true,
-      alreadyCheckedIn: alreadyPresent,
-      bookingId: row.id,
-      bookingCode: row.bookingCode,
-      sessionId: row.sessionId,
-      customerId: row.customerId,
-      customerName: row.customerName,
-      avatarUrl: row.avatarUrl,
-      classTitle: row.classTitle,
-      startsAt: row.startsAt,
-      endsAt: row.endsAt,
-      recordedAt: new Date(),
-      lockerCode: locker.rows[0]?.lockerCode ?? null,
-    };
+  checkInByBooking(staffId: string, bookingCode: string) {
+    return checkInAtLobby(this.db,staffId,bookingCode);
   }
+
 }
 
 @ApiTags('coach') @ApiCookieAuth('wellness.sid') @UseGuards(SessionGuard) @Controller('coach/sessions')
@@ -186,14 +120,14 @@ export class CoachController {
 export class AdminAttendanceController {
   constructor(private readonly attendance: AttendanceService) {}
   @Get(':id/participants')
-  participants(@Req() req: AuthRequest, @Param('id',ParseUUIDPipe) id: string) { assertRole(req,'admin'); return this.attendance.adminParticipants(id); }
+  participants(@Req() req: AuthRequest, @Param('id',ParseUUIDPipe) id: string) { assertPermission(req,'front_desk'); return this.attendance.adminParticipants(id); }
   @Put(':id/attendance/:customerId')
-  correct(@Req() req: AuthRequest, @Param('id',ParseUUIDPipe) id: string, @Param('customerId',ParseUUIDPipe) customerId: string, @Body() body: CorrectionDto) { return this.attendance.correct(assertRole(req,'admin').id,id,customerId,body.present,body.reason); }
+  correct(@Req() req: AuthRequest, @Param('id',ParseUUIDPipe) id: string, @Param('customerId',ParseUUIDPipe) customerId: string, @Body() body: CorrectionDto) { return this.attendance.correct(assertRole(req,'superadmin').id,id,customerId,body.present,body.reason); }
   @Get(':id/attendance-corrections')
-  corrections(@Req() req: AuthRequest, @Param('id',ParseUUIDPipe) id: string) { assertRole(req,'admin'); return this.attendance.corrections(id); }
+  corrections(@Req() req: AuthRequest, @Param('id',ParseUUIDPipe) id: string) { assertPermission(req,'front_desk'); return this.attendance.corrections(id); }
   @Post('check-in')
   checkIn(@Req() req: AuthRequest, @Body() body: CheckInDto) {
-    const admin = assertRole(req, 'admin');
+    const admin = assertPermission(req, 'front_desk');
     return this.attendance.checkInByBooking(admin.id, body.bookingId.trim());
   }
 }

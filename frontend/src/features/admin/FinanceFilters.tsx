@@ -79,6 +79,7 @@ export function FinanceFilters({
                   <option value="">Semua jenis</option>
                   <option value="class">Kelas</option>
                   <option value="package">Paket</option>
+                  <option value="event">Event</option>
                 </select>
               </label>
             )}

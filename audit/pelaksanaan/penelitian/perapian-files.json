@@ -1,0 +1,16 @@
+{
+  "archivedFiles": 844,
+  "archivePath": "audit/arsip/audit-sebelum-perapian-2026-11-12.zip",
+  "archiveSha256": "a8c53e7bf825bfb5e05b65f41b323fe995085b4b9ce3471dae81eb5896e0bb2c",
+  "archiveIntegrity": "PASS, CRC and SHA-256 for every archived file",
+  "removedDisposableDependencyFiles": 11163,
+  "removedDisposableDependencyBytes": 163302833,
+  "retainedResearchScreenshots": 7,
+  "applicationSourceDeleted": false,
+  "archivedUnusedHarness": "audit/arsip/harness-lama.cjs",
+  "archivedDeploymentCandidates": [
+    "audit/arsip/deploy-kandidat.yml",
+    "audit/arsip/ops-kandidat/"
+  ],
+  "deploymentRequested": false
+}

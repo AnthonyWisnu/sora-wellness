@@ -22,6 +22,7 @@ async function main() {
   try {
     adminId = (await pool.query<{ id: string }>('INSERT INTO app_users (email,full_name,role,password_hash) VALUES ($1,$2,$3,$4) RETURNING id', [email,'Admin CMS Smoke','admin',await hashPassword(password)])).rows[0].id;
     const loginToken = (await agent.get('/api/v1/auth/csrf').expect(200)).body.token as string;
+    await pool.query("UPDATE app_users SET permissions=ARRAY['studio_content'] WHERE id=$1",[adminId]);
     await agent.post('/api/v1/auth/login').set('x-csrf-token',loginToken).send({ email,password }).expect(200);
     const csrf = (await agent.get('/api/v1/auth/csrf').expect(200)).body.token as string;
     const state = (await agent.get('/api/v1/admin/site').expect(200)).body;

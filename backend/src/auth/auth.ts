@@ -1,11 +1,13 @@
 import { randomBytes } from 'node:crypto';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import { BadRequestException, Body, ConflictException, Controller, ForbiddenException, Get, HttpCode, NotFoundException, Param, ParseUUIDPipe, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiCookieAuth, ApiCreatedResponse, ApiOkResponse, ApiProperty, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
 import { IsArray, IsEmail, IsIn, IsInt, IsOptional, IsString, Length, Max, MaxLength, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 import { Db } from '../shared/db';
 import { csrf } from '../shared/csrf';
-import { AuthRequest, assertRole, hashPassword, SessionGuard, verifyPassword } from '../shared/security';
+import { AuthRequest, assertAnyPermission, assertPermission, assertRole, hashPassword, SessionGuard, verifyPassword } from '../shared/security';
+import { isCompromisedDemoHash } from './utils/demo-credentials';
 import { ALLOWED_STAFF_PERMISSIONS, UpdateStaffPermissionsDto } from './dto/staff-permissions.dto';
 
 export class RegisterDto {
@@ -61,7 +63,7 @@ export class AuthController {
   @ApiOkResponse({ schema: { example: { token: 'token-csrf-dari-server' } } })
   getCsrf(@Req() req: AuthRequest) { return { token: csrf.generateToken(req) }; }
 
-  @Post('register')
+  @Post('register') @UseGuards(ThrottlerGuard)
   @ApiCreatedResponse({ schema: { example: { id: '562a9064-bdd6-4f74-a903-91661ba23e75', email: 'pelanggan@example.com', role: 'customer' } } })
   async register(@Body() body: RegisterDto, @Req() req: AuthRequest) {
     const email = body.email.trim().toLowerCase();
@@ -81,12 +83,12 @@ export class AuthController {
     }
   }
 
-  @Post('login') @HttpCode(200)
+  @Post('login') @HttpCode(200) @UseGuards(ThrottlerGuard)
   @ApiOkResponse({ schema: { example: { id: '562a9064-bdd6-4f74-a903-91661ba23e75', role: 'customer', passwordChangeRequired: false } } })
   async login(@Body() body: LoginDto, @Req() req: AuthRequest) {
     const result = await this.db.query<{ id: string; role: string; password_hash: string; password_change_required: boolean; permissions?: string[] }>('SELECT id, role, password_hash, password_change_required, COALESCE(permissions, \'{}\') AS permissions FROM app_users WHERE email = $1', [body.email.trim().toLowerCase()]);
     const user = result.rows[0];
-    if (!user || !(await verifyPassword(body.password, user.password_hash))) throw new ForbiddenException('Email atau kata sandi salah');
+    if (!user || isCompromisedDemoHash(user.password_hash) || !(await verifyPassword(body.password, user.password_hash))) throw new ForbiddenException('Email atau kata sandi salah');
     await regenerate(req);
     req.session.userId = user.id;
     return { id: user.id, role: user.role, permissions: user.permissions || [], passwordChangeRequired: user.password_change_required };
@@ -112,16 +114,22 @@ export class AuthController {
 export class AdminAccountController {
   constructor(private readonly db: Db) {}
 
+  @Get('coaches') @UseGuards(SessionGuard) @ApiCookieAuth('wellness.sid')
+  async coaches(@Req() req: AuthRequest, @Query() filter: AccountFilter) {
+    assertAnyPermission(req, 'classes_schedule', 'community_events');
+    return (await this.db.query(`SELECT id,full_name AS "fullName" FROM app_users WHERE role='coach' ORDER BY id LIMIT $1 OFFSET $2`, [filter.limit ?? 20, ((filter.page ?? 1) - 1) * (filter.limit ?? 20)])).rows;
+  }
+
   @Get('accounts') @UseGuards(SessionGuard) @ApiCookieAuth('wellness.sid')
   async accounts(@Req() req: AuthRequest, @Query() filter: AccountFilter) {
-    assertRole(req, 'admin');
+    assertPermission(req, 'staff_management');
     const found = await this.db.query(`SELECT id,email,full_name AS "fullName",role,COALESCE(permissions, '{}') AS permissions,password_change_required AS "passwordChangeRequired",created_at AS "createdAt" FROM app_users WHERE ($1::text IS NULL OR email::text ILIKE '%'||$1||'%' OR full_name ILIKE '%'||$1||'%') AND ($2::text IS NULL OR role=$2) ORDER BY created_at DESC LIMIT $3 OFFSET $4`, [filter.q?.trim() || null, filter.role ?? null, filter.limit ?? 20, ((filter.page ?? 1) - 1) * (filter.limit ?? 20)]);
     return found.rows;
   }
 
   @Post('staff') @UseGuards(SessionGuard) @ApiCookieAuth('wellness.sid')
   async createStaff(@Req() req: AuthRequest, @Body() body: StaffDto) {
-    const admin = assertRole(req, 'admin', 'superadmin');
+    const admin = assertPermission(req, 'staff_management');
     const allowedRoles = admin.role === 'superadmin' ? ['admin', 'coach', 'finance', 'superadmin'] : ['coach'];
     if (!allowedRoles.includes(body.role)) throw new ForbiddenException('Peran staf tidak diizinkan untuk level akun Anda');
     const hash = await hashPassword(body.password);
@@ -160,11 +168,16 @@ export class AdminAccountController {
   }
 
   @Post('accounts/:id/reset-password') @UseGuards(SessionGuard) @ApiCookieAuth('wellness.sid')
-  async resetPassword(@Req() req: AuthRequest, @Body() body: ResetPasswordDto) {
-    const admin = assertRole(req, 'admin');
-    const id = req.params.id;
+  async resetPassword(@Req() req: AuthRequest, @Body() body: ResetPasswordDto, @Param('id', ParseUUIDPipe) id: string) {
+    const admin = assertPermission(req, 'staff_management');
+    if (id === admin.id) throw new ForbiddenException('Gunakan menu ganti kata sandi untuk akun sendiri');
     const temporaryPassword = randomBytes(18).toString('base64url');
     await this.db.transaction(async (client) => {
+      const target = await client.query<{ role: string }>('SELECT role FROM app_users WHERE id=$1 FOR UPDATE', [id]);
+      if (!target.rows[0]) throw new NotFoundException('Akun tidak ditemukan');
+      if (admin.role !== 'superadmin' && !['customer', 'coach'].includes(target.rows[0].role)) {
+        throw new ForbiddenException('Anda tidak berhak mereset akun ini');
+      }
       const changed = await client.query('UPDATE app_users SET password_hash=$1, password_change_required=true, updated_at=now() WHERE id=$2', [await hashPassword(temporaryPassword), id]);
       if (!changed.rowCount) throw new ForbiddenException('Akun tidak ditemukan');
       await client.query(`DELETE FROM "session" WHERE sess->>'userId' = $1`, [id]);

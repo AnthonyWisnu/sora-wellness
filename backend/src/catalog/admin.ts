@@ -1,7 +1,7 @@
 import { BadRequestException, Body, ConflictException, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiCookieAuth, ApiCreatedResponse, ApiTags } from '@nestjs/swagger';
 import { Db } from '../shared/db';
-import { AuthRequest, assertRole, SessionGuard } from '../shared/security';
+import { AuthRequest, assertPermission, assertAnyPermission, assertRole, SessionGuard } from '../shared/security';
 import { CancellationsService } from '../booking/cancellations';
 import { AdminSessionFilter, ClassTypeDto, PackageChangeDto, PackageDto, PolicyDto, ScheduleRuleDto, SessionDto, UpdateScheduleRuleDto } from './admin.dto';
 
@@ -12,14 +12,14 @@ export class AdminController {
 
   @Get('policies')
   async policies(@Req() req: AuthRequest) {
-    assertRole(req, 'admin');
+    assertPermission(req, 'studio_policy');
     const found = await this.db.query('SELECT guest_schedule_days AS "guestScheduleDays",member_schedule_days AS "memberScheduleDays",booking_cutoff_minutes AS "bookingCutoffMinutes",cancellation_cutoff_minutes AS "cancellationCutoffMinutes",seat_hold_minutes AS "seatHoldMinutes",monthly_class_quota AS "monthlyClassQuota",locker_enabled AS "lockerEnabled",(SELECT coalesce(booking_code_prefix,\'SORA\') FROM studio WHERE id=1) AS "bookingCodePrefix" FROM studio_policy WHERE studio_id=1');
     return found.rows[0];
   }
 
   @Patch('policies')
   async setPolicies(@Req() req: AuthRequest, @Body() body: PolicyDto) {
-    assertRole(req, 'admin');
+    assertPermission(req, 'studio_policy');
     if (body.bookingCodePrefix) {
       const clean = body.bookingCodePrefix.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
       if (clean.length >= 2 && clean.length <= 6) {
@@ -31,18 +31,18 @@ export class AdminController {
   }
 
   @Get('class-types')
-  async classTypes(@Req() req: AuthRequest) { assertRole(req, 'admin'); return (await this.db.query('SELECT * FROM class_types ORDER BY created_at DESC')).rows; }
+  async classTypes(@Req() req: AuthRequest) { assertAnyPermission(req, 'classes_schedule', 'community_events'); return (await this.db.query('SELECT * FROM class_types ORDER BY created_at DESC')).rows; }
 
   @Post('class-types')
   async createClassType(@Req() req: AuthRequest, @Body() b: ClassTypeDto) {
-    assertRole(req, 'admin');
+    assertPermission(req, 'classes_schedule');
     const found = await this.db.query('INSERT INTO class_types (title,category,level,description,duration_minutes,default_capacity,default_price_idr) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id', [b.title,b.category,b.level,b.description,b.durationMinutes,b.defaultCapacity,b.defaultPriceIdr]);
     return found.rows[0];
   }
 
   @Patch('class-types/:id')
   async changeClassType(@Req() req: AuthRequest, @Param('id') id: string, @Body() b: ClassTypeDto) {
-    assertRole(req, 'admin');
+    assertPermission(req, 'classes_schedule');
     return this.db.transaction(async (client) => {
       const existing = await client.query<{ level: string }>('SELECT level FROM class_types WHERE id=$1 FOR UPDATE', [id]);
       if (!existing.rows[0]) throw new BadRequestException('Jenis kelas tidak ditemukan');
@@ -55,18 +55,18 @@ export class AdminController {
   }
 
   @Get('package-options')
-  async packages(@Req() req: AuthRequest) { assertRole(req, 'admin'); return (await this.db.query('SELECT * FROM package_options ORDER BY duration_months')).rows; }
+  async packages(@Req() req: AuthRequest) { assertPermission(req, 'studio_policy'); return (await this.db.query('SELECT * FROM package_options ORDER BY duration_months')).rows; }
 
   @Post('package-options')
   async createPackage(@Req() req: AuthRequest, @Body() b: PackageDto) {
-    assertRole(req, 'admin');
+    assertPermission(req, 'studio_policy');
     try { return (await this.db.query('INSERT INTO package_options (duration_months,price_idr) VALUES ($1,$2) RETURNING id', [b.durationMonths,b.priceIdr])).rows[0]; }
     catch (error) { if ((error as { code?: string }).code === '23505') throw new ConflictException('Durasi paket sudah ada'); throw error; }
   }
 
   @Patch('package-options/:id')
   async changePackage(@Req() req: AuthRequest, @Param('id') id: string, @Body() b: PackageChangeDto) {
-    assertRole(req, 'admin');
+    assertPermission(req, 'studio_policy');
     const found = await this.db.query('UPDATE package_options SET price_idr=$1,active=$2 WHERE id=$3 RETURNING id,price_idr AS "priceIdr",active', [b.priceIdr,b.active,id]);
     if (!found.rows[0]) throw new BadRequestException('Pilihan paket tidak ditemukan');
     return found.rows[0];
@@ -74,7 +74,7 @@ export class AdminController {
 
   @Get('sessions')
   async sessions(@Req() req: AuthRequest, @Query() filter: AdminSessionFilter) {
-    assertRole(req, 'admin');
+    assertAnyPermission(req, 'classes_schedule', 'front_desk');
     return (await this.db.query('SELECT s.id,s.class_type_id,s.coach_id,s.local_date::text AS local_date,s.starts_at,s.ends_at,s.status,s.capacity,s.price_idr,t.title,u.full_name AS coach_name FROM class_sessions s JOIN class_types t ON t.id=s.class_type_id JOIN app_users u ON u.id=s.coach_id WHERE ($1::date IS NULL OR s.local_date=$1::date) ORDER BY s.starts_at DESC LIMIT 100', [filter.date ?? null])).rows;
   }
 
@@ -90,7 +90,7 @@ export class AdminController {
 
   @Get('executive-metrics')
   async executiveMetrics(@Req() req: AuthRequest) {
-    assertRole(req, 'admin');
+    assertRole(req, 'superadmin');
     const timezoneRow = await this.db.query<{ timezone: string }>(
       'SELECT coalesce(timezone, \'Asia/Makassar\') AS timezone FROM studio WHERE id=1',
     );
@@ -117,9 +117,9 @@ export class AdminController {
         [tz],
       ),
       this.db.query<{ avgOccupancyPct: number }>(
-        `SELECT COALESCE(ROUND((COUNT(b.id)::numeric / NULLIF(SUM(s.capacity), 0)::numeric) * 100), 0)::int AS "avgOccupancyPct"
+        `SELECT COALESCE(ROUND((COALESCE(SUM(b.booked),0)::numeric / NULLIF(SUM(s.capacity), 0)::numeric) * 100), 0)::int AS "avgOccupancyPct"
          FROM class_sessions s
-         LEFT JOIN bookings b ON b.session_id = s.id AND b.status IN ('confirmed', 'attended')
+         LEFT JOIN (SELECT session_id,count(*)::int AS booked FROM bookings WHERE status='confirmed' GROUP BY session_id) b ON b.session_id=s.id
          WHERE s.status != 'cancelled'
            AND s.starts_at >= date_trunc('month', now() AT TIME ZONE $1)`,
         [tz],
@@ -132,11 +132,11 @@ export class AdminController {
          SELECT
            d.d::text AS "dayDate",
            COALESCE(SUM(s.capacity), 0)::int AS "totalCapacity",
-           COUNT(b.id)::int AS "totalBooked",
-           COALESCE(ROUND((COUNT(b.id)::numeric / NULLIF(SUM(s.capacity), 0)::numeric) * 100), 0)::int AS "occupancyPct"
+           COALESCE(SUM(b.booked),0)::int AS "totalBooked",
+           COALESCE(ROUND((COALESCE(SUM(b.booked),0)::numeric / NULLIF(SUM(s.capacity), 0)::numeric) * 100), 0)::int AS "occupancyPct"
          FROM days d
          LEFT JOIN class_sessions s ON s.local_date = d.d AND s.status != 'cancelled'
-         LEFT JOIN bookings b ON b.session_id = s.id AND b.status IN ('confirmed', 'attended')
+         LEFT JOIN (SELECT session_id,count(*)::int AS booked FROM bookings WHERE status='confirmed' GROUP BY session_id) b ON b.session_id=s.id
          GROUP BY d.d
          ORDER BY d.d ASC`,
         [tz],
@@ -217,7 +217,7 @@ export class AdminController {
 
   @Post('sessions')
   async createSession(@Req() req: AuthRequest, @Body() b: SessionDto) {
-    assertRole(req, 'admin');
+    assertPermission(req, 'classes_schedule');
     if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(b.localStartTime)) throw new BadRequestException('Jam harus HH:mm');
     const result = await this.db.query(`INSERT INTO class_sessions (class_type_id,coach_id,local_date,starts_at,ends_at,capacity,price_idr) SELECT t.id,u.id,$3::date,($3::date + $4::time) AT TIME ZONE st.timezone,(($3::date + $4::time) AT TIME ZONE st.timezone) + t.duration_minutes * interval '1 minute',$5,$6 FROM class_types t JOIN app_users u ON u.id=$2 AND u.role='coach' CROSS JOIN studio st WHERE t.id=$1 AND st.id=1 RETURNING id`, [b.classTypeId,b.coachId,b.localDate,b.localStartTime,b.capacity,b.priceIdr]);
     if (!result.rows[0]) throw new BadRequestException('Jenis kelas atau pelatih tidak valid');
@@ -226,7 +226,7 @@ export class AdminController {
 
   @Patch('sessions/:id')
   async changeSession(@Req() req: AuthRequest, @Param('id') id: string, @Body() b: SessionDto) {
-    assertRole(req, 'admin');
+    assertPermission(req, 'classes_schedule');
     if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(b.localStartTime)) throw new BadRequestException('Jam harus HH:mm');
     return this.db.transaction(async (client) => {
       const existing = await client.query('SELECT id,status FROM class_sessions WHERE id=$1 FOR UPDATE', [id]);
@@ -243,19 +243,19 @@ export class AdminController {
   @Post('sessions/:id/cancel')
   @ApiCreatedResponse({ schema: { example: { id: 'd6d920d7-a0c1-46ac-8793-e5f84b004e2d', status: 'cancelled', bookingsCancelled: 4, previousCancellationsRestored: 1, creditedBalanceIdr: 150000, quotaReturned: 2 } } })
   async cancelSession(@Req() req: AuthRequest, @Param('id', ParseUUIDPipe) id: string) {
-    const admin = assertRole(req, 'admin');
+    const admin = assertPermission(req, 'classes_schedule');
     return this.cancellations.cancelSession(id, admin.id);
   }
 
   @Get('schedule-rules')
   async rules(@Req() req: AuthRequest) {
-    assertRole(req, 'admin');
+    assertPermission(req, 'classes_schedule');
     return (await this.db.query('SELECT r.*,t.title,u.full_name AS coach_name FROM schedule_rules r JOIN class_types t ON t.id=r.class_type_id JOIN app_users u ON u.id=r.coach_id ORDER BY r.starts_on DESC')).rows;
   }
 
   @Post('schedule-rules')
   async createRule(@Req() req: AuthRequest, @Body() b: ScheduleRuleDto) {
-    assertRole(req, 'admin');
+    assertPermission(req, 'classes_schedule');
     if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(b.localStartTime)) throw new BadRequestException('Jam harus HH:mm');
     const dates = await this.db.query<{ days: number }>(`SELECT ($2::date-$1::date)::int AS days`, [b.startsOn,b.endsOn]);
     if (dates.rows[0].days < 0 || dates.rows[0].days > 180) throw new BadRequestException('Rentang jadwal 0-180 hari');
@@ -273,7 +273,7 @@ export class AdminController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() b: UpdateScheduleRuleDto,
   ) {
-    assertRole(req, 'admin');
+    assertPermission(req, 'classes_schedule');
     if (b.localStartTime && !/^([01]\d|2[0-3]):[0-5]\d$/.test(b.localStartTime)) {
       throw new BadRequestException('Jam harus HH:mm');
     }
@@ -306,7 +306,7 @@ export class AdminController {
       );
 
       // Sinkronkan sesi mendatang yang belum dibooking jika coach, kapasitas, atau harga diubah
-      if (b.coachId || b.capacity || b.priceIdr) {
+      if (b.coachId !== undefined || b.capacity !== undefined || b.priceIdr !== undefined) {
         await client.query(
           `UPDATE class_sessions s
            SET coach_id = COALESCE($2, s.coach_id),
@@ -314,7 +314,7 @@ export class AdminController {
                price_idr = COALESCE($4, s.price_idr)
            WHERE s.schedule_rule_id = $1
              AND s.starts_at >= now()
-             AND s.id NOT IN (SELECT session_id FROM bookings WHERE status IN ('confirmed', 'attended'))`,
+             AND s.id NOT IN (SELECT session_id FROM bookings WHERE status IN ('confirmed', 'pending_payment'))`,
           [id, b.coachId ?? null, b.capacity ?? null, b.priceIdr ?? null],
         );
       }
@@ -325,7 +325,7 @@ export class AdminController {
 
   @Delete('schedule-rules/:id')
   async deleteRule(@Req() req: AuthRequest, @Param('id', ParseUUIDPipe) id: string) {
-    assertRole(req, 'admin');
+    assertPermission(req, 'classes_schedule');
     return this.db.transaction(async (client) => {
       const rule = await client.query('SELECT id FROM schedule_rules WHERE id = $1 FOR UPDATE', [id]);
       if (!rule.rows[0]) throw new BadRequestException('Aturan jadwal tidak ditemukan');

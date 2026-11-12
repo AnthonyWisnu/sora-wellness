@@ -60,7 +60,7 @@ export async function referenceData(): Promise<[AdminClassType[], Coach[]]> {
   const classes = await api<AdminClassType[]>('/admin/class-types')
   const coaches: Coach[] = []
   for (let page = 1; ; page++) {
-    const batch = await api<Coach[]>(`/admin/accounts?role=coach&limit=100&page=${page}`)
+    const batch = await api<Coach[]>(`/admin/coaches?limit=100&page=${page}`)
     coaches.push(...batch)
     if (batch.length < 100) break
   }

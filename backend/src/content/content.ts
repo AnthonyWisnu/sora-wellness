@@ -7,7 +7,7 @@ import { ApiBody, ApiConsumes, ApiCookieAuth, ApiProperty, ApiPropertyOptional, 
 import { ArrayMaxSize, IsArray, IsOptional, IsString, IsUUID, Length } from 'class-validator';
 import type { Response } from 'express';
 import { Db } from '../shared/db';
-import { AuthRequest, assertRole, SessionGuard } from '../shared/security';
+import { AuthRequest, assertPermission, SessionGuard } from '../shared/security';
 import { SiteService } from './site.service';
 
 export const maxBytes = 5 * 1024 * 1024;
@@ -68,7 +68,7 @@ export class AdminContentController {
 
   @Get('content')
   async content(@Req() req: AuthRequest) {
-    assertRole(req, 'admin');
+    assertPermission(req, 'studio_content');
     const studio = (await this.db.query(`SELECT name,description,address,hero_title AS "heroTitle",hero_subtitle AS "heroSubtitle",logo_media_id AS "logoMediaId",hero_media_id AS "heroMediaId",coalesce(booking_code_prefix,'SORA') AS "bookingCodePrefix" FROM studio WHERE id=1`)).rows[0];
     const gallery = await this.db.query<{ media_id: string }>('SELECT media_id FROM studio_gallery WHERE studio_id=1 ORDER BY position');
     return { ...studio, galleryMediaIds: gallery.rows.map(row => row.media_id) };
@@ -76,7 +76,7 @@ export class AdminContentController {
 
   @Put('content')
   async update(@Req() req: AuthRequest, @Body() body: ContentDto) {
-    assertRole(req, 'admin');
+    assertPermission(req, 'studio_content');
     if (new Set(body.galleryMediaIds).size !== body.galleryMediaIds.length) throw new BadRequestException('Foto galeri tidak boleh diulang');
     if (body.bookingCodePrefix) {
       const cleanPrefix = body.bookingCodePrefix.trim().toUpperCase();
@@ -90,13 +90,13 @@ export class AdminContentController {
     hero.title = body.heroTitle;
     hero.body = body.heroSubtitle;
     const saved = await this.site.save(document, current.draftVersion);
-    await this.site.publish(saved.draftVersion, assertRole(req, 'admin').id);
+    await this.site.publish(saved.draftVersion, assertPermission(req, 'studio_content').id);
     return this.content(req);
   }
 
   @Get('media')
   async listMedia(@Req() req: AuthRequest) {
-    assertRole(req, 'admin');
+    assertPermission(req, 'studio_content');
     return (await this.db.query(`SELECT a.id,a.filename,a.mime_type AS "mimeType",a.byte_size AS "byteSize",a.created_at AS "createdAt",
       (s.logo_media_id=a.id OR s.hero_media_id=a.id OR EXISTS(SELECT 1 FROM studio_gallery g WHERE g.studio_id=1 AND g.media_id=a.id) OR EXISTS(SELECT 1 FROM site_content_media cm WHERE cm.media_id=a.id)) AS used
       FROM media_assets a CROSS JOIN studio s WHERE s.id=1 AND a.purpose='public' ORDER BY a.created_at DESC`)).rows.map(row => ({ ...row, url: `/api/v1/public/media/${row.id}` }));
@@ -106,7 +106,7 @@ export class AdminContentController {
   @ApiBody({ schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } }, required: ['file'] } })
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: maxBytes, files: 1 } }))
   async upload(@Req() req: AuthRequest, @UploadedFile() file?: Upload) {
-    const admin = assertRole(req, 'admin');
+    const admin = assertPermission(req, 'studio_content');
     if (!file || file.size < 1 || file.size > maxBytes) throw new BadRequestException('Gambar wajib ada dan maksimal 5 MB');
     const detected = imageType(file);
     if (!detected) throw new BadRequestException('Hanya gambar JPG, PNG, atau WebP yang valid');
@@ -123,11 +123,11 @@ export class AdminContentController {
 
   @Delete('media/:id')
   async remove(@Req() req: AuthRequest, @Param('id', ParseUUIDPipe) id: string) {
-    assertRole(req, 'admin');
+    assertPermission(req, 'studio_content');
     let path: string;
     try {
       path = await this.db.transaction(async client => {
-        const found = await client.query<{ storage_path: string }>('SELECT storage_path FROM media_assets WHERE id=$1 FOR UPDATE', [id]);
+        const found = await client.query<{ storage_path: string }>("SELECT storage_path FROM media_assets WHERE id=$1 AND purpose='public' FOR UPDATE", [id]);
         if (!found.rows[0]) throw new NotFoundException('Gambar tidak ditemukan');
         const used = await client.query('SELECT 1 FROM studio WHERE logo_media_id=$1 OR hero_media_id=$1 UNION ALL SELECT 1 FROM studio_gallery WHERE media_id=$1 UNION ALL SELECT 1 FROM site_content_media WHERE media_id=$1 LIMIT 1', [id]);
         if (used.rowCount) throw new ConflictException('Gambar masih digunakan oleh konten publik');

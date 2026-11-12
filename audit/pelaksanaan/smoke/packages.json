@@ -1,0 +1,6 @@
+{
+  "name": "packages",
+  "exitCode": 0,
+  "target": "fixture sintetis lokal",
+  "script": "package-state-smoke"
+}

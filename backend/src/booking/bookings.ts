@@ -69,8 +69,8 @@ export class BookingController {
     if (!key || key.length < 8 || key.length > 128) throw new BadRequestException('Header Idempotency-Key wajib 8-128 karakter');
     if (body.paymentChoice === 'quota' && body.useBalance) throw new BadRequestException('Saldo tidak dipakai bersama jatah member');
     await this.payments.expirePending(actor.id);
-    return this.db.transaction(async (client) => {
-      await client.query('SELECT id FROM app_users WHERE id=$1 FOR UPDATE', [actor.id]);
+    const created = await this.db.transaction(async (client) => {
+      await client.query('SELECT id FROM app_users WHERE id=$1 FOR NO KEY UPDATE', [actor.id]);
       const prior = await client.query<{ id: string; booking_code: string | null; session_id: string; status: string; source: string; price_idr: number; wallet_reserved_idr: number; gateway_due_idr: number; hold_expires_at: Date | null; order_id: string | null; snap_token: string | null; redirect_url: string | null }>('SELECT b.id,b.booking_code,b.session_id,b.status,b.source,b.price_idr,b.wallet_reserved_idr,b.gateway_due_idr,b.hold_expires_at,p.order_id,p.snap_token,p.redirect_url FROM bookings b LEFT JOIN payment_transactions p ON p.booking_id=b.id WHERE b.customer_id=$1 AND b.idempotency_key=$2', [actor.id, key]);
       if (prior.rows[0]) {
         if (prior.rows[0].session_id !== body.sessionId) throw new ConflictException('Idempotency-Key sudah dipakai untuk sesi lain');
@@ -79,7 +79,7 @@ export class BookingController {
         return { id: b.id, bookingCode: b.booking_code, status: b.status, source: b.source, priceIdr: b.price_idr, walletReservedIdr: b.wallet_reserved_idr, gatewayDueIdr: b.gateway_due_idr, holdExpiresAt: b.hold_expires_at, payment: b.order_id && b.status === 'pending_payment' ? { orderId: b.order_id, snapToken: b.snap_token, redirectUrl: b.redirect_url } : null };
       }
       const session = await this.getSession(client, body.sessionId, true);
-      await client.query(`UPDATE bookings SET status='expired' WHERE session_id=$1 AND status='pending_payment' AND hold_expires_at <= now()`, [session.id]);
+      // Hold kedaluwarsa tidak dihitung sebagai kursi. Pelepasan saldo hanya melalui PaymentsService.expireBooking.
       const options = await this.eligibility(client, actor.id, session);
       if (!options.bookable) throw new ConflictException(options.reason);
       if (options.seatsLeft <= 0) throw new ConflictException('Kelas penuh');
@@ -106,9 +106,13 @@ export class BookingController {
       const result = await client.query<{ id: string; holdExpiresAt: Date | null }>(`INSERT INTO bookings (customer_id,session_id,status,source,price_idr,wallet_reserved_idr,gateway_due_idr,hold_expires_at,idempotency_key,confirmed_at,booking_code) VALUES ($1,$2,$3,$4,$5,$6,$7,CASE WHEN $3='pending_payment' THEN now()+($8::int * interval '1 minute') ELSE NULL END,$9,CASE WHEN $3='confirmed' THEN now() ELSE NULL END,$10) RETURNING id,hold_expires_at AS "holdExpiresAt"`, [actor.id,session.id,status,source,session.price_idr,walletReservedIdr,gatewayDueIdr,session.seat_hold_minutes,key,bookingCode]);
       const bookingId = result.rows[0].id;
       if (walletReservedIdr > 0) await this.payments.walletEntry(client,actor.id,bookingId,-walletReservedIdr,'class_purchase',`booking:${bookingId}:initial-debit`);
-      const payment = gatewayDueIdr > 0 ? await this.payments.createSnapForBooking(client,bookingId,gatewayDueIdr,session.seat_hold_minutes) : null;
+      const payment = gatewayDueIdr > 0 ? await this.payments.createBookingIntent(client,bookingId,gatewayDueIdr) : null;
       return { id: bookingId, bookingCode, status, source, priceIdr: session.price_idr, walletReservedIdr, gatewayDueIdr, holdExpiresAt: result.rows[0].holdExpiresAt, payment };
     });
+    if (created.status === 'pending_payment' && created.payment) {
+      return { ...created, payment: await this.payments.prepareSnap(created.payment.orderId) };
+    }
+    return created;
   }
 
   @Get('bookings')
@@ -117,6 +121,11 @@ export class BookingController {
     await this.db.query(`UPDATE class_sessions SET status='finished' WHERE status='scheduled' AND ends_at <= now()`);
     const found = await this.db.query(`SELECT b.id,b.booking_code AS "bookingCode",b.status,b.source,b.price_idr AS "priceIdr",b.wallet_reserved_idr AS "walletReservedIdr",b.gateway_due_idr AS "gatewayDueIdr",b.hold_expires_at AS "holdExpiresAt",b.created_at AS "createdAt",b.cancelled_at AS "cancelledAt",b.cancellation_origin AS "cancellationOrigin",b.quota_retained AS "quotaRetained",s.local_date::text AS "localDate",s.starts_at AS "startsAt",s.ends_at AS "endsAt",s.status AS "sessionStatus",t.title FROM bookings b JOIN class_sessions s ON s.id=b.session_id JOIN class_types t ON t.id=s.class_type_id WHERE b.customer_id=$1 ORDER BY b.created_at DESC LIMIT $2 OFFSET $3`, [actor.id, filter.limit ?? 20, ((filter.page ?? 1) - 1) * (filter.limit ?? 20)]);
     return found.rows;
+  }
+
+  @Post('bookings/:id/resume-payment')
+  async resume(@Req() req: AuthRequest, @Param('id', ParseUUIDPipe) id: string) {
+    return this.payments.resumeBooking(id, assertRole(req,'customer').id);
   }
 
   @Get('bookings/:id')

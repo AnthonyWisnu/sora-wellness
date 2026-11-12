@@ -14,22 +14,24 @@ class PurchaseDto { @ApiProperty({ format: 'uuid', description: 'ID dari GET /ap
 
 type Purchase = { id: string; customer_id: string; package_option_id: string; amount_idr: number; duration_months: number; status: string; expires_at: Date | null };
 
-export async function membershipStart(client: PoolClient, customerId: string): Promise<string> {
+export async function membershipStart(client: PoolClient, customerId: string, settledPayment = false): Promise<string> {
   const now = await client.query<{ today: string }>("SELECT (now() AT TIME ZONE timezone)::date::text AS today FROM studio WHERE id=1");
   const today = now.rows[0].today;
   const last = await client.query<{ starts_on: string; ends_on: string }>('SELECT starts_on::text,ends_on::text FROM memberships WHERE customer_id=$1 ORDER BY ends_on DESC LIMIT 1', [customerId]);
   const range = last.rows[0];
   if (!range || range.ends_on < today) return today;
-  if (range.starts_on > today) throw new ConflictException('Satu paket berikutnya sudah terjadwal');
+  if (!settledPayment && range.starts_on > today) throw new ConflictException('Satu paket berikutnya sudah terjadwal');
   const allowed = await client.query<{ allowed: boolean }>('SELECT $1::date <= $2::date + 30 AS allowed', [range.ends_on, today]);
-  if (!allowed.rows[0].allowed) throw new ConflictException('Perpanjangan tersedia mulai 30 hari sebelum paket berakhir');
+  if (!settledPayment && !allowed.rows[0].allowed) throw new ConflictException('Perpanjangan tersedia mulai 30 hari sebelum paket berakhir');
   const next = new Date(`${range.ends_on}T00:00:00Z`);
   next.setUTCDate(next.getUTCDate() + 1);
   return next.toISOString().slice(0, 10);
 }
 
 export async function activatePurchase(client: PoolClient, purchase: Pick<Purchase,'id' | 'customer_id' | 'duration_months'>) {
-  const start = await membershipStart(client, purchase.customer_id);
+  // Pembayaran yang telah settled tetap dipulihkan setelah paket terakhir.
+  // Jendela pembelian baru ditegakkan pada create(), sebelum charge dibuat.
+  const start = await membershipStart(client, purchase.customer_id, true);
   const end = membershipEndDate(start, purchase.duration_months);
   await client.query('INSERT INTO memberships (customer_id,purchase_id,starts_on,ends_on) VALUES ($1,$2,$3,$4)', [purchase.customer_id,purchase.id,start,end]);
   await client.query("UPDATE package_purchases SET status='paid',paid_at=now() WHERE id=$1", [purchase.id]);
@@ -43,8 +45,8 @@ export class MembershipPurchasesService {
   async create(customerId: string, optionId: string, key: string) {
     if (!key || key.length < 8 || key.length > 128) throw new BadRequestException('Header Idempotency-Key wajib 8-128 karakter');
     await this.payments.expirePendingPackages(customerId);
-    return this.db.transaction(async (client) => {
-      await client.query('SELECT id FROM app_users WHERE id=$1 FOR UPDATE', [customerId]);
+    const created = await this.db.transaction(async (client) => {
+      await client.query('SELECT id FROM app_users WHERE id=$1 FOR NO KEY UPDATE', [customerId]);
       const prior = await client.query<Purchase>(`SELECT * FROM package_purchases WHERE customer_id=$1 AND idempotency_key=$2`, [customerId,key]);
       if (prior.rows[0]) {
         if (prior.rows[0].package_option_id !== optionId) throw new ConflictException('Idempotency-Key sudah dipakai untuk pilihan paket lain');
@@ -59,9 +61,14 @@ export class MembershipPurchasesService {
       const purchase = await client.query<Purchase>(`INSERT INTO package_purchases (customer_id,package_option_id,amount_idr,duration_months,status,idempotency_key,expires_at) VALUES ($1,$2,$3,$4,$5,$6,CASE WHEN $5='pending_payment' THEN now()+($7::int * interval '1 minute') ELSE NULL END) RETURNING *`, [customerId,o.id,o.price_idr,o.duration_months,o.price_idr === 0 ? 'paid' : 'pending_payment',key,PACKAGE_CHECKOUT_MINUTES]);
       const p = purchase.rows[0];
       if (o.price_idr === 0) await activatePurchase(client,p);
-      else await this.payments.createSnapForPackage(client,p.id,o.price_idr);
+      else await this.payments.createPackageIntent(client,p.id,o.price_idr);
       return this.details(client,p);
     });
+    if (created.status === 'pending_payment' && created.payment) {
+      await this.payments.prepareSnap(created.payment.orderId);
+      return this.one(customerId,created.id);
+    }
+    return created;
   }
 
   async list(customerId: string) {
@@ -114,6 +121,14 @@ export class MembershipPurchasesController {
   async one(@Req() req: AuthRequest, @Param('id') id: string) { return this.service.one(assertRole(req,'customer').id,id); }
   @Post(':id/refresh-payment')
   async refresh(@Req() req: AuthRequest, @Param('id') id: string) { return this.payments.refreshByPackage(id,assertRole(req,'customer').id); }
+  @Post(':id/resume-payment')
+  async resume(@Req() req: AuthRequest, @Param('id') id: string) {
+    const actor=assertRole(req,'customer');
+    await this.payments.expirePendingPackages(actor.id);
+    const purchase=await this.service.one(actor.id,id);
+    if (purchase.status!=='pending_payment' || !purchase.payment) throw new ConflictException('Pesanan paket tidak lagi menunggu pembayaran');
+    return this.payments.prepareSnap(purchase.payment.orderId);
+  }
   @Post(':id/cancel-pending')
   async cancelPending(@Req() req: AuthRequest, @Param('id') id: string) { return this.service.cancelPending(assertRole(req,'customer').id,id); }
 }

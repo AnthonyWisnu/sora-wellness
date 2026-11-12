@@ -1,0 +1,24 @@
+const assert=require('node:assert/strict');
+const {start,base,pool,save}=require('./browser-common.cjs');
+let runtime;
+(async()=>{
+  runtime=await start('guest');const {page}=runtime;
+  await page.goto(base+'/membership');
+  const plan=page.locator('#pilihan-paket article').filter({has:page.getByRole('heading',{name:'1 bulan',exact:true})});
+  const created=page.waitForResponse(r=>r.url().endsWith('/api/v1/me/membership-purchases')&&r.request().method()==='POST');
+  await plan.getByRole('button',{name:'Pilih paket',exact:true}).click();
+  const response=await created;assert.equal(response.status(),201);const purchase=await response.json();
+  await page.getByRole('heading',{name:'Lanjutkan pembayaran',exact:true}).waitFor();
+  await page.getByRole('button',{name:'Tutup',exact:true}).click();
+  await page.goto(base+'/dashboard/membership');
+  const row=page.locator('.live-package-history article');await row.waitFor();
+  const resumed=page.waitForResponse(r=>r.url().endsWith(`/me/membership-purchases/${purchase.id}/resume-payment`)&&r.request().method()==='POST');
+  await row.getByRole('button',{name:'Lanjutkan bayar',exact:true}).click();
+  const resumedResponse=await resumed;assert.equal(resumedResponse.status(),201);const value=await resumedResponse.json();
+  assert.equal(value.redirectUrl,purchase.payment.redirectUrl);assert.equal(value.orderId,purchase.payment.orderId);
+  await page.getByRole('heading',{name:'Lanjutkan pembayaran',exact:true}).waitFor();
+  const count=(await pool.query('SELECT count(*)::int AS count FROM payment_transactions WHERE package_purchase_id=$1',[purchase.id])).rows[0].count;
+  assert.equal(count,1);
+  save('package-resume-results',{result:'PASS',provider:'Midtrans Sandbox nyata',paymentDialogAfterNavigation:true,resumeSameOrder:true,resumeSameUrl:true,paymentIntents:count,orderLeftToExpire:true,browserErrors:runtime.errors});
+  console.log('PASS: dialog paket tetap terbuka dan riwayat melanjutkan order/Snap yang sama');
+})().catch(error=>{console.error(error.stack);process.exitCode=1}).finally(async()=>{if(runtime)await runtime.browser.close();await pool.end()});

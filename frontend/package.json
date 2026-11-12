@@ -18,7 +18,8 @@
     "smoke:public-data": "node scripts/public-data-smoke.mjs",
     "smoke:package-benefits": "node scripts/package-benefits-smoke.mjs",
     "smoke:dashboard": "node scripts/dashboard-layout-smoke.mjs",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:payment-feedback": "node --experimental-strip-types --test scripts/payment-feedback.test.mjs"
   },
   "dependencies": {
     "@fontsource/cormorant-garamond": "^5.3.0",

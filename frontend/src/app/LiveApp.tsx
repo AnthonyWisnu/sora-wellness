@@ -1,3 +1,5 @@
+import { paymentFeedback } from '../features/booking/payment-feedback'
+import type { PaymentStatusResponse } from '../features/booking/payment-feedback'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { X } from 'lucide-react'
 import {
@@ -54,9 +56,12 @@ export default function LiveApp() {
   const [category, setCategory] = useState('Semua')
 
   const go = (next: string) => {
+    const target = new URL(next,window.location.origin)
+    if (target.origin !== window.location.origin) return
     const preview = new URLSearchParams(window.location.search).has('preview')
-    window.history.pushState({}, '', preview ? `${next}?preview=1` : next)
-    setPath(next)
+    if (preview) target.searchParams.set('preview','1')
+    window.history.pushState({}, '', target.pathname+target.search+target.hash)
+    setPath(target.pathname)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
   const show = useCallback((text: string) => setNotice(text), [])
@@ -151,6 +156,7 @@ export default function LiveApp() {
     })
 
   useEffect(() => {
+    if (/^\/(events|event)\//.test(window.location.pathname)) return
     const searchParams = new URLSearchParams(window.location.search)
     const paymentResult = searchParams.get('payment')
     const orderId = searchParams.get('order_id')
@@ -168,19 +174,15 @@ export default function LiveApp() {
         show('Pembayaran Anda terdeteksi. Memverifikasi status pesanan secara otomatis...')
         void (async () => {
           try {
-            await api('/me/payments/sync-order', {
+            const status = await api<PaymentStatusResponse>('/me/payments/sync-order', {
               method: 'POST',
               body: { orderId },
             })
+            show(paymentFeedback(orderId.startsWith('PKG-') ? 'package' : 'booking', status).message)
           } catch {
-            if (orderId.startsWith('CLS-')) {
-              await api(`/bookings/${orderId.slice(4)}/refresh-payment`, { method: 'POST' }).catch(() => {})
-            } else if (orderId.startsWith('PKG-')) {
-              await api(`/me/membership-purchases/${orderId.slice(4)}/refresh-payment`, { method: 'POST' }).catch(() => {})
-            }
+            show('Status pembayaran belum dapat diverifikasi. Buka riwayat transaksi untuk memeriksanya kembali.')
           } finally {
-            await Promise.all([loadCustomer(), loadSessions()])
-            show('Pembayaran berhasil dikonfirmasi! Kursi dan tiket kelas Anda telah aktif.')
+            await Promise.allSettled([loadCustomer(), loadSessions()])
           }
         })()
       } else if (paymentResult === 'unfinish') {
@@ -195,7 +197,7 @@ export default function LiveApp() {
   }, [loadCustomer, loadSessions, setActivePayment, show])
 
   useEffect(() => {
-    setActivePayment(null)
+    if (!path.startsWith('/dashboard')) setActivePayment(null)
   }, [path, setActivePayment])
 
   useEffect(() => {
@@ -341,11 +343,12 @@ export default function LiveApp() {
 
       {path === '/ganti-sandi' && <ChangePasswordPage busy={busy} changePassword={changePassword} />}
       {(path.startsWith('/events/') || path.startsWith('/event/')) && (
-        <PublicEventPage slug={path.replace(/^\/(events|event)\//, '').split('?')[0]} go={go} show={show} />
+        <PublicEventPage slug={path.replace(/^\/(events|event)\//, '').split('?')[0]} go={go} show={show} actor={actor} authReady={authReady} timezone={timezone} />
       )}
 
       {(path === '/dashboard' || path.startsWith('/dashboard/')) && (
         <DashboardPage
+          reloadCustomer={loadCustomer}
           authReady={authReady}
           path={path}
           actor={actor}

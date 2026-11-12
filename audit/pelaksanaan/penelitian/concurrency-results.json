@@ -1,0 +1,15 @@
+{
+  "result": "PASS",
+  "transport": "HTTP /api/v1/bookings",
+  "authenticatedCustomers": 50,
+  "requests": 50,
+  "capacity": 1,
+  "statuses": {
+    "201": 1,
+    "409": 49
+  },
+  "confirmedBookings": 1,
+  "overbooking": 0,
+  "dispatchWindowMs": 11.692900000001828,
+  "elapsedMs": 749.9668999999994
+}

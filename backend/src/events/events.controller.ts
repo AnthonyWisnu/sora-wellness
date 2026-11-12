@@ -11,7 +11,8 @@ import {
   UseGuards,
 } from '@nestjs/common'
 import { ApiCookieAuth, ApiTags } from '@nestjs/swagger'
-import { AuthRequest, assertRole, SessionGuard } from '../shared/security'
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler'
+import { AuthRequest, assertPermission, assertRole, SessionGuard } from '../shared/security'
 import { CreateEventDto, RegisterEventDto } from './events.dto'
 import { EventsService } from './events.service'
 
@@ -26,6 +27,7 @@ export class PublicEventsController {
   }
 
   @Get('ticket/:ticketCode')
+  @UseGuards(ThrottlerGuard) @Throttle({ default: { limit: 30, ttl: 60_000 } })
   ticket(@Param('ticketCode') ticketCode: string) {
     return this.service.getTicket(ticketCode)
   }
@@ -36,6 +38,7 @@ export class PublicEventsController {
   }
 
   @Post(':slug/register')
+  @UseGuards(ThrottlerGuard)
   register(@Param('slug') slug: string, @Body() body: RegisterEventDto) {
     return this.service.register(slug, body)
   }
@@ -50,20 +53,20 @@ export class AdminEventsController {
 
   @Get()
   list(@Req() req: AuthRequest) {
-    assertRole(req, 'admin', 'superadmin')
+    assertPermission(req, 'community_events')
     return this.service.listAdmin()
   }
 
   @Post()
   create(@Req() req: AuthRequest, @Body() body: CreateEventDto) {
-    assertRole(req, 'admin', 'superadmin')
+    assertPermission(req, 'community_events')
     return this.service.createEvent(body)
   }
 
   @Get(':slug')
   detail(@Req() req: AuthRequest, @Param('slug') slug: string) {
-    assertRole(req, 'admin', 'superadmin')
-    return this.service.getPublic(slug)
+    assertPermission(req, 'community_events')
+    return this.service.getPublic(slug, true)
   }
 
   @Put(':id')
@@ -72,25 +75,25 @@ export class AdminEventsController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: CreateEventDto,
   ) {
-    assertRole(req, 'admin', 'superadmin')
+    assertPermission(req, 'community_events')
     return this.service.updateEvent(id, body)
   }
 
   @Delete(':id')
   delete(@Req() req: AuthRequest, @Param('id', ParseUUIDPipe) id: string) {
-    assertRole(req, 'admin', 'superadmin')
+    assertPermission(req, 'community_events')
     return this.service.deleteEvent(id)
   }
 
   @Get(':id/registrations')
   registrations(@Req() req: AuthRequest, @Param('id', ParseUUIDPipe) id: string) {
-    assertRole(req, 'admin', 'superadmin')
+    assertPermission(req, 'community_events')
     return this.service.listRegistrations(id)
   }
 
   @Post('registrations/:regId/check-in')
   checkIn(@Req() req: AuthRequest, @Param('regId') regId: string) {
-    assertRole(req, 'admin', 'superadmin')
+    assertPermission(req, 'community_events')
     return this.service.checkIn(regId)
   }
 }

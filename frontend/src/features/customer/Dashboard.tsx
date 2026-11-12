@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { ArrowRight, CalendarDays, CreditCard, QrCode, Sparkles } from 'lucide-react'
-import type { Actor, Booking, Membership, PackagePurchase, Payment } from '../../shared/api'
+import { api, type Actor, type Booking, type Membership, type PackagePurchase, type Payment } from '../../shared/api'
 import { formatDate, localDateTime, localTime, money, statusName } from '../../shared/format'
 import { CustomerProfilePanel } from './Profile'
 import { CustomerLockerPanel } from './Locker'
@@ -9,6 +9,7 @@ import { TicketModal } from './TicketModal'
 import type { ActivePayment } from '../booking/usePaymentWatcher'
 
 type Props = {
+  onWalletChanged: () => Promise<void>
   section: string
   actor: Actor
   member: boolean
@@ -30,6 +31,7 @@ type Props = {
 }
 
 export function CustomerDashboard({
+  onWalletChanged,
   section,
   actor,
   member,
@@ -50,6 +52,16 @@ export function CustomerDashboard({
   onAvatarChanged,
 }: Props) {
   const [ticketBooking, setTicketBooking] = useState<Booking | null>(null)
+  const [resumingPackage, setResumingPackage] = useState<string | null>(null)
+  async function resumePackage(id: string) {
+    if (resumingPackage) return
+    setResumingPackage(id)
+    try {
+      const payment=await api<{redirectUrl:string;orderId:string}>(`/me/membership-purchases/${id}/resume-payment`,{method:'POST'})
+      setPaymentLink({kind:'package',id,url:payment.redirectUrl,orderId:payment.orderId})
+    } catch(error) { show(error instanceof Error ? error.message : 'Pembayaran belum dapat dilanjutkan.') }
+    finally { setResumingPackage(null) }
+  }
   return (
     <>
       {section === 'overview' && (
@@ -328,7 +340,7 @@ export function CustomerDashboard({
                     <button
                       className="button button-primary"
                       style={{ padding: "0.3rem 0.75rem", fontSize: "0.82rem", marginLeft: "auto" }}
-                      onClick={() => setPaymentLink(row.redirectUrl!)}
+                      onClick={() => row.packagePurchaseId ? void resumePackage(row.packagePurchaseId) : row.bookingId ? void paymentAction(row.bookingId,false) : row.eventSlug ? go(`/events/${row.eventSlug}?registration=${row.eventRegistrationId}`) : undefined}
                     >
                       Lanjutkan bayar
                     </button>
@@ -374,17 +386,11 @@ export function CustomerDashboard({
                   </div>
                   {purchase.status === 'pending_payment' && (
                     <div className="live-booking-actions">
-                      {purchase.payment?.redirectUrl && (
+                      {purchase.payment && (
                         <button
                           className="button button-primary"
-                          onClick={() =>
-                            setPaymentLink({
-                              url: purchase.payment!.redirectUrl!,
-                              kind: 'package',
-                              id: purchase.id,
-                              orderId: purchase.payment!.orderId,
-                            })
-                          }
+                          disabled={Boolean(resumingPackage)}
+                          onClick={() => void resumePackage(purchase.id)}
                         >
                           Lanjutkan bayar
                         </button>
@@ -410,7 +416,7 @@ export function CustomerDashboard({
       )}
       {section === 'wallet' && (
         <>
-          <CustomerWalletPanel balance={balance} timezone={timezone} show={show} />
+          <CustomerWalletPanel balance={balance} timezone={timezone} show={show} onChanged={onWalletChanged} />
           {member && <CustomerLockerPanel show={show} />}
         </>
       )}
